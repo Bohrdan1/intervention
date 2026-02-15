@@ -42,6 +42,12 @@ export function FinaliserClient({ rapport }: { rapport: any }) {
     };
   }
 
+  function initCanvasBackground(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+    // Remplir le fond en blanc pour éviter le fond noir en export
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
   function startDrawingTech(e: React.TouchEvent | React.MouseEvent) {
     activeCanvas.current = "tech";
     const canvas = canvasRef.current;
@@ -49,6 +55,8 @@ export function FinaliserClient({ rapport }: { rapport: any }) {
     isDrawing.current = true;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    // Fond blanc si canvas vierge (pas encore de signature)
+    if (!signatureData) initCanvasBackground(canvas, ctx);
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
@@ -65,6 +73,8 @@ export function FinaliserClient({ rapport }: { rapport: any }) {
     isDrawing.current = true;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    // Fond blanc si canvas vierge (pas encore de signature)
+    if (!signatureClient) initCanvasBackground(canvas, ctx);
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
@@ -90,10 +100,10 @@ export function FinaliserClient({ rapport }: { rapport: any }) {
     isDrawing.current = false;
     if (activeCanvas.current === "tech") {
       const canvas = canvasRef.current;
-      if (canvas) setSignatureData(canvas.toDataURL("image/jpeg", 0.6));
+      if (canvas) setSignatureData(canvas.toDataURL("image/png"));
     } else {
       const canvas = canvasClientRef.current;
-      if (canvas) setSignatureClient(canvas.toDataURL("image/jpeg", 0.6));
+      if (canvas) setSignatureClient(canvas.toDataURL("image/png"));
     }
   }
 
@@ -114,6 +124,7 @@ export function FinaliserClient({ rapport }: { rapport: any }) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     setSignatureClient(null);
   }
+
 
   // ── Génération PDF ──
   async function generatePdfBlob(): Promise<Blob> {
