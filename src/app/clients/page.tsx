@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ClientSearch } from "./client-search";
+import { TypePorteSelect } from "./type-porte-select";
 
 export default async function ClientsPage({
   searchParams,
@@ -188,17 +189,7 @@ export default async function ClientsPage({
                         required
                         className="flex-1 rounded border border-border px-2 py-1.5 text-xs focus:border-primary focus:outline-none"
                       />
-                      <select
-                        name="type_porte"
-                        className="rounded border border-border px-2 py-1.5 text-xs focus:border-primary focus:outline-none"
-                      >
-                        <option value="coulissante deux vantaux">Coulissante 2 vantaux</option>
-                        <option value="coulissante un vantail">Coulissante 1 vantail</option>
-                        <option value="Téléscopique deux vantaux">Téléscopique 2 vantaux</option>
-                        <option value="Téléscopique un vantail">Téléscopique 1 vantail</option>
-                        <option value="battante">Battante</option>
-                        <option value="tournante">Tournante</option>
-                      </select>
+                      <TypePorteSelect />
                       <input
                         name="modele"
                         placeholder="Modèle (ex: SOFTICA)"
