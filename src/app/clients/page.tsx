@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { ClientSearch } from "./client-search";
 import { TypePorteSelect } from "./type-porte-select";
+import { DEFAULT_POINTS_CONTROLE, DEFAULT_POINTS_ERP, DEFAULT_CONSTAT } from "@/lib/types";
 
 export default async function ClientsPage({
   searchParams,
@@ -93,6 +93,81 @@ export default async function ClientsPage({
     revalidatePath("/clients");
   }
 
+  async function createQuickRapport(formData: FormData) {
+    "use server";
+    const supabase = await createClient();
+    const client_id = formData.get("client_id") as string;
+    const site_id = formData.get("site_id") as string;
+    const type_rapport = formData.get("type_rapport") as string;
+    if (!client_id || !site_id) return;
+
+    const dateStr = new Date().toISOString().split("T")[0];
+    let numero: string;
+
+    if (type_rapport === "maintenance") {
+      const currentYear = new Date().getFullYear();
+      const { data: existing } = await supabase
+        .from("rapports")
+        .select("numero_cm")
+        .like("numero_cm", `CM ${currentYear}/%`);
+      let nextNum = 1;
+      if (existing && existing.length > 0) {
+        const nums = existing.map((r) => {
+          const parts = r.numero_cm.replace("CM ", "").split("/");
+          return parseInt(parts[1]) || 0;
+        });
+        nextNum = Math.max(...nums) + 1;
+      }
+      numero = `CM ${currentYear}/${nextNum}`;
+    } else {
+      const datePart = dateStr.replace(/-/g, "");
+      const { data: existing } = await supabase
+        .from("rapports")
+        .select("numero_cm")
+        .like("numero_cm", `INT-${datePart}%`);
+      numero = existing && existing.length > 0
+        ? `INT-${datePart}-${existing.length + 1}`
+        : `INT-${datePart}`;
+    }
+
+    const { data: rapport, error } = await supabase
+      .from("rapports")
+      .insert({
+        numero_cm: numero,
+        type_rapport,
+        date_intervention: dateStr,
+        client_id,
+        site_id,
+        constat_general: type_rapport === "maintenance" ? DEFAULT_CONSTAT : [],
+      })
+      .select()
+      .single();
+
+    if (error || !rapport) return;
+
+    if (type_rapport === "maintenance") {
+      // Récupérer toutes les portes du site
+      const { data: installations } = await supabase
+        .from("installations")
+        .select("id")
+        .eq("site_id", site_id);
+
+      if (installations && installations.length > 0) {
+        const controles = installations.map((inst, index) => ({
+          rapport_id: rapport.id,
+          installation_id: inst.id,
+          page_number: index + 1,
+          points_controle: DEFAULT_POINTS_CONTROLE,
+          points_erp: DEFAULT_POINTS_ERP,
+        }));
+        await supabase.from("controles").insert(controles);
+      }
+      redirect(`/rapports/${rapport.id}/controle`);
+    } else {
+      redirect(`/rapports/${rapport.id}/intervention`);
+    }
+  }
+
   return (
     <div>
       <div className="mb-6">
@@ -144,28 +219,12 @@ export default async function ClientsPage({
                     <p className="text-xs text-muted">{client.sous_titre}</p>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <Link
-                    href={`/rapports/nouveau?client_id=${client.id}&type=maintenance`}
-                    className="rounded-lg bg-blue-50 border border-blue-200 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors"
-                    title="Nouvelle maintenance"
-                  >
-                    🔧
-                  </Link>
-                  <Link
-                    href={`/rapports/nouveau?client_id=${client.id}&type=intervention`}
-                    className="rounded-lg bg-purple-50 border border-purple-200 px-2.5 py-1 text-xs font-medium text-purple-700 hover:bg-purple-100 transition-colors"
-                    title="Nouvelle intervention"
-                  >
-                    ⚡
-                  </Link>
-                  <form action={deleteClient}>
-                    <input type="hidden" name="id" value={client.id} />
-                    <button type="submit" className="text-xs text-danger hover:underline">
-                      Supprimer
-                    </button>
-                  </form>
-                </div>
+                <form action={deleteClient}>
+                  <input type="hidden" name="id" value={client.id} />
+                  <button type="submit" className="text-xs text-danger hover:underline">
+                    Supprimer
+                  </button>
+                </form>
               </div>
 
               {/* Sites */}
@@ -174,10 +233,36 @@ export default async function ClientsPage({
                   <div key={site.id} className="rounded-lg border border-border p-3 bg-slate-50">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-sm font-semibold">📍 {site.nom}</h4>
-                      <form action={deleteSite}>
-                        <input type="hidden" name="id" value={site.id} />
-                        <button type="submit" className="text-xs text-danger hover:underline">×</button>
-                      </form>
+                      <div className="flex items-center gap-1.5">
+                        <form action={createQuickRapport}>
+                          <input type="hidden" name="client_id" value={client.id} />
+                          <input type="hidden" name="site_id" value={site.id} />
+                          <input type="hidden" name="type_rapport" value="maintenance" />
+                          <button
+                            type="submit"
+                            className="rounded-lg bg-blue-50 border border-blue-200 px-2 py-0.5 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors"
+                            title="Nouvelle maintenance"
+                          >
+                            🔧
+                          </button>
+                        </form>
+                        <form action={createQuickRapport}>
+                          <input type="hidden" name="client_id" value={client.id} />
+                          <input type="hidden" name="site_id" value={site.id} />
+                          <input type="hidden" name="type_rapport" value="intervention" />
+                          <button
+                            type="submit"
+                            className="rounded-lg bg-purple-50 border border-purple-200 px-2 py-0.5 text-xs font-medium text-purple-700 hover:bg-purple-100 transition-colors"
+                            title="Nouvelle intervention"
+                          >
+                            ⚡
+                          </button>
+                        </form>
+                        <form action={deleteSite}>
+                          <input type="hidden" name="id" value={site.id} />
+                          <button type="submit" className="text-xs text-danger hover:underline">×</button>
+                        </form>
+                      </div>
                     </div>
 
                     {/* Installations */}
