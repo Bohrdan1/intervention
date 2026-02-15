@@ -144,12 +144,28 @@ export default async function ClientsPage({
                     <p className="text-xs text-muted">{client.sous_titre}</p>
                   )}
                 </div>
-                <form action={deleteClient}>
-                  <input type="hidden" name="id" value={client.id} />
-                  <button type="submit" className="text-xs text-danger hover:underline">
-                    Supprimer
-                  </button>
-                </form>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/rapports/nouveau?client_id=${client.id}&type=maintenance`}
+                    className="rounded-lg bg-blue-50 border border-blue-200 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors"
+                    title="Nouvelle maintenance"
+                  >
+                    🔧
+                  </Link>
+                  <Link
+                    href={`/rapports/nouveau?client_id=${client.id}&type=intervention`}
+                    className="rounded-lg bg-purple-50 border border-purple-200 px-2.5 py-1 text-xs font-medium text-purple-700 hover:bg-purple-100 transition-colors"
+                    title="Nouvelle intervention"
+                  >
+                    ⚡
+                  </Link>
+                  <form action={deleteClient}>
+                    <input type="hidden" name="id" value={client.id} />
+                    <button type="submit" className="text-xs text-danger hover:underline">
+                      Supprimer
+                    </button>
+                  </form>
+                </div>
               </div>
 
               {/* Sites */}

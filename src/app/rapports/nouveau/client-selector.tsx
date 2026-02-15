@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 interface Installation {
   id: string;
@@ -23,8 +24,12 @@ interface Client {
 }
 
 export function ClientSiteSelectorClient({ clients }: { clients: Client[] }) {
-  const [typeRapport, setTypeRapport] = useState<"maintenance" | "intervention">("maintenance");
-  const [selectedClientId, setSelectedClientId] = useState("");
+  const searchParams = useSearchParams();
+  const initialType = searchParams.get("type") === "intervention" ? "intervention" : "maintenance";
+  const initialClientId = searchParams.get("client_id") || "";
+
+  const [typeRapport, setTypeRapport] = useState<"maintenance" | "intervention">(initialType);
+  const [selectedClientId, setSelectedClientId] = useState(initialClientId);
   const [selectedSiteId, setSelectedSiteId] = useState("");
 
   const selectedClient = clients.find((c) => c.id === selectedClientId);

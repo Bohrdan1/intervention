@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { DEFAULT_POINTS_CONTROLE, DEFAULT_POINTS_ERP, DEFAULT_CONSTAT } from "@/lib/types";
 import { ClientSiteSelectorClient } from "./client-selector";
 
@@ -115,7 +116,9 @@ export default async function NouveauRapportPage() {
       ) : (
         <form action={creerRapport} className="space-y-6">
           {/* Sélecteur de type */}
-          <ClientSiteSelectorClient clients={clients} />
+          <Suspense fallback={null}>
+            <ClientSiteSelectorClient clients={clients} />
+          </Suspense>
 
           {/* Bouton création */}
           <button
