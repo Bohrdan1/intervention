@@ -26,6 +26,7 @@ export default async function NouveauRapportPage() {
     if (type_rapport === "maintenance" && installationIds.length === 0) return;
 
     let numero: string;
+    const dateStr = (date_intervention || new Date().toISOString().split("T")[0]).replace(/-/g, "");
 
     if (type_rapport === "maintenance") {
       // Numérotation CM YYYY/N
@@ -44,9 +45,20 @@ export default async function NouveauRapportPage() {
         nextNum = Math.max(...nums) + 1;
       }
       numero = `CM ${currentYear}/${nextNum}`;
+    } else if (type_rapport === "visite") {
+      // Numérotation VT-YYYYMMDD(-N)
+      const { data: existingVT } = await supabase
+        .from("rapports")
+        .select("numero_cm")
+        .like("numero_cm", `VT-${dateStr}%`);
+
+      if (existingVT && existingVT.length > 0) {
+        numero = `VT-${dateStr}-${existingVT.length + 1}`;
+      } else {
+        numero = `VT-${dateStr}`;
+      }
     } else {
       // Numérotation INT-YYYYMMDD(-N)
-      const dateStr = (date_intervention || new Date().toISOString().split("T")[0]).replace(/-/g, "");
       const { data: existingInt } = await supabase
         .from("rapports")
         .select("numero_cm")
@@ -90,6 +102,8 @@ export default async function NouveauRapportPage() {
 
       await supabase.from("controles").insert(controles);
       redirect(`/rapports/${rapport.id}/controle`);
+    } else if (type_rapport === "visite") {
+      redirect(`/rapports/${rapport.id}/visite`);
     } else {
       redirect(`/rapports/${rapport.id}/intervention`);
     }

@@ -24,6 +24,7 @@ export default async function Dashboard() {
   const nbBrouillons = all.filter((r) => r.statut === "brouillon").length;
   const nbMaintenance = all.filter((r) => r.type_rapport === "maintenance").length;
   const nbIntervention = all.filter((r) => r.type_rapport === "intervention").length;
+  const nbVisite = all.filter((r) => r.type_rapport === "visite").length;
 
   return (
     <div>
@@ -45,7 +46,7 @@ export default async function Dashboard() {
 
       {/* Stats */}
       {totalRapports > 0 && (
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
           <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
             <p className="text-2xl font-bold text-foreground">{totalRapports}</p>
             <p className="text-xs text-muted">Total</p>
@@ -61,6 +62,10 @@ export default async function Dashboard() {
           <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
             <p className="text-2xl font-bold text-purple-600">{nbIntervention}</p>
             <p className="text-xs text-muted">Interventions</p>
+          </div>
+          <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+            <p className="text-2xl font-bold text-teal-600">{nbVisite}</p>
+            <p className="text-xs text-muted">Visites</p>
           </div>
         </div>
       )}

@@ -65,7 +65,7 @@ export interface Controle {
   updated_at: string;
 }
 
-export type TypeRapport = 'maintenance' | 'intervention';
+export type TypeRapport = 'maintenance' | 'intervention' | 'visite';
 
 export interface PieceUtilisee {
   nom: string;
@@ -88,6 +88,9 @@ export interface Rapport {
   description_probleme: string | null;
   travaux_effectues: string | null;
   pieces_utilisees: PieceUtilisee[];
+  // Champs visite technique
+  observations_visite: string | null;
+  recommandations: string | null;
   statut: 'brouillon' | 'finalise';
   signature_data: string | null;
   signature_client: string | null;

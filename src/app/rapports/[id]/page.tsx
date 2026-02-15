@@ -31,6 +31,7 @@ export default async function RapportDetailPage({
   }
 
   const isIntervention = rapport.type_rapport === "intervention";
+  const isVisite = rapport.type_rapport === "visite";
   const photos: PhotoItem[] = rapport.photos || [];
 
   const controles = (rapport.controles || []).sort(
@@ -54,12 +55,14 @@ export default async function RapportDetailPage({
           </span>
           <span
             className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-              isIntervention
-                ? "bg-purple-100 text-purple-700"
-                : "bg-blue-100 text-blue-700"
+              isVisite
+                ? "bg-teal-100 text-teal-700"
+                : isIntervention
+                  ? "bg-purple-100 text-purple-700"
+                  : "bg-blue-100 text-blue-700"
             }`}
           >
-            {isIntervention ? "Intervention" : "Maintenance"}
+            {isVisite ? "Visite technique" : isIntervention ? "Intervention" : "Maintenance"}
           </span>
           <span
             className={`rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -78,7 +81,56 @@ export default async function RapportDetailPage({
       </div>
 
       {/* Contenu selon le type */}
-      {isIntervention ? (
+      {isVisite ? (
+        <div className="mb-6 space-y-4">
+          {rapport.observations_visite && (
+            <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+              <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">
+                Observations
+              </h2>
+              <p className="text-sm whitespace-pre-wrap">{rapport.observations_visite}</p>
+            </div>
+          )}
+
+          {rapport.recommandations && (
+            <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+              <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">
+                Recommandations
+              </h2>
+              <p className="text-sm whitespace-pre-wrap">{rapport.recommandations}</p>
+            </div>
+          )}
+
+          {/* Photos visite */}
+          {photos.filter((p) => p.context === "visite").length > 0 && (
+            <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+              <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-3">
+                Photos
+              </h2>
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {photos
+                  .filter((p) => p.context === "visite")
+                  .map((photo) => (
+                    <img
+                      key={photo.id}
+                      src={photo.url}
+                      alt={photo.label || "Photo"}
+                      className="h-24 w-full rounded-lg object-cover"
+                    />
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {!rapport.observations_visite && !rapport.recommandations && (
+            <div className="rounded-xl border-2 border-dashed border-border bg-white p-8 text-center">
+              <p className="text-muted text-sm">
+                Aucune information saisie pour cette visite.
+              </p>
+            </div>
+          )}
+        </div>
+      ) : isIntervention ? (
         <div className="mb-6 space-y-4">
           {rapport.description_probleme && (
             <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
@@ -214,7 +266,14 @@ export default async function RapportDetailPage({
 
       {/* Actions */}
       <div className="flex gap-3">
-        {isIntervention ? (
+        {isVisite ? (
+          <Link
+            href={`/rapports/${rapport.id}/visite`}
+            className="flex-1 rounded-xl border border-border bg-white py-3 text-center text-sm font-medium hover:bg-slate-50"
+          >
+            Modifier la visite
+          </Link>
+        ) : isIntervention ? (
           <Link
             href={`/rapports/${rapport.id}/intervention`}
             className="flex-1 rounded-xl border border-border bg-white py-3 text-center text-sm font-medium hover:bg-slate-50"

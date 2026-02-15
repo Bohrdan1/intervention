@@ -119,6 +119,15 @@ export default async function ClientsPage({
         nextNum = Math.max(...nums) + 1;
       }
       numero = `CM ${currentYear}/${nextNum}`;
+    } else if (type_rapport === "visite") {
+      const datePart = dateStr.replace(/-/g, "");
+      const { data: existing } = await supabase
+        .from("rapports")
+        .select("numero_cm")
+        .like("numero_cm", `VT-${datePart}%`);
+      numero = existing && existing.length > 0
+        ? `VT-${datePart}-${existing.length + 1}`
+        : `VT-${datePart}`;
     } else {
       const datePart = dateStr.replace(/-/g, "");
       const { data: existing } = await supabase
@@ -163,6 +172,8 @@ export default async function ClientsPage({
         await supabase.from("controles").insert(controles);
       }
       redirect(`/rapports/${rapport.id}/controle`);
+    } else if (type_rapport === "visite") {
+      redirect(`/rapports/${rapport.id}/visite`);
     } else {
       redirect(`/rapports/${rapport.id}/intervention`);
     }
@@ -256,6 +267,18 @@ export default async function ClientsPage({
                             title="Nouvelle intervention"
                           >
                             ⚡
+                          </button>
+                        </form>
+                        <form action={createQuickRapport}>
+                          <input type="hidden" name="client_id" value={client.id} />
+                          <input type="hidden" name="site_id" value={site.id} />
+                          <input type="hidden" name="type_rapport" value="visite" />
+                          <button
+                            type="submit"
+                            className="rounded-lg bg-teal-50 border border-teal-200 px-2 py-0.5 text-xs font-medium text-teal-700 hover:bg-teal-100 transition-colors"
+                            title="Nouvelle visite technique"
+                          >
+                            👁
                           </button>
                         </form>
                         <form action={deleteSite}>

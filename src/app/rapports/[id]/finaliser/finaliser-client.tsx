@@ -197,6 +197,7 @@ export function FinaliserClient({ rapport }: { rapport: any }) {
   }
 
   const isIntervention = rapport.type_rapport === "intervention";
+  const isVisite = rapport.type_rapport === "visite";
   const controles = rapport.controles || [];
 
   // Résumé des contrôles (maintenance uniquement)
@@ -252,11 +253,11 @@ export function FinaliserClient({ rapport }: { rapport: any }) {
       <h1 className="text-2xl font-bold mb-2">Finaliser le rapport</h1>
       <p className="text-sm text-muted mb-6">
         {rapport.numero_cm} · {rapport.site?.nom}
-        {isIntervention ? "" : ` · ${rapport.controles?.length || 0} porte${(rapport.controles?.length || 0) > 1 ? "s" : ""}`}
+        {!isIntervention && !isVisite ? ` · ${rapport.controles?.length || 0} porte${(rapport.controles?.length || 0) > 1 ? "s" : ""}` : ""}
       </p>
 
       {/* Résumé (maintenance uniquement) */}
-      {!isIntervention && (
+      {!isIntervention && !isVisite && (
         <div className="mb-6 grid grid-cols-4 gap-2">
           <div className="rounded-xl bg-white border border-border p-3 text-center shadow-sm">
             <p className="text-xl font-bold text-green-600">{pointsOk}</p>
@@ -306,8 +307,30 @@ export function FinaliserClient({ rapport }: { rapport: any }) {
         </div>
       )}
 
+      {/* Résumé visite */}
+      {isVisite && (
+        <div className="mb-6 rounded-xl border border-border bg-white p-4 shadow-sm">
+          <h2 className="text-base font-bold mb-3">👁 Résumé de la visite technique</h2>
+          {rapport.observations_visite && (
+            <div className="mb-3">
+              <p className="text-xs font-semibold text-muted uppercase">Observations</p>
+              <p className="text-sm mt-1 whitespace-pre-wrap">{rapport.observations_visite}</p>
+            </div>
+          )}
+          {rapport.recommandations && (
+            <div>
+              <p className="text-xs font-semibold text-muted uppercase">Recommandations</p>
+              <p className="text-sm mt-1 whitespace-pre-wrap">{rapport.recommandations}</p>
+            </div>
+          )}
+          {!rapport.observations_visite && !rapport.recommandations && (
+            <p className="text-sm text-muted">Aucune information saisie.</p>
+          )}
+        </div>
+      )}
+
       {/* Constat général (maintenance uniquement) */}
-      {!isIntervention && (
+      {!isIntervention && !isVisite && (
         <div className="mb-6 rounded-xl border border-border bg-white p-4 shadow-sm">
           <h2 className="text-base font-bold mb-4">🛠 Constat général de conformité</h2>
           <div className="space-y-3">

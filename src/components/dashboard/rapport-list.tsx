@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Pagination } from "@/components/ui/pagination";
 
-type FilterType = "tous" | "maintenance" | "intervention" | "brouillon" | "finalise";
+type FilterType = "tous" | "maintenance" | "intervention" | "visite" | "brouillon" | "finalise";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -30,6 +30,7 @@ export function RapportList({ rapports }: { rapports: RapportItem[] }) {
     // Filtre par type/statut
     if (filter === "maintenance") result = result.filter((r) => r.type_rapport === "maintenance");
     else if (filter === "intervention") result = result.filter((r) => r.type_rapport === "intervention");
+    else if (filter === "visite") result = result.filter((r) => r.type_rapport === "visite");
     else if (filter === "brouillon") result = result.filter((r) => r.statut === "brouillon");
     else if (filter === "finalise") result = result.filter((r) => r.statut === "finalise");
 
@@ -69,6 +70,7 @@ export function RapportList({ rapports }: { rapports: RapportItem[] }) {
     { value: "tous", label: "Tous" },
     { value: "maintenance", label: "Maintenance" },
     { value: "intervention", label: "Intervention" },
+    { value: "visite", label: "Visites" },
     { value: "brouillon", label: "Brouillons" },
     { value: "finalise", label: "Finalisés" },
   ];
@@ -119,6 +121,7 @@ export function RapportList({ rapports }: { rapports: RapportItem[] }) {
           <div className="space-y-3">
             {paginatedRapports.map((rapport) => {
             const isIntervention = rapport.type_rapport === "intervention";
+            const isVisite = rapport.type_rapport === "visite";
             const nbPortes = rapport.controles?.length || 0;
             const date = new Date(rapport.date_intervention).toLocaleDateString("fr-FR", {
               day: "numeric",
@@ -139,12 +142,14 @@ export function RapportList({ rapports }: { rapports: RapportItem[] }) {
                     </span>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        isIntervention
-                          ? "bg-purple-100 text-purple-700"
-                          : "bg-blue-100 text-blue-700"
+                        isVisite
+                          ? "bg-teal-100 text-teal-700"
+                          : isIntervention
+                            ? "bg-purple-100 text-purple-700"
+                            : "bg-blue-100 text-blue-700"
                       }`}
                     >
-                      {isIntervention ? "Intervention" : "Maintenance"}
+                      {isVisite ? "Visite" : isIntervention ? "Intervention" : "Maintenance"}
                     </span>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${

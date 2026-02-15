@@ -25,10 +25,11 @@ interface Client {
 
 export function ClientSiteSelectorClient({ clients }: { clients: Client[] }) {
   const searchParams = useSearchParams();
-  const initialType = searchParams.get("type") === "intervention" ? "intervention" : "maintenance";
+  const typeParam = searchParams.get("type");
+  const initialType = typeParam === "intervention" ? "intervention" : typeParam === "visite" ? "visite" : "maintenance";
   const initialClientId = searchParams.get("client_id") || "";
 
-  const [typeRapport, setTypeRapport] = useState<"maintenance" | "intervention">(initialType);
+  const [typeRapport, setTypeRapport] = useState<"maintenance" | "intervention" | "visite">(initialType);
   const [selectedClientId, setSelectedClientId] = useState(initialClientId);
   const [selectedSiteId, setSelectedSiteId] = useState("");
 
@@ -43,7 +44,7 @@ export function ClientSiteSelectorClient({ clients }: { clients: Client[] }) {
       <input type="hidden" name="type_rapport" value={typeRapport} />
       <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
         <label className="block text-sm font-semibold text-muted mb-3">Type de rapport</label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <button
             type="button"
             onClick={() => setTypeRapport("maintenance")}
@@ -69,6 +70,19 @@ export function ClientSiteSelectorClient({ clients }: { clients: Client[] }) {
             <p className="text-2xl mb-1">⚡</p>
             <p className="text-sm font-semibold">Intervention</p>
             <p className="text-xs text-muted mt-1">Dépannage / réparation</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTypeRapport("visite")}
+            className={`rounded-xl border-2 p-4 text-center transition-all ${
+              typeRapport === "visite"
+                ? "border-primary bg-primary/5 shadow-sm"
+                : "border-border hover:border-primary-light"
+            }`}
+          >
+            <p className="text-2xl mb-1">👁</p>
+            <p className="text-sm font-semibold">Visite technique</p>
+            <p className="text-xs text-muted mt-1">Observations / RDV</p>
           </button>
         </div>
       </div>
