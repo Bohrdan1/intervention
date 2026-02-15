@@ -498,10 +498,10 @@ function PageConstat({
           <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', textDecoration: 'underline', marginTop: 4 }}>
             {rapport.technicien}
           </Text>
-          {rapport.signature_data && !rapport.signature_data.startsWith('data:') ? (
+          {rapport.signature_data ? (
             <Image style={{ width: 150, height: 80, marginTop: 10 }} src={rapport.signature_data} />
           ) : (
-            <View style={{ width: 150, height: 80, marginTop: 10, borderWidth: 1, borderColor: '#999', borderStyle: 'solid', backgroundColor: '#f9f9f9', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 150, height: 80, marginTop: 10, borderWidth: 1, borderColor: '#999', borderStyle: 'dashed', backgroundColor: '#f9f9f9', alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ fontSize: 8, color: '#666' }}>Signature</Text>
             </View>
           )}
@@ -512,13 +512,7 @@ function PageConstat({
           <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold' }}>Le client :</Text>
           {rapport.signature_client ? (
             <>
-              {!rapport.signature_client.startsWith('data:') ? (
-                <Image style={{ width: 150, height: 80, marginTop: 10 }} src={rapport.signature_client} />
-              ) : (
-                <View style={{ width: 150, height: 80, marginTop: 10, borderWidth: 1, borderColor: '#999', borderStyle: 'solid', backgroundColor: '#f9f9f9', alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 8, color: '#666' }}>Signature</Text>
-                </View>
-              )}
+              <Image style={{ width: 150, height: 80, marginTop: 10 }} src={rapport.signature_client} />
               <Text style={{ fontSize: 9, marginTop: 6 }}>Date : {formatDate(rapport.date_intervention)}</Text>
             </>
           ) : (
@@ -650,10 +644,10 @@ function PageIntervention({
           <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', textDecoration: 'underline', marginTop: 4 }}>
             {rapport.technicien}
           </Text>
-          {rapport.signature_data && !rapport.signature_data.startsWith('data:') ? (
+          {rapport.signature_data ? (
             <Image style={{ width: 150, height: 80, marginTop: 10 }} src={rapport.signature_data} />
           ) : (
-            <View style={{ width: 150, height: 80, marginTop: 10, borderWidth: 1, borderColor: '#999', borderStyle: 'solid', backgroundColor: '#f9f9f9', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 150, height: 80, marginTop: 10, borderWidth: 1, borderColor: '#999', borderStyle: 'dashed', backgroundColor: '#f9f9f9', alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ fontSize: 8, color: '#666' }}>Signature</Text>
             </View>
           )}
@@ -664,13 +658,7 @@ function PageIntervention({
           <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold' }}>Le client :</Text>
           {rapport.signature_client ? (
             <>
-              {!rapport.signature_client.startsWith('data:') ? (
-                <Image style={{ width: 150, height: 80, marginTop: 10 }} src={rapport.signature_client} />
-              ) : (
-                <View style={{ width: 150, height: 80, marginTop: 10, borderWidth: 1, borderColor: '#999', borderStyle: 'solid', backgroundColor: '#f9f9f9', alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 8, color: '#666' }}>Signature</Text>
-                </View>
-              )}
+              <Image style={{ width: 150, height: 80, marginTop: 10 }} src={rapport.signature_client} />
               <Text style={{ fontSize: 9, marginTop: 6 }}>Date : {formatDate(rapport.date_intervention)}</Text>
             </>
           ) : (
