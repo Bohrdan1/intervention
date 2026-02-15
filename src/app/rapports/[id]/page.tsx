@@ -237,12 +237,10 @@ export default async function RapportDetailPage({
         </Link>
       </div>
 
-      {/* Supprimer (brouillons uniquement) */}
-      {rapport.statut === "brouillon" && (
-        <div className="mt-4">
-          <DeleteButton rapportId={rapport.id} />
-        </div>
-      )}
+      {/* Supprimer */}
+      <div className="mt-4">
+        <DeleteButton rapportId={rapport.id} isFinalise={rapport.statut === "finalise"} />
+      </div>
     </div>
   );
 }
