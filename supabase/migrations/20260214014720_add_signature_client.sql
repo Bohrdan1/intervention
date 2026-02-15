@@ -1,0 +1,1 @@
+ALTER TABLE rapports ADD COLUMN IF NOT EXISTS signature_client TEXT DEFAULT NULL;
