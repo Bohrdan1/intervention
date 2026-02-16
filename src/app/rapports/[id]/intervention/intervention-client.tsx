@@ -153,15 +153,13 @@ export function InterventionClient({ rapport }: { rapport: any }) {
                   />
                 </div>
               </div>
-              {pieces.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removePiece(i)}
-                  className="mt-2 text-red-500 hover:text-red-700 text-sm font-bold px-2"
-                >
-                  ✕
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => removePiece(i)}
+                className="mt-2 text-red-500 hover:text-red-700 text-sm font-bold px-2"
+              >
+                ✕
+              </button>
             </div>
           ))}
         </div>
