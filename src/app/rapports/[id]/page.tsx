@@ -2,7 +2,149 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { DeleteButton } from "./delete-button";
-import type { PhotoItem } from "@/lib/types";
+import type { PhotoItem, VisiteData, PorteVisite } from "@/lib/types";
+
+function getTypePorteLabel(porte: PorteVisite): string {
+  if (porte.type_porte === "coulissante") {
+    const type = porte.type_coulissante === "telescopique" ? "Télesco." : "Simple";
+    return `Coulissante ${type} ${porte.vantaux}V${porte.parties_fixes > 0 ? ` + ${porte.parties_fixes}F` : ""}`;
+  }
+  if (porte.type_porte === "battante") {
+    const sens = porte.sens_ouverture === "tirant" ? "Tirant" : "Poussant";
+    return `Battante ${porte.vantaux}V ${sens}`;
+  }
+  return porte.type_autre || "Autre";
+}
+
+function getSupportLabel(s: string, autre?: string): string {
+  const labels: Record<string, string> = { beton: "Béton", metal: "Métal", placo: "Placo renforcé", autre: "Autre" };
+  if (s === "autre" && autre) return autre;
+  return labels[s] || s;
+}
+
+function VisiteDetail({ rapport, photos }: { rapport: any; photos: PhotoItem[] }) {
+  const data: VisiteData | null = rapport.visite_data;
+  const hasData = data && Object.keys(data).length > 0;
+
+  if (!hasData) {
+    return (
+      <div className="mb-6">
+        <div className="rounded-xl border-2 border-dashed border-border bg-white p-8 text-center">
+          <p className="text-muted text-sm">Aucune information saisie pour cette visite.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const env = data.environnement || { acces: "", electricite: [], securite: [], activation: [] };
+  const elecLabels: Record<string, string> = { "230v": "230V dispo", disjoncteur: "Disjoncteur dédié", a_prevoir: "À prévoir" };
+  const secuLabels: Record<string, string> = { rideau_laser: "Rideau laser", cellules: "Cellules", barre_palpeuse: "Barre palpeuse", das: "DAS" };
+  const actLabels: Record<string, string> = { radar: "Radar", bouton: "Bouton", digicode: "Digicode", badge: "Badge", telecommande: "Télécommande" };
+  const visitePhotos = photos.filter((p) => p.context === "visite");
+
+  return (
+    <div className="mb-6 space-y-4">
+      {/* Infos */}
+      {(data.adresse || data.contact_sur_place) && (
+        <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+          <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">Informations</h2>
+          {data.adresse && <p className="text-sm"><span className="font-semibold">Adresse :</span> {data.adresse}</p>}
+          {data.contact_sur_place && (
+            <p className="text-sm">
+              <span className="font-semibold">Contact :</span> {data.contact_sur_place}
+              {data.telephone_contact ? ` (${data.telephone_contact})` : ""}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Travaux */}
+      {data.travaux_envisages && (
+        <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+          <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">Travaux envisagés</h2>
+          <p className="text-sm whitespace-pre-wrap">{data.travaux_envisages}</p>
+        </div>
+      )}
+
+      {/* Portes */}
+      {data.portes && data.portes.length > 0 && (
+        <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+          <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-3">
+            Portes ({data.portes.length})
+          </h2>
+          <div className="space-y-3">
+            {data.portes.map((porte, i) => (
+              <div key={porte.id || i} className="rounded-lg bg-slate-50 p-3">
+                <p className="text-sm font-semibold mb-1">Porte {i + 1} — {getTypePorteLabel(porte)}</p>
+                <div className="grid grid-cols-3 gap-2 text-xs text-muted">
+                  {porte.hauteur && <span>H: {porte.hauteur} mm</span>}
+                  {porte.largeur && <span>L: {porte.largeur} mm</span>}
+                  {porte.passage_utile && <span>PU: {porte.passage_utile} mm</span>}
+                  {porte.linteau && <span>Linteau: {porte.linteau} mm</span>}
+                  {porte.profondeur && <span>Prof: {porte.profondeur} mm</span>}
+                  <span>Support: {getSupportLabel(porte.support, porte.support_autre)}</span>
+                </div>
+                {porte.debattement === "obstacle" && (
+                  <p className="text-xs text-orange-600 mt-1">
+                    Obstacle : {porte.debattement_detail || "Non précisé"}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Environnement */}
+      <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+        <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">Environnement</h2>
+        <div className="space-y-1 text-sm">
+          {env.acces && <p><span className="font-semibold">Accès :</span> {env.acces}</p>}
+          {env.electricite.length > 0 && (
+            <p><span className="font-semibold">Électricité :</span> {env.electricite.map((v) => elecLabels[v] || v).join(", ")}</p>
+          )}
+          {env.securite.length > 0 && (
+            <p><span className="font-semibold">Sécurité :</span> {env.securite.map((v) => secuLabels[v] || v).join(", ")}</p>
+          )}
+          {env.activation.length > 0 && (
+            <p><span className="font-semibold">Activation :</span> {env.activation.map((v) => actLabels[v] || v).join(", ")}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Observations */}
+      {(data.observations_particulieres || data.preconisation) && (
+        <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+          <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">Observations & Recommandations</h2>
+          {data.observations_particulieres && (
+            <div className="mb-2">
+              <p className="text-xs font-semibold text-muted">Observations</p>
+              <p className="text-sm whitespace-pre-wrap">{data.observations_particulieres}</p>
+            </div>
+          )}
+          {data.preconisation && (
+            <div>
+              <p className="text-xs font-semibold text-muted">Préconisation</p>
+              <p className="text-sm whitespace-pre-wrap">{data.preconisation}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Photos */}
+      {visitePhotos.length > 0 && (
+        <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+          <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-3">Photos</h2>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {visitePhotos.map((photo) => (
+              <img key={photo.id} src={photo.url} alt={photo.label || "Photo"} className="h-24 w-full rounded-lg object-cover" />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default async function RapportDetailPage({
   params,
@@ -82,54 +224,7 @@ export default async function RapportDetailPage({
 
       {/* Contenu selon le type */}
       {isVisite ? (
-        <div className="mb-6 space-y-4">
-          {rapport.observations_visite && (
-            <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">
-                Observations
-              </h2>
-              <p className="text-sm whitespace-pre-wrap">{rapport.observations_visite}</p>
-            </div>
-          )}
-
-          {rapport.recommandations && (
-            <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">
-                Recommandations
-              </h2>
-              <p className="text-sm whitespace-pre-wrap">{rapport.recommandations}</p>
-            </div>
-          )}
-
-          {/* Photos visite */}
-          {photos.filter((p) => p.context === "visite").length > 0 && (
-            <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-3">
-                Photos
-              </h2>
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {photos
-                  .filter((p) => p.context === "visite")
-                  .map((photo) => (
-                    <img
-                      key={photo.id}
-                      src={photo.url}
-                      alt={photo.label || "Photo"}
-                      className="h-24 w-full rounded-lg object-cover"
-                    />
-                  ))}
-              </div>
-            </div>
-          )}
-
-          {!rapport.observations_visite && !rapport.recommandations && (
-            <div className="rounded-xl border-2 border-dashed border-border bg-white p-8 text-center">
-              <p className="text-muted text-sm">
-                Aucune information saisie pour cette visite.
-              </p>
-            </div>
-          )}
-        </div>
+        <VisiteDetail rapport={rapport} photos={photos} />
       ) : isIntervention ? (
         <div className="mb-6 space-y-4">
           {rapport.description_probleme && (
@@ -269,31 +364,41 @@ export default async function RapportDetailPage({
         {isVisite ? (
           <Link
             href={`/rapports/${rapport.id}/visite`}
-            className="flex-1 rounded-xl border border-border bg-white py-3 text-center text-sm font-medium hover:bg-slate-50"
+            className="flex-1 rounded-xl bg-primary py-3 text-center text-sm font-semibold text-white hover:bg-primary-light"
           >
             Modifier la visite
           </Link>
         ) : isIntervention ? (
-          <Link
-            href={`/rapports/${rapport.id}/intervention`}
-            className="flex-1 rounded-xl border border-border bg-white py-3 text-center text-sm font-medium hover:bg-slate-50"
-          >
-            Modifier l&apos;intervention
-          </Link>
+          <>
+            <Link
+              href={`/rapports/${rapport.id}/intervention`}
+              className="flex-1 rounded-xl border border-border bg-white py-3 text-center text-sm font-medium hover:bg-slate-50"
+            >
+              Modifier l&apos;intervention
+            </Link>
+            <Link
+              href={`/rapports/${rapport.id}/finaliser`}
+              className="flex-1 rounded-xl bg-primary py-3 text-center text-sm font-semibold text-white hover:bg-primary-light"
+            >
+              Exporter PDF
+            </Link>
+          </>
         ) : (
-          <Link
-            href={`/rapports/${rapport.id}/controle`}
-            className="flex-1 rounded-xl border border-border bg-white py-3 text-center text-sm font-medium hover:bg-slate-50"
-          >
-            Modifier les contrôles
-          </Link>
+          <>
+            <Link
+              href={`/rapports/${rapport.id}/controle`}
+              className="flex-1 rounded-xl border border-border bg-white py-3 text-center text-sm font-medium hover:bg-slate-50"
+            >
+              Modifier les contrôles
+            </Link>
+            <Link
+              href={`/rapports/${rapport.id}/finaliser`}
+              className="flex-1 rounded-xl bg-primary py-3 text-center text-sm font-semibold text-white hover:bg-primary-light"
+            >
+              Exporter PDF
+            </Link>
+          </>
         )}
-        <Link
-          href={`/rapports/${rapport.id}/finaliser`}
-          className="flex-1 rounded-xl bg-primary py-3 text-center text-sm font-semibold text-white hover:bg-primary-light"
-        >
-          Exporter PDF
-        </Link>
       </div>
 
       {/* Supprimer */}

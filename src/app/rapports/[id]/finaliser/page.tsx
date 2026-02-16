@@ -28,6 +28,11 @@ export default async function FinaliserPage({
     redirect("/");
   }
 
+  // Les visites techniques ne passent plus par la page finaliser
+  if (rapport.type_rapport === "visite") {
+    redirect(`/rapports/${id}/visite`);
+  }
+
   // Trier les contrôles
   const controles = (rapport.controles || []).sort(
     (a: any, b: any) => a.page_number - b.page_number

@@ -67,6 +67,98 @@ export interface Controle {
 
 export type TypeRapport = 'maintenance' | 'intervention' | 'visite';
 
+// ── Visite technique (portes automatiques) ──
+
+export type TypePorteVisite = 'coulissante' | 'battante' | 'autre';
+export type TypeCoulissante = 'simple' | 'telescopique';
+export type SensOuverture = 'poussant' | 'tirant';
+export type NatureSupport = 'beton' | 'metal' | 'placo' | 'autre';
+export type Debattement = 'degage' | 'obstacle';
+
+export interface PorteVisite {
+  id: string;
+  type_porte: TypePorteVisite;
+  type_coulissante: TypeCoulissante | '';
+  vantaux: number;
+  parties_fixes: number;
+  sens_ouverture: SensOuverture | '';
+  type_autre: string;
+  support: NatureSupport;
+  support_autre: string;
+  hauteur: string;
+  largeur: string;
+  passage_utile: string;
+  linteau: string;
+  profondeur: string;
+  debattement: Debattement;
+  debattement_detail: string;
+  photos: PhotoItem[];
+}
+
+export interface EnvironnementVisite {
+  acces: string;
+  electricite: string[]; // ['230v', 'disjoncteur', 'a_prevoir']
+  securite: string[];    // ['rideau_laser', 'cellules', 'barre_palpeuse', 'das']
+  activation: string[];  // ['radar', 'bouton', 'digicode', 'badge', 'telecommande']
+}
+
+export interface ChecklistPhotos {
+  interieur: boolean;
+  exterieur: boolean;
+  details_techniques: boolean;
+}
+
+export interface VisiteData {
+  client_site_libre: string;
+  adresse: string;
+  contact_sur_place: string;
+  telephone_contact: string;
+  email_supplementaire: string;
+  travaux_envisages: string;
+  portes: PorteVisite[];
+  environnement: EnvironnementVisite;
+  observations_particulieres: string;
+  preconisation: string;
+}
+
+export const DEFAULT_PORTE_VISITE: PorteVisite = {
+  id: '',
+  type_porte: 'coulissante',
+  type_coulissante: 'simple',
+  vantaux: 2,
+  parties_fixes: 0,
+  sens_ouverture: '',
+  type_autre: '',
+  support: 'beton',
+  support_autre: '',
+  hauteur: '',
+  largeur: '',
+  passage_utile: '',
+  linteau: '',
+  profondeur: '',
+  debattement: 'degage',
+  debattement_detail: '',
+  photos: [],
+};
+
+export const DEFAULT_VISITE_DATA: VisiteData = {
+  client_site_libre: '',
+  adresse: '',
+  contact_sur_place: '',
+  telephone_contact: '',
+  email_supplementaire: '',
+  travaux_envisages: '',
+  portes: [],
+  environnement: {
+    acces: '',
+    electricite: [],
+    securite: [],
+    activation: [],
+  },
+  observations_particulieres: '',
+  preconisation: '',
+};
+
 export interface PieceUtilisee {
   nom: string;
   quantite: number;
@@ -91,6 +183,7 @@ export interface Rapport {
   // Champs visite technique
   observations_visite: string | null;
   recommandations: string | null;
+  visite_data: VisiteData | null;
   statut: 'brouillon' | 'finalise';
   signature_data: string | null;
   signature_client: string | null;

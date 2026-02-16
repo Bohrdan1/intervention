@@ -10,7 +10,7 @@ import {
   Svg,
   Path,
 } from '@react-pdf/renderer';
-import type { RapportComplet, PhotoItem } from '@/lib/types';
+import type { RapportComplet, PhotoItem, VisiteData, PorteVisite } from '@/lib/types';
 import { SOCIETE } from '@/lib/types';
 import { LOGO_AAC_BASE64 } from './logo';
 
@@ -677,10 +677,259 @@ function PageIntervention({
 }
 
 // ============================================
+// Helpers visite technique
+// ============================================
+function getTypePorteLabel(porte: PorteVisite): string {
+  if (porte.type_porte === 'coulissante') {
+    const type = porte.type_coulissante === 'telescopique' ? 'Télescopique' : 'Simple';
+    return `Coulissante ${type} - ${porte.vantaux} vantaux${porte.parties_fixes > 0 ? ` + ${porte.parties_fixes} fixe(s)` : ''}`;
+  }
+  if (porte.type_porte === 'battante') {
+    const sens = porte.sens_ouverture === 'tirant' ? 'Tirant' : 'Poussant';
+    return `Battante ${porte.vantaux} vantaux - ${sens}`;
+  }
+  return porte.type_autre || 'Autre';
+}
+
+function getSupportLabel(porte: PorteVisite): string {
+  const labels: Record<string, string> = { beton: 'Béton', metal: 'Métal', placo: 'Placo renforcé', autre: 'Autre' };
+  if (porte.support === 'autre' && porte.support_autre) return porte.support_autre;
+  return labels[porte.support] || porte.support;
+}
+
+function getElectriciteLabels(values: string[]): string {
+  const labels: Record<string, string> = { '230v': '230V dispo', disjoncteur: 'Disjoncteur dédié', a_prevoir: 'À prévoir' };
+  return values.map((v) => labels[v] || v).join(', ') || 'Non renseigné';
+}
+
+function getSecuriteLabels(values: string[]): string {
+  const labels: Record<string, string> = { rideau_laser: 'Rideau laser', cellules: 'Cellules', barre_palpeuse: 'Barre palpeuse', das: 'DAS (Incendie)' };
+  return values.map((v) => labels[v] || v).join(', ') || 'Aucun';
+}
+
+function getActivationLabels(values: string[]): string {
+  const labels: Record<string, string> = { radar: 'Radar', bouton: 'Bouton', digicode: 'Digicode', badge: 'Badge', telecommande: 'Télécommande' };
+  return values.map((v) => labels[v] || v).join(', ') || 'Non renseigné';
+}
+
+// ============================================
+// Page visite technique
+// ============================================
+function PageVisiteTechnique({
+  rapport,
+  pageNum,
+  totalPages,
+}: {
+  rapport: RapportComplet;
+  pageNum: number;
+  totalPages: number;
+}) {
+  const data: VisiteData = (rapport as any).visite_data || {};
+  const portes: PorteVisite[] = data.portes || [];
+  const env = data.environnement || { acces: '', electricite: [], securite: [], activation: [] };
+  const visitePhotos = ((rapport as any).photos || []).filter((p: PhotoItem) => p.context === 'visite');
+
+  return (
+    <Page size="A4" style={s.page}>
+      {/* En-tête */}
+      <View style={s.header}>
+        <Image style={{ width: 90, height: 50 }} src={LOGO_AAC_BASE64} />
+        <View style={{ alignItems: 'center' }}>
+          <Text style={{ fontSize: 9 }}>{rapport.numero_cm}</Text>
+          <Text style={{ fontSize: 9 }}>LE {formatDate(rapport.date_intervention)}</Text>
+        </View>
+        <View style={{ textAlign: 'right' }}>
+          <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>{rapport.client.nom}</Text>
+          {rapport.client.sous_titre && (
+            <Text style={{ fontSize: 8 }}>{rapport.client.sous_titre}</Text>
+          )}
+        </View>
+      </View>
+
+      {/* Titre */}
+      <Text style={s.title}>Fiche de visite technique</Text>
+
+      {/* 1. Infos générales */}
+      <View style={s.infoBlock}>
+        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 6, textDecoration: 'underline' }}>
+          1. Informations generales
+        </Text>
+        <View style={s.infoRow}>
+          <Text style={{ width: 120, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Client / Site</Text>
+          <Text style={{ fontSize: 9 }}>: {rapport.client.nom} - {rapport.site.nom}</Text>
+        </View>
+        {data.adresse ? (
+          <View style={s.infoRow}>
+            <Text style={{ width: 120, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Adresse</Text>
+            <Text style={{ fontSize: 9 }}>: {data.adresse}</Text>
+          </View>
+        ) : null}
+        {data.contact_sur_place ? (
+          <View style={s.infoRow}>
+            <Text style={{ width: 120, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Contact sur place</Text>
+            <Text style={{ fontSize: 9 }}>: {data.contact_sur_place}{data.telephone_contact ? ` (Tél: ${data.telephone_contact})` : ''}</Text>
+          </View>
+        ) : null}
+        <View style={s.infoRow}>
+          <Text style={{ width: 120, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Technicien</Text>
+          <Text style={{ fontSize: 9 }}>: {rapport.technicien}</Text>
+        </View>
+      </View>
+
+      {/* 2. Travaux envisagés */}
+      {data.travaux_envisages ? (
+        <View style={{ marginBottom: 12 }}>
+          <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 4, textDecoration: 'underline' }}>
+            2. Travaux envisages
+          </Text>
+          <Text style={{ fontSize: 9, lineHeight: 1.4 }}>{data.travaux_envisages}</Text>
+        </View>
+      ) : null}
+
+      {/* 3. Caractéristiques portes */}
+      {portes.length > 0 && (
+        <View style={{ marginBottom: 12 }}>
+          <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 6, textDecoration: 'underline' }}>
+            3. Caracteristiques portes
+          </Text>
+          <View style={s.tableOuter}>
+            {/* Header tableau */}
+            <View style={s.headerRow}>
+              <View style={{ width: '8%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 4, paddingVertical: 3, justifyContent: 'center' }}>
+                <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 7 }}>N</Text>
+              </View>
+              <View style={{ width: '30%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 4, paddingVertical: 3, justifyContent: 'center' }}>
+                <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 7 }}>Type</Text>
+              </View>
+              <View style={{ width: '12%', borderRightWidth: 0.5, borderRightColor: '#999', paddingVertical: 3, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 7 }}>H (mm)</Text>
+              </View>
+              <View style={{ width: '12%', borderRightWidth: 0.5, borderRightColor: '#999', paddingVertical: 3, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 7 }}>L (mm)</Text>
+              </View>
+              <View style={{ width: '12%', borderRightWidth: 0.5, borderRightColor: '#999', paddingVertical: 3, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 7 }}>Linteau</Text>
+              </View>
+              <View style={{ width: '12%', borderRightWidth: 0.5, borderRightColor: '#999', paddingVertical: 3, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 7 }}>Prof.</Text>
+              </View>
+              <View style={{ width: '14%', paddingLeft: 4, paddingVertical: 3, justifyContent: 'center' }}>
+                <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 7 }}>Support</Text>
+              </View>
+            </View>
+            {/* Lignes */}
+            {portes.map((porte, i) => (
+              <View key={i} style={i % 2 === 0 ? s.row : s.rowAlt}>
+                <View style={{ width: '8%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 4, paddingVertical: 3, justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 8 }}>{i + 1}</Text>
+                </View>
+                <View style={{ width: '30%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 4, paddingVertical: 3, justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 7 }}>{getTypePorteLabel(porte)}</Text>
+                </View>
+                <View style={{ width: '12%', borderRightWidth: 0.5, borderRightColor: '#999', paddingVertical: 3, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 8 }}>{porte.hauteur || '-'}</Text>
+                </View>
+                <View style={{ width: '12%', borderRightWidth: 0.5, borderRightColor: '#999', paddingVertical: 3, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 8 }}>{porte.largeur || '-'}</Text>
+                </View>
+                <View style={{ width: '12%', borderRightWidth: 0.5, borderRightColor: '#999', paddingVertical: 3, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 8 }}>{porte.linteau || '-'}</Text>
+                </View>
+                <View style={{ width: '12%', borderRightWidth: 0.5, borderRightColor: '#999', paddingVertical: 3, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 8 }}>{porte.profondeur || '-'}</Text>
+                </View>
+                <View style={{ width: '14%', paddingLeft: 4, paddingVertical: 3, justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 7 }}>{getSupportLabel(porte)}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+          {/* Détails débattement + passage utile sous le tableau */}
+          {portes.map((porte, i) => (
+            (porte.passage_utile || porte.debattement === 'obstacle') ? (
+              <View key={i} style={{ marginTop: 2 }}>
+                <Text style={{ fontSize: 7, color: '#555' }}>
+                  Porte {i + 1} :
+                  {porte.passage_utile ? ` Passage utile: ${porte.passage_utile} mm` : ''}
+                  {porte.debattement === 'obstacle' ? ` | Débattement: Obstacle${porte.debattement_detail ? ` (${porte.debattement_detail})` : ''}` : ' | Débattement: Dégagé'}
+                </Text>
+              </View>
+            ) : null
+          ))}
+        </View>
+      )}
+
+      {/* 4. Environnement & Sécurité */}
+      <View style={{ marginBottom: 12 }}>
+        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 4, textDecoration: 'underline' }}>
+          4. Environnement & Securite
+        </Text>
+        {env.acces ? (
+          <View style={s.infoRow}>
+            <Text style={{ width: 120, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Acces</Text>
+            <Text style={{ fontSize: 9 }}>: {env.acces}</Text>
+          </View>
+        ) : null}
+        <View style={s.infoRow}>
+          <Text style={{ width: 120, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Electricite</Text>
+          <Text style={{ fontSize: 9 }}>: {getElectriciteLabels(env.electricite)}</Text>
+        </View>
+        <View style={s.infoRow}>
+          <Text style={{ width: 120, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Securite</Text>
+          <Text style={{ fontSize: 9 }}>: {getSecuriteLabels(env.securite)}</Text>
+        </View>
+        <View style={s.infoRow}>
+          <Text style={{ width: 120, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Activation</Text>
+          <Text style={{ fontSize: 9 }}>: {getActivationLabels(env.activation)}</Text>
+        </View>
+      </View>
+
+      {/* 5. Observations & Recommandations */}
+      {(data.observations_particulieres || data.preconisation) && (
+        <View style={{ marginBottom: 12 }}>
+          <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 4, textDecoration: 'underline' }}>
+            5. Observations & Recommandations
+          </Text>
+          {data.observations_particulieres ? (
+            <View style={{ marginBottom: 6 }}>
+              <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', marginBottom: 2 }}>Observations :</Text>
+              <Text style={{ fontSize: 9, lineHeight: 1.4 }}>{data.observations_particulieres}</Text>
+            </View>
+          ) : null}
+          {data.preconisation ? (
+            <View>
+              <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', marginBottom: 2 }}>Preconisation :</Text>
+              <Text style={{ fontSize: 9, lineHeight: 1.4 }}>{data.preconisation}</Text>
+            </View>
+          ) : null}
+        </View>
+      )}
+
+      {/* Photos */}
+      <PhotosSection photos={visitePhotos} title="Photos" />
+
+      <Footer pageNum={pageNum} totalPages={totalPages} />
+    </Page>
+  );
+}
+
+// ============================================
 // DOCUMENT PRINCIPAL
 // ============================================
 export function RapportPDF({ rapport }: { rapport: RapportComplet }) {
   const isIntervention = (rapport as any).type_rapport === 'intervention';
+  const isVisite = (rapport as any).type_rapport === 'visite';
+
+  if (isVisite) {
+    return (
+      <Document
+        title={`${rapport.numero_cm} - ${rapport.client.nom}`}
+        author={SOCIETE.nom}
+      >
+        <PageVisiteTechnique rapport={rapport} pageNum={1} totalPages={1} />
+      </Document>
+    );
+  }
 
   if (isIntervention) {
     return (
