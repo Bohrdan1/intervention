@@ -31,7 +31,7 @@ export default async function ControlePage({
 
   // Trier les contrôles par page_number
   const controles = (rapport.controles || []).sort(
-    (a: any, b: any) => a.page_number - b.page_number
+    (a: { page_number: number }, b: { page_number: number }) => a.page_number - b.page_number
   );
 
   return (

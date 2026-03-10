@@ -13,7 +13,7 @@ export async function saveIntervention(
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
 
-  const updateData: any = {
+  const updateData: Record<string, string | PieceUtilisee[] | PhotoItem[]> = {
     description_probleme,
     travaux_effectues,
     pieces_utilisees,

@@ -1,6 +1,6 @@
 "use client";
 
-import { Component, ReactNode } from "react";
+import { Component, ReactNode, ErrorInfo } from "react";
 
 interface Props {
   children: ReactNode;
@@ -22,7 +22,7 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("ErrorBoundary caught:", error, errorInfo);
   }
 
@@ -40,7 +40,7 @@ export class ErrorBoundary extends Component<Props, State> {
               Une erreur est survenue
             </h2>
             <p className="text-sm text-slate-600 mb-6">
-              Quelque chose s'est mal passé. Veuillez réessayer.
+              Quelque chose s&apos;est mal passé. Veuillez réessayer.
             </p>
             
             {/* Message d'erreur (développement) */}

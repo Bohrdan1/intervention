@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveVisite, finalizeVisite } from "./actions";
-import type { PorteVisite, VisiteData } from "@/lib/types";
+import type { PorteVisite, VisiteData, RapportComplet } from "@/lib/types";
 import { DEFAULT_VISITE_DATA, DEFAULT_PORTE_VISITE as defaultPorte } from "@/lib/types";
 import { useToast } from "@/components/ui/toast";
 import PhotoUpload from "@/components/ui/photo-upload";
@@ -74,7 +74,7 @@ function PorteSection({
   onRemove: () => void;
   canRemove: boolean;
 }) {
-  function update(field: keyof PorteVisite, value: any) {
+  function update(field: keyof PorteVisite, value: PorteVisite[keyof PorteVisite]) {
     onChange({ ...porte, [field]: value });
   }
 
@@ -373,7 +373,7 @@ function PorteSection({
 }
 
 // ── Composant principal ──
-export function VisiteClient({ rapport }: { rapport: any }) {
+export function VisiteClient({ rapport }: { rapport: RapportComplet }) {
   const router = useRouter();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
@@ -480,13 +480,13 @@ export function VisiteClient({ rapport }: { rapport: any }) {
       }
 
       // Génération PDF
-      const rapportComplet = {
+      const rapportComplet: RapportComplet = {
         ...rapport,
         visite_data: data,
         observations_visite: data.observations_particulieres,
         recommandations: data.preconisation,
         photos: allPhotos,
-        statut: "finalise",
+        statut: "finalise" as const,
       };
 
       const { pdf } = await import("@react-pdf/renderer");

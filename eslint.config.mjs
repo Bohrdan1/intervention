@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Scripts Node.js utilitaires (non-ESM)
+    "create-user.js",
+    "create-user-simple.js",
   ]),
 ]);
 

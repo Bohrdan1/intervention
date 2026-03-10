@@ -6,7 +6,7 @@ import { saveConstatAndFinalize, saveConstatDraft } from "./actions";
 import type { ConstatItem, RapportComplet } from "@/lib/types";
 import { useToast } from "@/components/ui/toast";
 
-export function FinaliserClient({ rapport }: { rapport: any }) {
+export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
   const router = useRouter();
   const { toast } = useToast();
   const [constat, setConstat] = useState<ConstatItem[]>(rapport.constat_general || []);
@@ -21,7 +21,7 @@ export function FinaliserClient({ rapport }: { rapport: any }) {
   const activeCanvas = useRef<"tech" | "client">("tech");
 
   // ── Constat handlers ──
-  function updateConstat(index: number, field: keyof ConstatItem, value: any) {
+  function updateConstat(index: number, field: keyof ConstatItem, value: string | boolean) {
     setConstat((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [field]: value };
@@ -202,22 +202,22 @@ export function FinaliserClient({ rapport }: { rapport: any }) {
 
   // Résumé des contrôles (maintenance uniquement)
   const totalPoints = controles.reduce(
-    (acc: number, c: any) => acc + c.points_controle.length,
+    (acc: number, c: RapportComplet["controles"][number]) => acc + c.points_controle.length,
     0
   );
   const pointsOk = controles.reduce(
-    (acc: number, c: any) =>
-      acc + c.points_controle.filter((p: any) => p.etat === "ok").length,
+    (acc: number, c: RapportComplet["controles"][number]) =>
+      acc + c.points_controle.filter((p) => p.etat === "ok").length,
     0
   );
   const corrections = controles.reduce(
-    (acc: number, c: any) =>
-      acc + c.points_controle.filter((p: any) => p.etat === "correction").length,
+    (acc: number, c: RapportComplet["controles"][number]) =>
+      acc + c.points_controle.filter((p) => p.etat === "correction").length,
     0
   );
   const preventions = controles.reduce(
-    (acc: number, c: any) =>
-      acc + c.points_controle.filter((p: any) => p.etat === "prevention").length,
+    (acc: number, c: RapportComplet["controles"][number]) =>
+      acc + c.points_controle.filter((p) => p.etat === "prevention").length,
     0
   );
 
@@ -298,7 +298,7 @@ export function FinaliserClient({ rapport }: { rapport: any }) {
             <div>
               <p className="text-xs font-semibold text-muted uppercase">Pièces</p>
               <ul className="text-sm mt-1 list-disc list-inside">
-                {rapport.pieces_utilisees.map((p: any, i: number) => (
+                {rapport.pieces_utilisees.map((p, i) => (
                   <li key={i}>{p.nom} x{p.quantite}{p.reference ? ` (${p.reference})` : ""}</li>
                 ))}
               </ul>

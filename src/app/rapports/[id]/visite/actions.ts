@@ -13,7 +13,7 @@ export async function saveVisite(
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
 
-  const updateData: any = {
+  const updateData: Record<string, string | PhotoItem[] | VisiteData> = {
     observations_visite,
     recommandations,
   };
@@ -49,7 +49,7 @@ export async function finalizeVisite(
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
 
-  const updateData: any = {
+  const updateData: Record<string, string | PhotoItem[] | VisiteData> = {
     observations_visite,
     recommandations,
     statut: "finalise",

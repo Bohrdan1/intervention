@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { EtatControle, PhotoItem } from "@/lib/types";
 import { saveControle, savePhotos } from "./actions";
@@ -48,7 +48,6 @@ export function ChecklistClient({
   const { toast } = useToast();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [allControles, setAllControles] = useState<ControleData[]>(controles);
-  const [isPending, startTransition] = useTransition();
   const [saving, setSaving] = useState(false);
   const [photos, setPhotos] = useState<PhotoItem[]>(initialPhotos);
 
@@ -64,7 +63,7 @@ export function ChecklistClient({
     setPhotos([...otherPhotos, ...updatedContextPhotos]);
   }
 
-  function updatePointControle(pointIndex: number, field: "etat" | "observation", value: any) {
+  function updatePointControle(pointIndex: number, field: "etat" | "observation", value: string) {
     setAllControles((prev) => {
       const next = [...prev];
       const controle = { ...next[currentIndex] };

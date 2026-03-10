@@ -21,7 +21,6 @@ export default async function Dashboard() {
   // Stats
   const totalRapports = all.length;
   const nbFinalises = all.filter((r) => r.statut === "finalise").length;
-  const nbBrouillons = all.filter((r) => r.statut === "brouillon").length;
   const nbMaintenance = all.filter((r) => r.type_rapport === "maintenance").length;
   const nbIntervention = all.filter((r) => r.type_rapport === "intervention").length;
   const nbVisite = all.filter((r) => r.type_rapport === "visite").length;

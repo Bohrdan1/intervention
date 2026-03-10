@@ -16,8 +16,8 @@ export async function deleteRapport(rapportId: string) {
   // Supprimer les fichiers du storage
   if (rapport?.photos && Array.isArray(rapport.photos) && rapport.photos.length > 0) {
     const paths = rapport.photos
-      .map((p: any) => p.path)
-      .filter(Boolean);
+      .map((p: { path?: string }) => p.path)
+      .filter((path): path is string => Boolean(path));
     if (paths.length > 0) {
       const admin = createAdminClient();
       await admin.storage.from("photos").remove(paths);

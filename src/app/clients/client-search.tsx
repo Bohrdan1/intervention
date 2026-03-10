@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 export function ClientSearch({ initialQuery }: { initialQuery: string }) {
@@ -17,7 +17,7 @@ export function ClientSearch({ initialQuery }: { initialQuery: string }) {
     }, 300);
 
     return () => clearTimeout(timeout);
-  }, [query]);
+  }, [query, initialQuery, router]);
 
   return (
     <div className="mb-4">

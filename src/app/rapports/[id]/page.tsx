@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { DeleteButton } from "./delete-button";
-import type { PhotoItem, VisiteData, PorteVisite } from "@/lib/types";
+import Image from "next/image";
+import type { PhotoItem, VisiteData, PorteVisite, RapportComplet, PieceUtilisee } from "@/lib/types";
 
 function getTypePorteLabel(porte: PorteVisite): string {
   if (porte.type_porte === "coulissante") {
@@ -22,7 +23,7 @@ function getSupportLabel(s: string, autre?: string): string {
   return labels[s] || s;
 }
 
-function VisiteDetail({ rapport, photos }: { rapport: any; photos: PhotoItem[] }) {
+function VisiteDetail({ rapport, photos }: { rapport: RapportComplet; photos: PhotoItem[] }) {
   const data: VisiteData | null = rapport.visite_data;
   const hasData = data && Object.keys(data).length > 0;
 
@@ -137,7 +138,7 @@ function VisiteDetail({ rapport, photos }: { rapport: any; photos: PhotoItem[] }
           <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-3">Photos</h2>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
             {visitePhotos.map((photo) => (
-              <img key={photo.id} src={photo.url} alt={photo.label || "Photo"} className="h-24 w-full rounded-lg object-cover" />
+              <Image key={photo.id} src={photo.url} alt={photo.label || "Photo"} width={200} height={96} className="h-24 w-full rounded-lg object-cover" unoptimized />
             ))}
           </div>
         </div>
@@ -177,7 +178,7 @@ export default async function RapportDetailPage({
   const photos: PhotoItem[] = rapport.photos || [];
 
   const controles = (rapport.controles || []).sort(
-    (a: any, b: any) => a.page_number - b.page_number
+    (a: { page_number: number }, b: { page_number: number }) => a.page_number - b.page_number
   );
 
   const date = new Date(rapport.date_intervention).toLocaleDateString("fr-FR", {
@@ -255,24 +256,27 @@ export default async function RapportDetailPage({
                 {photos
                   .filter((p) => p.context === "intervention")
                   .map((photo) => (
-                    <img
+                    <Image
                       key={photo.id}
                       src={photo.url}
                       alt={photo.label || "Photo"}
+                      width={200}
+                      height={96}
                       className="h-24 w-full rounded-lg object-cover"
+                      unoptimized
                     />
                   ))}
               </div>
             </div>
           )}
 
-          {rapport.pieces_utilisees && (rapport.pieces_utilisees as any[]).length > 0 && (
+          {rapport.pieces_utilisees && rapport.pieces_utilisees.length > 0 && (
             <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
               <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">
                 Pièces et matériel
               </h2>
               <div className="space-y-2">
-                {(rapport.pieces_utilisees as any[]).map((piece: any, i: number) => (
+                {rapport.pieces_utilisees.map((piece: PieceUtilisee, i: number) => (
                   <div key={i} className="flex items-center gap-2 text-sm">
                     <span className="font-medium">{piece.nom}</span>
                     <span className="text-muted">x{piece.quantite}</span>
@@ -298,8 +302,8 @@ export default async function RapportDetailPage({
           <h2 className="text-sm font-bold text-muted uppercase tracking-wide">
             Portes contrôlées ({controles.length})
           </h2>
-          {controles.map((controle: any) => {
-            const nbOk = controle.points_controle.filter((p: any) => p.etat === "ok").length;
+          {controles.map((controle: RapportComplet["controles"][number]) => {
+            const nbOk = controle.points_controle.filter((p) => p.etat === "ok").length;
             const total = controle.points_controle.length;
             const controlePhotos = photos.filter(
               (p) => p.context === `controle:${controle.installation?.id}`
@@ -326,8 +330,8 @@ export default async function RapportDetailPage({
                 </div>
                 {/* Observations non-OK */}
                 {controle.points_controle
-                  .filter((p: any) => p.etat !== "ok" && p.etat !== "na")
-                  .map((p: any, i: number) => (
+                  .filter((p) => p.etat !== "ok" && p.etat !== "na")
+                  .map((p, i) => (
                     <div key={i} className="mt-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2">
                       <span className={`text-xs font-medium ${
                         p.etat === "correction" ? "text-red-700" : "text-orange-700"
@@ -344,11 +348,14 @@ export default async function RapportDetailPage({
                 {controlePhotos.length > 0 && (
                   <div className="mt-3 grid grid-cols-4 gap-1.5">
                     {controlePhotos.map((photo) => (
-                      <img
+                      <Image
                         key={photo.id}
                         src={photo.url}
                         alt={photo.label || "Photo"}
+                        width={160}
+                        height={64}
                         className="h-16 w-full rounded-lg object-cover"
+                        unoptimized
                       />
                     ))}
                   </div>

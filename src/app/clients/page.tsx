@@ -240,7 +240,7 @@ export default async function ClientsPage({
 
               {/* Sites */}
               <div className="p-4 space-y-3">
-                {client.sites?.map((site: any) => (
+                {client.sites?.map((site: { id: string; nom: string; installations?: { id: string; repere: string; type_porte: string; modele: string | null }[] }) => (
                   <div key={site.id} className="rounded-lg border border-border p-3 bg-slate-50">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-sm font-semibold">📍 {site.nom}</h4>
@@ -289,7 +289,7 @@ export default async function ClientsPage({
                     </div>
 
                     {/* Installations */}
-                    {site.installations?.map((inst: any) => (
+                    {site.installations?.map((inst: { id: string; repere: string; type_porte: string; modele: string | null }) => (
                       <div key={inst.id} className="ml-4 flex items-center justify-between border-b border-border py-1.5 last:border-0">
                         <span className="text-sm">
                           🚪 {inst.repere}

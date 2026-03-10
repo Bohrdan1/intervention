@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/alt-text */
 import React from 'react';
 import {
   Document,
@@ -6,11 +7,10 @@ import {
   View,
   StyleSheet,
   Image,
-  Font,
   Svg,
   Path,
 } from '@react-pdf/renderer';
-import type { RapportComplet, PhotoItem, VisiteData, PorteVisite } from '@/lib/types';
+import type { RapportComplet, PhotoItem, VisiteData, PorteVisite, PieceUtilisee } from '@/lib/types';
 import { SOCIETE } from '@/lib/types';
 import { LOGO_AAC_BASE64 } from './logo';
 
@@ -542,7 +542,7 @@ function PageIntervention({
   pageNum: number;
   totalPages: number;
 }) {
-  const pieces = (rapport as any).pieces_utilisees || [];
+  const pieces: PieceUtilisee[] = rapport.pieces_utilisees || [];
 
   return (
     <Page size="A4" style={s.page}>
@@ -582,7 +582,7 @@ function PageIntervention({
           Description du probleme
         </Text>
         <Text style={{ fontSize: 10, lineHeight: 1.5 }}>
-          {(rapport as any).description_probleme || 'Non renseigne'}
+          {rapport.description_probleme || 'Non renseigne'}
         </Text>
       </View>
 
@@ -592,7 +592,7 @@ function PageIntervention({
           Travaux effectues
         </Text>
         <Text style={{ fontSize: 10, lineHeight: 1.5 }}>
-          {(rapport as any).travaux_effectues || 'Non renseigne'}
+          {rapport.travaux_effectues || 'Non renseigne'}
         </Text>
       </View>
 
@@ -616,7 +616,7 @@ function PageIntervention({
               </View>
             </View>
             {/* Lignes */}
-            {pieces.map((piece: any, i: number) => (
+            {pieces.map((piece, i) => (
               <View key={i} style={i % 2 === 0 ? s.row : s.rowAlt}>
                 <View style={{ width: '50%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
                   <Text style={{ fontSize: 9 }}>{piece.nom}</Text>
@@ -634,7 +634,7 @@ function PageIntervention({
       )}
 
       {/* Photos */}
-      <PhotosSection photos={((rapport as any).photos || []).filter((p: PhotoItem) => p.context === 'intervention')} title="Photos" />
+      <PhotosSection photos={(rapport.photos || []).filter((p) => p.context === 'intervention')} title="Photos" />
 
       {/* Signatures côte à côte */}
       <View style={{ flexDirection: 'row', marginTop: 30, justifyContent: 'space-between' }}>
@@ -724,10 +724,10 @@ function PageVisiteTechnique({
   pageNum: number;
   totalPages: number;
 }) {
-  const data: VisiteData = (rapport as any).visite_data || {};
+  const data: VisiteData = rapport.visite_data || {} as VisiteData;
   const portes: PorteVisite[] = data.portes || [];
   const env = data.environnement || { acces: '', electricite: [], securite: [], activation: [] };
-  const visitePhotos = ((rapport as any).photos || []).filter((p: PhotoItem) => p.context === 'visite');
+  const visitePhotos = (rapport.photos || []).filter((p) => p.context === 'visite');
 
   return (
     <Page size="A4" style={s.page}>
@@ -917,8 +917,8 @@ function PageVisiteTechnique({
 // DOCUMENT PRINCIPAL
 // ============================================
 export function RapportPDF({ rapport }: { rapport: RapportComplet }) {
-  const isIntervention = (rapport as any).type_rapport === 'intervention';
-  const isVisite = (rapport as any).type_rapport === 'visite';
+  const isIntervention = rapport.type_rapport === 'intervention';
+  const isVisite = rapport.type_rapport === 'visite';
 
   if (isVisite) {
     return (
@@ -950,8 +950,8 @@ export function RapportPDF({ rapport }: { rapport: RapportComplet }) {
       author={SOCIETE.nom}
     >
       {rapport.controles.map((controle, index) => {
-        const doorPhotos = ((rapport as any).photos || []).filter(
-          (p: PhotoItem) => p.context === `controle:${controle.installation_id}`
+        const doorPhotos = (rapport.photos || []).filter(
+          (p) => p.context === `controle:${controle.installation_id}`
         );
         return (
           <PageControle

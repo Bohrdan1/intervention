@@ -155,6 +155,7 @@ export default function PhotoUpload({
         <div className="flex gap-2 overflow-x-auto pb-2">
           {photos.map((photo) => (
             <div key={photo.id} className="group relative flex-shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={photo.url}
                 alt={photo.label || 'Photo'}
@@ -180,6 +181,7 @@ export default function PhotoUpload({
           className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4"
           onClick={() => setPreviewUrl(null)}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={previewUrl}
             alt="Preview"

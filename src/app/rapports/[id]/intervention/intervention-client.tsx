@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveIntervention } from "./actions";
-import type { PieceUtilisee, PhotoItem } from "@/lib/types";
+import type { PieceUtilisee, PhotoItem, RapportComplet } from "@/lib/types";
 import { useToast } from "@/components/ui/toast";
 import PhotoUpload from "@/components/ui/photo-upload";
 
-export function InterventionClient({ rapport }: { rapport: any }) {
+export function InterventionClient({ rapport }: { rapport: RapportComplet }) {
   const router = useRouter();
   const { toast } = useToast();
   const [description, setDescription] = useState(rapport.description_probleme || "");
@@ -28,7 +28,7 @@ export function InterventionClient({ rapport }: { rapport: any }) {
     setPieces(pieces.filter((_, i) => i !== index));
   }
 
-  function updatePiece(index: number, field: keyof PieceUtilisee, value: any) {
+  function updatePiece(index: number, field: keyof PieceUtilisee, value: string | number) {
     setPieces((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [field]: value };

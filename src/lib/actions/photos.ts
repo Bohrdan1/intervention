@@ -32,8 +32,8 @@ export async function uploadPhoto(
       .getPublicUrl(path);
 
     return { success: true, url: urlData.publicUrl, path };
-  } catch (e: any) {
-    return { success: false, error: e.message };
+  } catch (e: unknown) {
+    return { success: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
@@ -45,7 +45,7 @@ export async function deletePhoto(
     const { error } = await supabase.storage.from("photos").remove([path]);
     if (error) return { success: false, error: error.message };
     return { success: true };
-  } catch (e: any) {
-    return { success: false, error: e.message };
+  } catch (e: unknown) {
+    return { success: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
