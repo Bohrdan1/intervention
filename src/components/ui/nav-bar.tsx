@@ -24,7 +24,8 @@ export function NavBar() {
     <nav className="sticky top-0 z-50 border-b border-border bg-white px-4 py-3 shadow-sm">
       <div className="mx-auto flex max-w-5xl items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-lg font-bold text-primary">A&A</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-aac.png" alt="AAC" className="h-8 w-auto" />
           <span className="hidden text-sm font-semibold text-foreground sm:block">
             Automatisme & Agencement
           </span>
