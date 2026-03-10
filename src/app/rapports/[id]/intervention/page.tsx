@@ -24,9 +24,16 @@ export default async function InterventionPage({
     redirect("/");
   }
 
+  // Charger les installations du site pour le sélecteur de porte
+  const { data: installations } = await supabase
+    .from("installations")
+    .select("*")
+    .eq("site_id", rapport.site_id)
+    .order("repere");
+
   return (
     <div>
-      <InterventionClient rapport={rapport} />
+      <InterventionClient rapport={rapport} installations={installations || []} />
     </div>
   );
 }

@@ -3,14 +3,27 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveIntervention } from "./actions";
-import type { PieceUtilisee, PhotoItem, RapportComplet } from "@/lib/types";
+import type { PieceUtilisee, PhotoItem, RapportComplet, Installation } from "@/lib/types";
 import { useToast } from "@/components/ui/toast";
 import PhotoUpload from "@/components/ui/photo-upload";
 
-export function InterventionClient({ rapport }: { rapport: RapportComplet }) {
+export function InterventionClient({
+  rapport,
+  installations,
+}: {
+  rapport: RapportComplet;
+  installations: Installation[];
+}) {
   const router = useRouter();
   const { toast } = useToast();
-  const [description, setDescription] = useState(rapport.description_probleme || "");
+
+  const [selectedInstallation, setSelectedInstallation] = useState<string | null>(
+    rapport.installation_id || null
+  );
+  const [description, setDescription] = useState(
+    rapport.description_probleme || rapport.demande_client || ""
+  );
+  const [diagnostic, setDiagnostic] = useState(rapport.diagnostic || "");
   const [travaux, setTravaux] = useState(rapport.travaux_effectues || "");
   const [pieces, setPieces] = useState<PieceUtilisee[]>(
     rapport.pieces_utilisees?.length > 0
@@ -19,6 +32,14 @@ export function InterventionClient({ rapport }: { rapport: RapportComplet }) {
   );
   const [photos, setPhotos] = useState<PhotoItem[]>(rapport.photos || []);
   const [saving, setSaving] = useState(false);
+
+  function handleSelectInstallation(inst: Installation) {
+    setSelectedInstallation(inst.id);
+    // Vider le pré-remplissage porte s'il était présent (désormais affiché dans l'en-tête)
+    if (description.startsWith("Porte :")) {
+      setDescription("");
+    }
+  }
 
   function addPiece() {
     setPieces([...pieces, { nom: "", quantite: 1, reference: "" }]);
@@ -40,7 +61,15 @@ export function InterventionClient({ rapport }: { rapport: RapportComplet }) {
     setSaving(true);
     try {
       const piecesClean = pieces.filter((p) => p.nom.trim() !== "");
-      const result = await saveIntervention(rapport.id, description, travaux, piecesClean, photos);
+      const result = await saveIntervention(
+        rapport.id,
+        selectedInstallation,
+        description,
+        diagnostic,
+        travaux,
+        piecesClean,
+        photos
+      );
       if (!result.success) {
         toast(result.error || "Erreur de sauvegarde", "error");
         return;
@@ -56,7 +85,15 @@ export function InterventionClient({ rapport }: { rapport: RapportComplet }) {
     setSaving(true);
     try {
       const piecesClean = pieces.filter((p) => p.nom.trim() !== "");
-      const result = await saveIntervention(rapport.id, description, travaux, piecesClean, photos);
+      const result = await saveIntervention(
+        rapport.id,
+        selectedInstallation,
+        description,
+        diagnostic,
+        travaux,
+        piecesClean,
+        photos
+      );
       if (!result.success) {
         toast(result.error || "Erreur de sauvegarde", "error");
         return;
@@ -75,14 +112,66 @@ export function InterventionClient({ rapport }: { rapport: RapportComplet }) {
         {rapport.numero_cm} · {rapport.client?.nom} · {rapport.site?.nom}
       </p>
 
-      {/* Description du problème */}
+      {/* Sélecteur de porte */}
+      {installations.length > 0 && (
+        <div className="mb-4 rounded-xl border border-border bg-white p-4 shadow-sm">
+          <label className="block text-sm font-bold mb-3">Porte concernée</label>
+          <div className="space-y-2">
+            {installations.map((inst) => {
+              const isSelected = selectedInstallation === inst.id;
+              return (
+                <button
+                  key={inst.id}
+                  type="button"
+                  onClick={() => handleSelectInstallation(inst)}
+                  className={`w-full flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                    isSelected
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:bg-slate-50"
+                  }`}
+                >
+                  <div
+                    className={`h-4 w-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
+                      isSelected ? "border-primary" : "border-slate-300"
+                    }`}
+                  >
+                    {isSelected && (
+                      <div className="h-2 w-2 rounded-full bg-primary" />
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium">🚪 {inst.repere}</span>
+                    <span className="text-xs text-muted ml-2">
+                      {inst.type_porte}{inst.modele ? ` · ${inst.modele}` : ""}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Demande client / Description du problème */}
       <div className="mb-4 rounded-xl border border-border bg-white p-4 shadow-sm">
-        <label className="block text-sm font-bold mb-2">Description du problème</label>
+        <label className="block text-sm font-bold mb-2">Demande client / Description du problème</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Décrivez le problème constaté..."
+          placeholder="Porte concernée, demande du client, problème constaté..."
           rows={5}
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none resize-none"
+        />
+      </div>
+
+      {/* Diagnostic */}
+      <div className="mb-4 rounded-xl border border-border bg-white p-4 shadow-sm">
+        <label className="block text-sm font-bold mb-2">Diagnostic</label>
+        <textarea
+          value={diagnostic}
+          onChange={(e) => setDiagnostic(e.target.value)}
+          placeholder="Diagnostic technique..."
+          rows={4}
           className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none resize-none"
         />
       </div>
@@ -94,7 +183,7 @@ export function InterventionClient({ rapport }: { rapport: RapportComplet }) {
           value={travaux}
           onChange={(e) => setTravaux(e.target.value)}
           placeholder="Décrivez les travaux réalisés..."
-          rows={5}
+          rows={4}
           className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none resize-none"
         />
       </div>

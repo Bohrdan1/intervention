@@ -491,7 +491,7 @@ function PageConstat({
       </Text>
 
       {/* Signatures côte à côte */}
-      <View style={{ flexDirection: 'row', marginTop: 30, justifyContent: 'space-between' }}>
+      <View wrap={false} style={{ flexDirection: 'row', marginTop: 30, justifyContent: 'space-between' }}>
         {/* Technicien */}
         <View style={{ width: '45%' }}>
           <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold' }}>Le technicien :</Text>
@@ -570,6 +570,12 @@ function PageIntervention({
           <Text style={{ width: 90, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Site</Text>
           <Text style={{ fontSize: 9 }}>: {rapport.site.nom}</Text>
         </View>
+        {rapport.installation && (
+          <View style={s.infoRow}>
+            <Text style={{ width: 90, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Porte</Text>
+            <Text style={{ fontSize: 9 }}>: {rapport.installation.repere} ({rapport.installation.type_porte})</Text>
+          </View>
+        )}
         <View style={s.infoRow}>
           <Text style={{ width: 90, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Technicien</Text>
           <Text style={{ fontSize: 9 }}>: {rapport.technicien}</Text>
@@ -577,14 +583,26 @@ function PageIntervention({
       </View>
 
       {/* Description du problème */}
-      <View style={{ marginBottom: 16 }}>
-        <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', marginBottom: 6, textDecoration: 'underline' }}>
-          Description du probleme
+      <View style={{ marginBottom: 12 }}>
+        <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
+          Demande client / Description du probleme
         </Text>
         <Text style={{ fontSize: 10, lineHeight: 1.5 }}>
           {rapport.description_probleme || 'Non renseigne'}
         </Text>
       </View>
+
+      {/* Diagnostic */}
+      {rapport.diagnostic ? (
+        <View style={{ marginBottom: 12 }}>
+          <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
+            Diagnostic
+          </Text>
+          <Text style={{ fontSize: 10, lineHeight: 1.5 }}>
+            {rapport.diagnostic}
+          </Text>
+        </View>
+      ) : null}
 
       {/* Travaux effectués */}
       <View style={{ marginBottom: 16 }}>
@@ -637,7 +655,7 @@ function PageIntervention({
       <PhotosSection photos={(rapport.photos || []).filter((p) => p.context === 'intervention')} title="Photos" />
 
       {/* Signatures côte à côte */}
-      <View style={{ flexDirection: 'row', marginTop: 30, justifyContent: 'space-between' }}>
+      <View wrap={false} style={{ flexDirection: 'row', marginTop: 30, justifyContent: 'space-between' }}>
         {/* Technicien */}
         <View style={{ width: '45%' }}>
           <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold' }}>Le technicien :</Text>

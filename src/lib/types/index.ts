@@ -21,6 +21,7 @@ export interface Site {
   id: string;
   client_id: string;
   nom: string;
+  adresse: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -177,7 +178,10 @@ export interface Rapport {
   // Photos
   photos: PhotoItem[];
   // Champs intervention
+  installation_id: string | null;
+  demande_client: string | null;
   description_probleme: string | null;
+  diagnostic: string | null;
   travaux_effectues: string | null;
   pieces_utilisees: PieceUtilisee[];
   // Champs visite technique
@@ -195,6 +199,7 @@ export interface Rapport {
 export interface RapportComplet extends Rapport {
   client: Client;
   site: Site;
+  installation?: Installation | null;
   controles: (Controle & { installation: Installation })[];
 }
 

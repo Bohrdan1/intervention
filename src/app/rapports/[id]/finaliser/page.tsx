@@ -16,6 +16,7 @@ export default async function FinaliserPage({
       *,
       client:clients(*),
       site:sites(*),
+      installation:installations(*),
       controles(
         *,
         installation:installations(*)

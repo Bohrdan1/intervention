@@ -6,15 +6,19 @@ import type { PieceUtilisee, PhotoItem } from "@/lib/types";
 
 export async function saveIntervention(
   rapportId: string,
+  installation_id: string | null,
   description_probleme: string,
+  diagnostic: string,
   travaux_effectues: string,
   pieces_utilisees: PieceUtilisee[],
   photos?: PhotoItem[]
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
 
-  const updateData: Record<string, string | PieceUtilisee[] | PhotoItem[]> = {
+  const updateData: Record<string, string | null | PieceUtilisee[] | PhotoItem[]> = {
+    installation_id,
     description_probleme,
+    diagnostic,
     travaux_effectues,
     pieces_utilisees,
   };
