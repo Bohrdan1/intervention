@@ -292,7 +292,12 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
             <div className="mb-3">
               <p className="text-xs font-semibold text-muted uppercase">Travaux</p>
               <p className="text-sm mt-1">{rapport.travaux_effectues}</p>
+          {rapport.diagnostic && (
+            <div className="mb-3">
+              <p className="text-xs font-semibold text-muted uppercase">Diagnostic</p>
+              <p className="text-sm mt-1 whitespace-pre-wrap">{rapport.diagnostic}</p>
             </div>
+          )}            </div>
           )}
           {rapport.pieces_utilisees?.length > 0 && (
             <div>
