@@ -454,15 +454,6 @@ export function VisiteClient({ rapport }: { rapport: RapportComplet }) {
     }
   }
 
-  // Détection iOS/iPad
-  function isIOS(): boolean {
-    if (typeof navigator === "undefined") return false;
-    return (
-      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
-    );
-  }
-
   // Terminé → finaliser + PDF
   async function handleFinalize() {
     setGenerating(true);
@@ -494,16 +485,7 @@ export function VisiteClient({ rapport }: { rapport: RapportComplet }) {
       const blob = await pdf(<RapportPDF rapport={rapportComplet} />).toBlob();
       const url = URL.createObjectURL(blob);
 
-      if (isIOS()) {
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${rapport.numero_cm.replace(/\s/g, "_")}_visite.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } else {
-        setPreviewUrl(url);
-      }
+      setPreviewUrl(url);
 
       toast("Visite finalisée", "success");
     } catch (error) {

@@ -346,7 +346,7 @@ function PageControle({
         </View>
         <View style={s.infoRow}>
           <Text style={{ width: 90, fontFamily: 'Helvetica-Oblique', fontSize: 9 }}>Modele</Text>
-          <Text style={{ fontSize: 9 }}>; {installation.modele || ''}</Text>
+          <Text style={{ fontSize: 9 }}>: {installation.modele || ''}</Text>
         </View>
       </View>
 
@@ -573,7 +573,7 @@ function PageIntervention({
         {rapport.installation && (
           <View style={s.infoRow}>
             <Text style={{ width: 90, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Porte</Text>
-            <Text style={{ fontSize: 9 }}>: {rapport.installation.repere} ({rapport.installation.type_porte})</Text>
+            <Text style={{ fontSize: 9 }}>: {rapport.installation.repere} ({rapport.installation.type_porte}{rapport.installation.modele ? ` - ${rapport.installation.modele}` : ''})</Text>
           </View>
         )}
         <View style={s.infoRow}>

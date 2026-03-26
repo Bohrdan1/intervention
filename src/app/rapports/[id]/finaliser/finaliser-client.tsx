@@ -140,31 +140,13 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
     return pdf(<RapportPDF rapport={rapportComplet} />).toBlob();
   }
 
-  // Détection iOS/iPad
-  function isIOS(): boolean {
-    if (typeof navigator === "undefined") return false;
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  }
-
   async function handlePreview() {
     setGenerating(true);
     try {
       await saveConstatAndFinalize(rapport.id, constat, signatureData, signatureClient);
       const blob = await generatePdfBlob();
       const url = URL.createObjectURL(blob);
-
-      if (isIOS()) {
-        // Sur iPad/iPhone : télécharger le PDF (fonctionne aussi en mode PWA)
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${rapport.numero_cm.replace(/\s/g, "_")}_${rapport.site?.nom || "rapport"}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } else {
-        setPreviewUrl(url);
-      }
+      setPreviewUrl(url);
     } catch (error) {
       console.error("Erreur PDF:", error);
       toast("Erreur lors de la génération du PDF", "error");
