@@ -4,7 +4,12 @@ import { Suspense } from "react";
 import { DEFAULT_POINTS_CONTROLE, DEFAULT_POINTS_ERP, DEFAULT_CONSTAT } from "@/lib/types";
 import { ClientSiteSelectorClient } from "./client-selector";
 
-export default async function NouveauRapportPage() {
+export default async function NouveauRapportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ erreur?: string }>;
+}) {
+  const { erreur } = await searchParams;
   const supabase = await createClient();
 
   const { data: clients } = await supabase
@@ -86,6 +91,10 @@ export default async function NouveauRapportPage() {
       .single();
 
     if (error || !rapport) {
+      // Code 23505 = violation de contrainte unique (doublon)
+      if (error?.code === '23505') {
+        redirect('/rapports/nouveau?erreur=doublon');
+      }
       console.error("Erreur création rapport:", error);
       return;
     }
@@ -112,6 +121,12 @@ export default async function NouveauRapportPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Nouveau rapport</h1>
+
+      {erreur === 'doublon' && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+          Un rapport de maintenance existe déjà pour ce client, ce site et cette date.
+        </div>
+      )}
 
       {!clients || clients.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-border bg-white p-12 text-center">

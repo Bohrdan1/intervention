@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { DeleteButton } from "./delete-button";
 import Image from "next/image";
@@ -369,12 +370,20 @@ export default async function RapportDetailPage({
       {/* Actions */}
       <div className="flex gap-3">
         {isVisite ? (
-          <Link
-            href={`/rapports/${rapport.id}/visite`}
-            className="flex-1 rounded-xl bg-primary py-3 text-center text-sm font-semibold text-white hover:bg-primary-light"
-          >
-            Modifier la visite
-          </Link>
+          <>
+            <Link
+              href={`/rapports/${rapport.id}/visite`}
+              className="flex-1 rounded-xl border border-border bg-white py-3 text-center text-sm font-medium hover:bg-slate-50"
+            >
+              Modifier
+            </Link>
+            <Link
+              href={`/rapports/${rapport.id}/devis`}
+              className="flex-1 rounded-xl bg-primary py-3 text-center text-sm font-semibold text-white hover:bg-primary-light"
+            >
+              Devis
+            </Link>
+          </>
         ) : isIntervention ? (
           <>
             <Link
@@ -383,12 +392,35 @@ export default async function RapportDetailPage({
             >
               Modifier l&apos;intervention
             </Link>
-            <Link
-              href={`/rapports/${rapport.id}/finaliser`}
-              className="flex-1 rounded-xl bg-primary py-3 text-center text-sm font-semibold text-white hover:bg-primary-light"
-            >
-              Exporter PDF
-            </Link>
+            {rapport.statut === 'finalise' ? (
+              <Link
+                href={`/rapports/${rapport.id}/pdf`}
+                className="flex-1 rounded-xl bg-primary py-3 text-center text-sm font-semibold text-white hover:bg-primary-light"
+              >
+                PDF
+              </Link>
+            ) : (
+              <form
+                action={async () => {
+                  'use server';
+                  const supabase = await createClient();
+                  await supabase
+                    .from('rapports')
+                    .update({ statut: 'finalise', updated_at: new Date().toISOString() })
+                    .eq('id', rapport.id);
+                  revalidatePath(`/rapports/${rapport.id}`);
+                  redirect(`/rapports/${rapport.id}/pdf`);
+                }}
+                className="flex-1"
+              >
+                <button
+                  type="submit"
+                  className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white hover:bg-primary-light"
+                >
+                  Valider
+                </button>
+              </form>
+            )}
           </>
         ) : (
           <>
@@ -398,12 +430,35 @@ export default async function RapportDetailPage({
             >
               Modifier les contrôles
             </Link>
-            <Link
-              href={`/rapports/${rapport.id}/finaliser`}
-              className="flex-1 rounded-xl bg-primary py-3 text-center text-sm font-semibold text-white hover:bg-primary-light"
-            >
-              Exporter PDF
-            </Link>
+            {rapport.statut === 'finalise' ? (
+              <Link
+                href={`/rapports/${rapport.id}/pdf`}
+                className="flex-1 rounded-xl bg-primary py-3 text-center text-sm font-semibold text-white hover:bg-primary-light"
+              >
+                PDF
+              </Link>
+            ) : (
+              <form
+                action={async () => {
+                  'use server';
+                  const supabase = await createClient();
+                  await supabase
+                    .from('rapports')
+                    .update({ statut: 'finalise', updated_at: new Date().toISOString() })
+                    .eq('id', rapport.id);
+                  revalidatePath(`/rapports/${rapport.id}`);
+                  redirect(`/rapports/${rapport.id}/pdf`);
+                }}
+                className="flex-1"
+              >
+                <button
+                  type="submit"
+                  className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white hover:bg-primary-light"
+                >
+                  Valider
+                </button>
+              </form>
+            )}
           </>
         )}
       </div>

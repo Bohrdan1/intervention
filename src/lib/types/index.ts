@@ -255,3 +255,46 @@ export const DEFAULT_CONSTAT: ConstatItem[] = [
   { label: 'Mouvements', texte: 'Fermeture progressive, sans à-coups, butée respectée.', conforme: true },
   { label: 'Essais finaux', texte: 'Fonctionnement fluide, voyants au vert.', conforme: true },
 ];
+
+// ── Module Devis (issu d'une visite technique) ──
+
+export type TypeLigne = 'materiel' | 'main_oeuvre' | 'deplacement' | 'autre';
+export type StatutFournisseur = 'a_consulter' | 'en_attente' | 'confirme';
+export type StatutDevis = 'brouillon' | 'envoye' | 'accepte' | 'refuse';
+
+export interface LigneDevis {
+  id: string;
+  type: TypeLigne;
+  description: string;
+  quantite: number;
+  unite: string;           // 'u', 'h', 'forfait', 'm', 'm²'
+  prix_unitaire: number;
+  fournisseur: string;     // nom du fournisseur
+  statut_fournisseur: StatutFournisseur;
+  reference: string;
+}
+
+export const DEFAULT_LIGNE_DEVIS: LigneDevis = {
+  id: '',
+  type: 'materiel',
+  description: '',
+  quantite: 1,
+  unite: 'u',
+  prix_unitaire: 0,
+  fournisseur: '',
+  statut_fournisseur: 'a_consulter',
+  reference: '',
+};
+
+export const UNITES = ['u', 'h', 'forfait', 'm', 'm²', 'ml', 'lot'] as const;
+export const TYPE_LIGNE_LABELS: Record<TypeLigne, string> = {
+  materiel: 'Matériel',
+  main_oeuvre: 'Main d\'œuvre',
+  deplacement: 'Déplacement',
+  autre: 'Autre',
+};
+export const STATUT_FOURNISSEUR_LABELS: Record<StatutFournisseur, string> = {
+  a_consulter: 'À consulter',
+  en_attente: 'En attente',
+  confirme: 'Confirmé',
+};

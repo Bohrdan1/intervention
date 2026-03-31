@@ -130,48 +130,62 @@ export function RapportList({ rapports }: { rapports: RapportItem[] }) {
             });
 
             return (
-              <Link
+              <div
                 key={rapport.id}
-                href={`/rapports/${rapport.id}`}
-                className="flex items-center justify-between rounded-xl border border-border bg-white p-4 shadow-sm hover:shadow-md hover:border-primary-light transition-all active:scale-[0.99]"
+                className="relative rounded-xl border border-border bg-white shadow-sm hover:shadow-md hover:border-primary-light transition-all"
               >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-mono font-semibold text-primary">
-                      {rapport.numero_cm}
-                    </span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        isVisite
-                          ? "bg-teal-100 text-teal-700"
-                          : isIntervention
-                            ? "bg-purple-100 text-purple-700"
-                            : "bg-blue-100 text-blue-700"
-                      }`}
-                    >
-                      {isVisite ? "Visite" : isIntervention ? "Intervention" : "Maintenance"}
-                    </span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        rapport.statut === "finalise"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-amber-100 text-amber-700"
-                      }`}
-                    >
-                      {rapport.statut === "finalise" ? "Finalisé" : "Brouillon"}
-                    </span>
+                {/* Lien principal couvrant toute la carte */}
+                <Link
+                  href={`/rapports/${rapport.id}`}
+                  className="absolute inset-0 rounded-xl"
+                  aria-label={rapport.client?.nom || "Rapport"}
+                />
+                {/* Contenu */}
+                <div className="flex items-center justify-between p-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className={`text-xs font-semibold ${
+                          isVisite
+                            ? "text-teal-700"
+                            : isIntervention
+                              ? "text-purple-700"
+                              : "text-blue-700"
+                        }`}
+                      >
+                        {isVisite ? "Visite technique" : isIntervention ? "Intervention" : "Maintenance"} · {date}
+                      </span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          rapport.statut === "finalise"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-amber-100 text-amber-700"
+                        }`}
+                      >
+                        {rapport.statut === "finalise" ? "Finalisé" : "Brouillon"}
+                      </span>
+                    </div>
+                    <p className="font-semibold truncate">
+                      {rapport.client?.nom || "Client inconnu"}
+                    </p>
+                    <p className="text-sm text-muted">
+                      {rapport.site?.nom || "Site inconnu"}
+                      {!isIntervention ? ` · ${nbPortes} porte${nbPortes > 1 ? "s" : ""}` : ""}
+                    </p>
                   </div>
-                  <p className="font-semibold truncate">
-                    {rapport.client?.nom || "Client inconnu"}
-                  </p>
-                  <p className="text-sm text-muted">
-                    {rapport.site?.nom || "Site inconnu"}
-                    {!isIntervention ? ` · ${nbPortes} porte${nbPortes > 1 ? "s" : ""}` : ""}
-                    {" · "}{date}
-                  </p>
+                  <div className="ml-3 flex items-center gap-2 relative z-10">
+                    {isVisite && rapport.statut === "brouillon" && (
+                      <Link
+                        href={`/rapports/${rapport.id}/devis`}
+                        className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-700 transition-colors"
+                      >
+                        Valider la visite
+                      </Link>
+                    )}
+                    <span className="text-muted">›</span>
+                  </div>
                 </div>
-                <span className="ml-3 text-muted">›</span>
-              </Link>
+              </div>
             );
           })}
         </div>
