@@ -131,11 +131,13 @@ export default async function ClientsPage({
     const repere = formData.get("repere") as string;
     const type_porte = formData.get("type_porte") as string;
     const modele = formData.get("modele") as string;
+    const avec_batterie = formData.get("avec_batterie") === "true";
     if (!id || !repere?.trim()) return;
     await supabase.from("installations").update({
       repere: repere.trim(),
       type_porte: type_porte?.trim() || "coulissante deux vantaux",
       modele: modele?.trim() || null,
+      avec_batterie,
     }).eq("id", id);
     revalidatePath("/clients");
   }
@@ -313,7 +315,7 @@ export default async function ClientsPage({
                       </form>
                     }
                   >
-                    {site.installations?.map((inst: { id: string; repere: string; type_porte: string; modele: string | null }) => (
+                    {site.installations?.map((inst: { id: string; repere: string; type_porte: string; modele: string | null; avec_batterie: boolean }) => (
                       <InstallationEditItem
                         key={inst.id}
                         inst={inst}

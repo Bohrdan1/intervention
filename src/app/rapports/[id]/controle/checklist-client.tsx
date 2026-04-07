@@ -16,6 +16,7 @@ interface PointControle {
 interface PointERP {
   nom: string;
   conforme: boolean;
+  commentaire?: string;
 }
 
 interface ControleData {
@@ -23,6 +24,7 @@ interface ControleData {
   page_number: number;
   points_controle: PointControle[];
   points_erp: PointERP[];
+  note_supplementaire?: string;
   installation: {
     id: string;
     repere: string;
@@ -30,6 +32,12 @@ interface ControleData {
     modele: string | null;
   };
 }
+
+const BBG_OPTIONS = [
+  { value: "déverrouillage", label: "Déverrouillage", color: "border-green-300 text-green-700", activeColor: "bg-green-100 border-green-500 text-green-800 font-semibold" },
+  { value: "ouverture", label: "Ouverture", color: "border-blue-300 text-blue-700", activeColor: "bg-blue-100 border-blue-500 text-blue-800 font-semibold" },
+  { value: "verrouillé", label: "Verrouillé", color: "border-red-300 text-red-600", activeColor: "bg-red-100 border-red-500 text-red-800 font-semibold" },
+];
 
 export function ChecklistClient({
   rapportId,
@@ -54,7 +62,6 @@ export function ChecklistClient({
   const current = allControles[currentIndex];
   const total = allControles.length;
 
-  // Photos filtrées pour la porte actuelle
   const currentContext = `controle:${current.installation.id}`;
   const currentPhotos = photos.filter((p) => p.context === currentContext);
 
@@ -75,21 +82,29 @@ export function ChecklistClient({
     });
   }
 
-  function updatePointERP(pointIndex: number, conforme: boolean) {
+  function updatePointERP(pointIndex: number, updates: Partial<PointERP>) {
     setAllControles((prev) => {
       const next = [...prev];
       const controle = { ...next[currentIndex] };
       const points = [...controle.points_erp];
-      points[pointIndex] = { ...points[pointIndex], conforme };
+      points[pointIndex] = { ...points[pointIndex], ...updates };
       controle.points_erp = points;
       next[currentIndex] = controle;
       return next;
     });
   }
 
+  function updateNoteSupplementaire(value: string) {
+    setAllControles((prev) => {
+      const next = [...prev];
+      next[currentIndex] = { ...next[currentIndex], note_supplementaire: value };
+      return next;
+    });
+  }
+
   async function handleSaveAndNavigate(direction: "prev" | "next" | "finish") {
     setSaving(true);
-    const result = await saveControle(current.id, current.points_controle, current.points_erp);
+    const result = await saveControle(current.id, current.points_controle, current.points_erp, current.note_supplementaire);
     const photoResult = await savePhotos(rapportId, photos);
 
     if (!result.success || !photoResult.success) {
@@ -115,7 +130,7 @@ export function ChecklistClient({
   async function handleJumpTo(index: number) {
     if (index === currentIndex) return;
     setSaving(true);
-    const result = await saveControle(current.id, current.points_controle, current.points_erp);
+    const result = await saveControle(current.id, current.points_controle, current.points_erp, current.note_supplementaire);
     const photoResult = await savePhotos(rapportId, photos);
     setSaving(false);
 
@@ -189,43 +204,58 @@ export function ChecklistClient({
         <h3 className="text-sm font-bold text-muted uppercase tracking-wide">
           Points de contrôle
         </h3>
-        {current.points_controle.map((point, i) => (
-          <div key={i} className="rounded-xl border border-border bg-white p-3 shadow-sm">
-            <p className="text-sm font-medium mb-2">{point.nom}</p>
-            <div className="flex gap-1.5 mb-2">
-              {etatOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => updatePointControle(i, "etat", opt.value)}
-                  className={`flex-1 rounded-lg border py-2 text-xs transition-all ${
-                    point.etat === opt.value ? opt.activeColor : opt.color
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+        {current.points_controle.map((point, i) => {
+          const isBBG = point.nom.startsWith("boitier vert");
+          return (
+            <div key={i} className="rounded-xl border border-border bg-white p-3 shadow-sm">
+              <p className="text-sm font-medium mb-2">{point.nom}</p>
+
+              {isBBG ? (
+                /* Rendu spécial BBG : 3 états */
+                <div className="flex gap-1.5">
+                  {BBG_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => updatePointControle(i, "observation", opt.value)}
+                      className={`flex-1 rounded-lg border py-2 text-xs transition-all ${
+                        point.observation === opt.value ? opt.activeColor : opt.color
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <div className="flex gap-1.5 mb-2">
+                    {etatOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => updatePointControle(i, "etat", opt.value)}
+                        className={`flex-1 rounded-lg border py-2 text-xs transition-all ${
+                          point.etat === opt.value ? opt.activeColor : opt.color
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  {(point.etat !== "ok" && point.etat !== "na") || point.observation ? (
+                    <input
+                      type="text"
+                      placeholder="Observation..."
+                      value={point.observation}
+                      onChange={(e) => updatePointControle(i, "observation", e.target.value)}
+                      className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                    />
+                  ) : null}
+                </>
+              )}
             </div>
-            {point.etat !== "ok" && point.etat !== "na" && (
-              <input
-                type="text"
-                placeholder="Observation..."
-                value={point.observation}
-                onChange={(e) => updatePointControle(i, "observation", e.target.value)}
-                className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
-              />
-            )}
-            {(point.etat === "ok" || point.etat === "na") && point.observation && (
-              <input
-                type="text"
-                placeholder="Observation..."
-                value={point.observation}
-                onChange={(e) => updatePointControle(i, "observation", e.target.value)}
-                className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
-              />
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Points ERP */}
@@ -236,39 +266,64 @@ export function ChecklistClient({
         {current.points_erp.map((point, i) => (
           <div
             key={i}
-            className="flex items-center justify-between rounded-xl border border-border bg-white p-3 shadow-sm"
+            className="rounded-xl border border-border bg-white p-3 shadow-sm"
           >
-            <p className="text-sm font-medium flex-1">{point.nom}</p>
-            <div className="flex gap-2 ml-3">
-              <button
-                type="button"
-                onClick={() => updatePointERP(i, true)}
-                className={`rounded-lg border px-4 py-2 text-xs transition-all ${
-                  point.conforme
-                    ? "bg-green-100 border-green-500 text-green-800 font-semibold"
-                    : "border-green-300 text-green-600"
-                }`}
-              >
-                ✔ Conforme
-              </button>
-              <button
-                type="button"
-                onClick={() => updatePointERP(i, false)}
-                className={`rounded-lg border px-4 py-2 text-xs transition-all ${
-                  !point.conforme
-                    ? "bg-red-100 border-red-500 text-red-800 font-semibold"
-                    : "border-red-300 text-red-600"
-                }`}
-              >
-                ✘ Non conforme
-              </button>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium flex-1">{point.nom}</p>
+              <div className="flex gap-2 ml-3">
+                <button
+                  type="button"
+                  onClick={() => updatePointERP(i, { conforme: true })}
+                  className={`rounded-lg border px-4 py-2 text-xs transition-all ${
+                    point.conforme
+                      ? "bg-green-100 border-green-500 text-green-800 font-semibold"
+                      : "border-green-300 text-green-600"
+                  }`}
+                >
+                  ✔ Conforme
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updatePointERP(i, { conforme: false })}
+                  className={`rounded-lg border px-4 py-2 text-xs transition-all ${
+                    !point.conforme
+                      ? "bg-red-100 border-red-500 text-red-800 font-semibold"
+                      : "border-red-300 text-red-600"
+                  }`}
+                >
+                  ✘ Non conforme
+                </button>
+              </div>
             </div>
+            {!point.conforme && (
+              <input
+                type="text"
+                placeholder="Commentaire non-conformité..."
+                value={point.commentaire ?? ""}
+                onChange={(e) => updatePointERP(i, { commentaire: e.target.value })}
+                className="mt-2 w-full rounded-lg border border-red-200 px-3 py-2 text-sm focus:border-red-400 focus:outline-none"
+              />
+            )}
           </div>
         ))}
       </div>
 
-      {/* Photos */}
+      {/* Note supplémentaire */}
       <div className="mt-6 rounded-xl border border-border bg-white p-4 shadow-sm">
+        <h3 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">
+          Observations supplémentaires
+        </h3>
+        <textarea
+          placeholder="Remarques complémentaires pour cette porte..."
+          value={current.note_supplementaire ?? ""}
+          onChange={(e) => updateNoteSupplementaire(e.target.value)}
+          rows={3}
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none resize-none"
+        />
+      </div>
+
+      {/* Photos */}
+      <div className="mt-4 rounded-xl border border-border bg-white p-4 shadow-sm">
         <PhotoUpload
           rapportId={rapportId}
           context={currentContext}

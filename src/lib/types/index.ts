@@ -32,6 +32,7 @@ export interface Installation {
   repere: string;
   type_porte: string;
   modele: string | null;
+  avec_batterie: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -47,6 +48,7 @@ export interface PointControle {
 export interface PointERP {
   nom: string;
   conforme: boolean;
+  commentaire?: string;
 }
 
 export interface ConstatItem {
@@ -62,6 +64,7 @@ export interface Controle {
   page_number: number;
   points_controle: PointControle[];
   points_erp: PointERP[];
+  note_supplementaire?: string;
   created_at: string;
   updated_at: string;
 }
@@ -217,11 +220,15 @@ export const SOCIETE = {
 // Points de contrôle par défaut
 export const DEFAULT_POINTS_CONTROLE: PointControle[] = [
   { nom: 'câblages basse tension', etat: 'ok', observation: '' },
+  { nom: 'raccordement électrique', etat: 'ok', observation: '' },
   { nom: 'groupe moteur', etat: 'ok', observation: '' },
   { nom: 'platine électronique', etat: 'ok', observation: '' },
   { nom: 'détecteurs', etat: 'ok', observation: '' },
+  { nom: 'SSI / DAS', etat: 'ok', observation: '' },
   { nom: 'verrouillage', etat: 'ok', observation: '' },
   { nom: 'boitier de commande', etat: 'ok', observation: '' },
+  { nom: 'contrôle d\'accès', etat: 'ok', observation: '' },
+  { nom: 'boitier vert (BBG)', etat: 'ok', observation: 'déverrouillage' },
   { nom: 'bande de roulement', etat: 'ok', observation: '' },
   { nom: 'courroie', etat: 'ok', observation: '' },
   { nom: 'poulies de renvoi', etat: 'ok', observation: '' },

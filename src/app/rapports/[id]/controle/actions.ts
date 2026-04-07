@@ -6,7 +6,8 @@ import type { PointControle, PointERP, PhotoItem } from "@/lib/types";
 export async function saveControle(
   controleId: string,
   points_controle: PointControle[],
-  points_erp: PointERP[]
+  points_erp: PointERP[],
+  note_supplementaire?: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
 
@@ -15,6 +16,7 @@ export async function saveControle(
     .update({
       points_controle,
       points_erp,
+      note_supplementaire: note_supplementaire ?? null,
     })
     .eq("id", controleId);
 

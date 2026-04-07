@@ -12,7 +12,7 @@ const TYPES_PORTE = [
 ];
 
 interface Props {
-  inst: { id: string; repere: string; type_porte: string; modele: string | null };
+  inst: { id: string; repere: string; type_porte: string; modele: string | null; avec_batterie: boolean };
   clientId: string;
   siteId: string;
   updateAction: (formData: FormData) => Promise<void>;
@@ -29,9 +29,8 @@ export function InstallationEditItem({
   createRapportAction,
 }: Props) {
   const [editing, setEditing] = useState(false);
-  const [typeCustom, setTypeCustom] = useState(
-    !TYPES_PORTE.includes(inst.type_porte)
-  );
+  const [typeCustom, setTypeCustom] = useState(!TYPES_PORTE.includes(inst.type_porte));
+  const [avecBatterie, setAvecBatterie] = useState(inst.avec_batterie ?? false);
 
   if (editing) {
     return (
@@ -83,6 +82,16 @@ export function InstallationEditItem({
             placeholder="Modèle"
             className="flex-1 rounded border border-border px-2 py-1.5 text-xs focus:border-primary focus:outline-none"
           />
+          <input type="hidden" name="avec_batterie" value={avecBatterie ? "true" : "false"} />
+          <label className="flex items-center gap-1.5 text-xs text-muted cursor-pointer whitespace-nowrap">
+            <input
+              type="checkbox"
+              checked={avecBatterie}
+              onChange={(e) => setAvecBatterie(e.target.checked)}
+              className="rounded"
+            />
+            Batterie
+          </label>
           <div className="flex gap-1">
             <button
               type="submit"
@@ -108,7 +117,7 @@ export function InstallationEditItem({
       <span className="text-sm">
         🚪 {inst.repere}
         <span className="text-xs text-muted ml-1">
-          ({inst.type_porte}{inst.modele ? ` - ${inst.modele}` : ""})
+          ({inst.type_porte}{inst.modele ? ` - ${inst.modele}` : ""}{inst.avec_batterie ? " · 🔋" : ""})
         </span>
       </span>
       <div className="flex items-center gap-2">
