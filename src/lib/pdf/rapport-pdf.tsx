@@ -328,7 +328,7 @@ function PageControle({
       </View>
 
       {/* Titre */}
-      <Text style={s.title}>Compte rendu de maintenance preventive et corrective</Text>
+      <Text style={s.title}>Compte rendu de maintenance n° {rapport.numero_cm}</Text>
 
       {/* Infos installation */}
       <View style={s.infoBlock}>
@@ -348,6 +348,10 @@ function PageControle({
           <Text style={{ width: 90, fontFamily: 'Helvetica-Oblique', fontSize: 9 }}>Modele</Text>
           <Text style={{ fontSize: 9 }}>: {installation.modele || ''}</Text>
         </View>
+        <View style={s.infoRow}>
+          <Text style={{ width: 90, fontFamily: 'Helvetica-Oblique', fontSize: 9 }}>Batterie</Text>
+          <Text style={{ fontSize: 9 }}>: {installation.avec_batterie ? 'Oui' : 'Non'}</Text>
+        </View>
       </View>
 
       {/* ── TABLEAU ── */}
@@ -366,19 +370,25 @@ function PageControle({
         </View>
 
         {/* Points de controle */}
-        {controle.points_controle.map((pt, i) => (
-          <View key={i} style={i % 2 === 0 ? s.row : s.rowAlt}>
-            <View style={s.cellNom}>
-              <Text style={{ fontSize: 9 }}>{pt.nom}</Text>
+        {controle.points_controle.map((pt, i) => {
+          const isBBG = pt.nom.startsWith('boitier vert');
+          return (
+            <View key={i} style={i % 2 === 0 ? s.row : s.rowAlt}>
+              <View style={s.cellNom}>
+                <Text style={{ fontSize: 9 }}>{pt.nom}</Text>
+              </View>
+              <View style={s.cellEtat}>
+                {isBBG
+                  ? <Text style={{ fontSize: 8, textAlign: 'center' }}>{pt.observation || '—'}</Text>
+                  : <RenderEtat etat={pt.etat} />
+                }
+              </View>
+              <View style={s.cellObs}>
+                <Text style={{ fontSize: 9 }}>{isBBG ? '' : pt.observation}</Text>
+              </View>
             </View>
-            <View style={s.cellEtat}>
-              <RenderEtat etat={pt.etat} />
-            </View>
-            <View style={s.cellObs}>
-              <Text style={{ fontSize: 9 }}>{pt.observation}</Text>
-            </View>
-          </View>
-        ))}
+          );
+        })}
 
         {/* Section ERP */}
         <View style={s.erpHeaderRow}>
@@ -402,7 +412,7 @@ function PageControle({
               {pt.conforme ? <CheckMark /> : <CrossMark />}
             </View>
             <View style={s.cellObs}>
-              <Text></Text>
+              <Text style={{ fontSize: 9, color: pt.conforme ? '#000' : '#cc0000' }}>{pt.commentaire || ''}</Text>
             </View>
           </View>
         ))}
@@ -415,6 +425,14 @@ function PageControle({
       <Text style={s.noteSmall}>
         Correction {'->'} Intervention corrective realisee / <Text style={{ fontFamily: 'Helvetica-Bold' }}>Prevention</Text> {'->'} Intervention preventive conseillee
       </Text>
+
+      {/* Observations supplémentaires */}
+      {controle.note_supplementaire ? (
+        <View style={{ marginTop: 6, padding: 6, backgroundColor: '#f8f8f8', borderRadius: 3 }}>
+          <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', marginBottom: 2 }}>Observations supplementaires :</Text>
+          <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Oblique' }}>{controle.note_supplementaire}</Text>
+        </View>
+      ) : null}
 
       {/* Photos de cette porte */}
       <PhotosSection photos={photos} title={`Photos - ${installation.repere}`} />

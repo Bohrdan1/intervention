@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "odessa-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "PATH=/usr/local/bin:$PATH /usr/local/bin/node /Users/odessa/Dev/odessa/node_modules/next/dist/bin/next dev"],
       "port": 3000
     }
   ]
