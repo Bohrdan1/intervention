@@ -315,7 +315,7 @@ export default async function ClientsPage({
                       </form>
                     }
                   >
-                    {site.installations?.map((inst: { id: string; repere: string; type_porte: string; modele: string | null; avec_batterie: boolean }) => (
+                    {site.installations?.map((inst: any) => (
                       <InstallationEditItem
                         key={inst.id}
                         inst={inst}
