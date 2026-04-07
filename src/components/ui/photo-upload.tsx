@@ -70,6 +70,7 @@ export default function PhotoUpload({
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -119,6 +120,7 @@ export default function PhotoUpload({
     }
     setUploading(false);
     if (inputRef.current) inputRef.current.value = '';
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleDelete = async (photo: PhotoItem) => {
@@ -133,20 +135,35 @@ export default function PhotoUpload({
         <h4 className="text-sm font-semibold text-foreground">
           Photos ({photos.length}/{maxPhotos})
         </h4>
-        {photos.length < maxPhotos && (
-          <label className="cursor-pointer rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200">
-            {uploading ? 'Envoi...' : '+ Ajouter'}
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              multiple
-              onChange={handleFileChange}
-              className="hidden"
-              disabled={uploading}
-            />
-          </label>
+        {photos.length < maxPhotos && !uploading && (
+          <div className="flex gap-1.5">
+            <label className="cursor-pointer rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200">
+              📷 Photo
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                multiple
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </label>
+            <label className="cursor-pointer rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200">
+              📁 Fichier
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </label>
+          </div>
+        )}
+        {uploading && (
+          <span className="text-sm text-muted">Envoi...</span>
         )}
       </div>
 
