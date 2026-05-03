@@ -19,6 +19,11 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
   const canvasClientRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
   const activeCanvas = useRef<"tech" | "client">("tech");
+  
+  // Modal signature plein écran
+  const [sigModal, setSigModal] = useState<"tech" | "client" | null>(null);
+  const canvasModalRef = useRef<HTMLCanvasElement>(null);
+  const isDrawingModal = useRef(false);
 
   // ── Constat handlers ──
   function updateConstat(index: number, field: keyof ConstatItem, value: string | boolean) {
@@ -108,23 +113,90 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
   }
 
   function clearSignature() {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
     setSignatureData(null);
   }
 
   function clearSignatureClient() {
-    const canvas = canvasClientRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
     setSignatureClient(null);
   }
 
+  // ── Modal signature plein écran ──
+  function openSigModal(type: "tech" | "client") {
+    setSigModal(type);
+    // Initialiser le canvas après un court délai pour que le DOM soit disponible
+    setTimeout(() => {
+      const canvas = canvasModalRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      
+      // Fond blanc
+      initCanvasBackground(canvas, ctx);
+      
+      // Si une signature existe déjà, la redessiner
+      const existingSignature = type === "tech" ? signatureData : signatureClient;
+      if (existingSignature) {
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+        img.src = existingSignature;
+      }
+    }, 0);
+  }
+
+  function startDrawingModal(e: React.TouchEvent | React.MouseEvent) {
+    const canvas = canvasModalRef.current;
+    if (!canvas) return;
+    isDrawingModal.current = true;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    const { x, y } = getCanvasCoords(e, canvas);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  }
+
+  function drawModal(e: React.TouchEvent | React.MouseEvent) {
+    if (!isDrawingModal.current) return;
+    const canvas = canvasModalRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const { x, y } = getCanvasCoords(e, canvas);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  }
+
+  function stopDrawingModal() {
+    isDrawingModal.current = false;
+  }
+
+  function clearModalSignature() {
+    const canvas = canvasModalRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function validateModalSignature() {
+    const canvas = canvasModalRef.current;
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL("image/png");
+    
+    if (sigModal === "tech") {
+      setSignatureData(dataUrl);
+    } else if (sigModal === "client") {
+      setSignatureClient(dataUrl);
+    }
+    
+    setSigModal(null);
+  }
 
   // ── Génération PDF ──
   async function generatePdfBlob(): Promise<Blob> {
@@ -156,13 +228,9 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
   }
 
   function handleDownload() {
-    if (!previewUrl) return;
-    const a = document.createElement("a");
-    a.href = previewUrl;
-    a.download = `${rapport.numero_cm.replace(/\s/g, "_")}_${rapport.site?.nom || "rapport"}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    // Utilise la route serveur avec Content-Disposition: attachment
+    // (le blob URL + <a download> ne fonctionne pas sur iPad Safari)
+    window.open(`/rapports/${rapport.id}/pdf?download=1`, '_blank');
   }
 
   function closePreview() {
@@ -208,18 +276,19 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
       {/* Overlay aperçu PDF */}
       {previewUrl && (
         <div className="fixed inset-0 z-[100] flex flex-col bg-black/80">
-          <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-border">
+          {/* Barre d'actions — toujours accessible, z-index au-dessus de l'iframe */}
+          <div className="relative z-10 flex items-center justify-between px-4 py-3 bg-white border-b border-border safe-area-top">
             <h2 className="text-sm font-bold">Aperçu du rapport</h2>
             <div className="flex gap-2">
               <button
                 onClick={handleDownload}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-light"
+                className="rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white hover:bg-primary-light touch-manipulation"
               >
                 📥 Télécharger
               </button>
               <button
                 onClick={closePreview}
-                className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-slate-50"
+                className="rounded-lg border border-border px-4 py-3 text-sm font-semibold hover:bg-slate-50 touch-manipulation"
               >
                 ✕ Fermer
               </button>
@@ -232,6 +301,70 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
           />
         </div>
       )}
+
+      {/* Modal signature plein écran */}
+      {sigModal !== null && (
+        <div className="fixed inset-0 z-[200] flex flex-col bg-white">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-slate-50">
+            <button
+              onClick={() => setSigModal(null)}
+              className="text-sm text-muted hover:text-foreground"
+            >
+              ✕ Annuler
+            </button>
+            <h3 className="text-sm font-bold">
+              Signature {sigModal === "tech" ? rapport.technicien : rapport.client?.nom || "Client"}
+            </h3>
+            <button
+              onClick={clearModalSignature}
+              className="text-sm text-danger hover:text-red-700"
+            >
+              Effacer
+            </button>
+          </div>
+
+          {/* Instruction */}
+          <p className="text-center text-xs text-muted py-2">Signez dans la zone ci-dessous</p>
+
+          {/* Canvas */}
+          <div className="flex-1 flex items-center justify-center px-4">
+            <canvas
+              ref={canvasModalRef}
+              width={600}
+              height={280}
+              className="w-full max-h-[50vh] rounded-xl border-2 border-dashed border-primary bg-slate-50 touch-none cursor-crosshair"
+              onMouseDown={startDrawingModal}
+              onMouseMove={drawModal}
+              onMouseUp={stopDrawingModal}
+              onMouseLeave={stopDrawingModal}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                startDrawingModal(e);
+              }}
+              onTouchMove={(e) => {
+                e.preventDefault();
+                drawModal(e);
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                stopDrawingModal();
+              }}
+            />
+          </div>
+
+          {/* Bouton valider */}
+          <div className="px-4 pb-6 pt-3">
+            <button
+              onClick={validateModalSignature}
+              className="w-full rounded-xl bg-primary py-4 text-base font-bold text-white hover:bg-primary-light"
+            >
+              ✓ Valider la signature
+            </button>
+          </div>
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold mb-2">Finaliser le rapport</h1>
       <p className="text-sm text-muted mb-6">
         {rapport.numero_cm} · {rapport.site?.nom}
@@ -357,56 +490,64 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
         <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-bold">✍️ Technicien</h2>
+            {signatureData && (
+              <button
+                type="button"
+                onClick={clearSignature}
+                className="text-xs text-danger hover:underline"
+              >
+                Effacer et resigner
+              </button>
+            )}
+          </div>
+          <p className="text-sm text-muted mb-3">{rapport.technicien}</p>
+          {signatureData ? (
+            <img
+              src={signatureData}
+              alt="Signature technicien"
+              className="w-full h-24 object-contain rounded-lg border border-border bg-white"
+            />
+          ) : (
             <button
               type="button"
-              onClick={clearSignature}
-              className="text-xs text-danger hover:underline"
+              onClick={() => openSigModal("tech")}
+              className="w-full h-24 rounded-lg border-2 border-dashed border-primary bg-slate-50 text-sm text-primary font-medium hover:bg-primary/5 transition-colors"
             >
-              Effacer
+              ✍️ Appuyer pour signer
             </button>
-          </div>
-          <p className="text-sm text-muted mb-2">{rapport.technicien}</p>
-          <canvas
-            ref={canvasRef}
-            width={300}
-            height={120}
-            className="w-full rounded-lg border-2 border-dashed border-border bg-slate-50 touch-none"
-            onMouseDown={startDrawingTech}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-            onTouchStart={startDrawingTech}
-            onTouchMove={draw}
-            onTouchEnd={stopDrawing}
-          />
+          )}
         </div>
 
         {/* Signature Client */}
         <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-bold">✍️ Client</h2>
+            {signatureClient && (
+              <button
+                type="button"
+                onClick={clearSignatureClient}
+                className="text-xs text-danger hover:underline"
+              >
+                Effacer et resigner
+              </button>
+            )}
+          </div>
+          <p className="text-sm text-muted mb-3">{rapport.client?.nom || "Client"}</p>
+          {signatureClient ? (
+            <img
+              src={signatureClient}
+              alt="Signature client"
+              className="w-full h-24 object-contain rounded-lg border border-border bg-white"
+            />
+          ) : (
             <button
               type="button"
-              onClick={clearSignatureClient}
-              className="text-xs text-danger hover:underline"
+              onClick={() => openSigModal("client")}
+              className="w-full h-24 rounded-lg border-2 border-dashed border-primary bg-slate-50 text-sm text-primary font-medium hover:bg-primary/5 transition-colors"
             >
-              Effacer
+              ✍️ Appuyer pour signer
             </button>
-          </div>
-          <p className="text-sm text-muted mb-2">{rapport.client?.nom || "Client"}</p>
-          <canvas
-            ref={canvasClientRef}
-            width={300}
-            height={120}
-            className="w-full rounded-lg border-2 border-dashed border-border bg-slate-50 touch-none"
-            onMouseDown={startDrawingClient}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-            onTouchStart={startDrawingClient}
-            onTouchMove={draw}
-            onTouchEnd={stopDrawing}
-          />
+          )}
         </div>
       </div>
 

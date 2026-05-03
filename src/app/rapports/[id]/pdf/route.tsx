@@ -4,10 +4,12 @@ import { RapportPDF } from '@/lib/pdf/rapport-pdf';
 import type { RapportComplet } from '@/lib/types';
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const url = new URL(request.url);
+  const forceDownload = url.searchParams.get('download') === '1';
   const supabase = await createClient();
 
   const { data: rapport } = await supabase
@@ -36,10 +38,11 @@ export async function GET(
   );
 
   const filename = `${rapport.numero_cm.replace(/\s/g, '_')}.pdf`;
+  const disposition = forceDownload ? 'attachment' : 'inline';
   return new Response(new Uint8Array(buffer), {
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="${filename}"`,
+      'Content-Disposition': `${disposition}; filename="${filename}"`,
     },
   });
 }

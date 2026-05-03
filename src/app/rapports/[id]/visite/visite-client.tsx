@@ -497,13 +497,7 @@ export function VisiteClient({ rapport }: { rapport: RapportComplet }) {
   }
 
   function handleDownload() {
-    if (!previewUrl) return;
-    const a = document.createElement("a");
-    a.href = previewUrl;
-    a.download = `${rapport.numero_cm.replace(/\s/g, "_")}_visite.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    window.open(`/rapports/${rapport.id}/pdf?download=1`, '_blank');
   }
 
   function closePreview() {
@@ -516,20 +510,20 @@ export function VisiteClient({ rapport }: { rapport: RapportComplet }) {
       {/* Overlay aperçu PDF */}
       {previewUrl && (
         <div className="fixed inset-0 z-[100] flex flex-col bg-black/80">
-          <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-border">
+          <div className="relative z-10 flex items-center justify-between px-4 py-3 bg-white border-b border-border safe-area-top">
             <h2 className="text-sm font-bold">Aperçu visite technique</h2>
             <div className="flex gap-2">
               <button
                 onClick={handleDownload}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-light"
+                className="rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white hover:bg-primary-light touch-manipulation"
               >
-                Télécharger
+                📥 Télécharger
               </button>
               <button
                 onClick={closePreview}
-                className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-slate-50"
+                className="rounded-lg border border-border px-4 py-3 text-sm font-semibold hover:bg-slate-50 touch-manipulation"
               >
-                Fermer
+                ✕ Fermer
               </button>
             </div>
           </div>
