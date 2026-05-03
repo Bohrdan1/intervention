@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { DeleteButton } from "./delete-button";
+import { ArchiveButton } from "./archive-button";
 import Image from "next/image";
 import type { PhotoItem, VisiteData, PorteVisite, RapportComplet, PieceUtilisee } from "@/lib/types";
 
@@ -393,12 +394,12 @@ export default async function RapportDetailPage({
               Modifier l&apos;intervention
             </Link>
             {rapport.statut === 'finalise' ? (
-              <Link
-                href={`/rapports/${rapport.id}/pdf`}
+              <a
+                href={`/rapports/${rapport.id}/pdf?download=1`}
                 className="flex-1 rounded-xl bg-primary py-3 text-center text-sm font-semibold text-white hover:bg-primary-light"
               >
-                PDF
-              </Link>
+                📥 Télécharger PDF
+              </a>
             ) : (
               <form
                 action={async () => {
@@ -409,7 +410,7 @@ export default async function RapportDetailPage({
                     .update({ statut: 'finalise', updated_at: new Date().toISOString() })
                     .eq('id', rapport.id);
                   revalidatePath(`/rapports/${rapport.id}`);
-                  redirect(`/rapports/${rapport.id}/pdf`);
+                  redirect(`/rapports/${rapport.id}/pdf?download=1`);
                 }}
                 className="flex-1"
               >
@@ -431,12 +432,12 @@ export default async function RapportDetailPage({
               Modifier les contrôles
             </Link>
             {rapport.statut === 'finalise' ? (
-              <Link
-                href={`/rapports/${rapport.id}/pdf`}
+              <a
+                href={`/rapports/${rapport.id}/pdf?download=1`}
                 className="flex-1 rounded-xl bg-primary py-3 text-center text-sm font-semibold text-white hover:bg-primary-light"
               >
-                PDF
-              </Link>
+                📥 Télécharger PDF
+              </a>
             ) : (
               <form
                 action={async () => {
@@ -447,7 +448,7 @@ export default async function RapportDetailPage({
                     .update({ statut: 'finalise', updated_at: new Date().toISOString() })
                     .eq('id', rapport.id);
                   revalidatePath(`/rapports/${rapport.id}`);
-                  redirect(`/rapports/${rapport.id}/pdf`);
+                  redirect(`/rapports/${rapport.id}/pdf?download=1`);
                 }}
                 className="flex-1"
               >
@@ -463,8 +464,13 @@ export default async function RapportDetailPage({
         )}
       </div>
 
-      {/* Supprimer */}
+      {/* Archiver */}
       <div className="mt-4">
+        <ArchiveButton rapportId={rapport.id} isArchived={!!rapport.archived_at} />
+      </div>
+
+      {/* Supprimer */}
+      <div className="mt-2">
         <DeleteButton rapportId={rapport.id} isFinalise={rapport.statut === "finalise"} />
       </div>
     </div>
