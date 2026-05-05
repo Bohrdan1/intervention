@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Pagination } from "@/components/ui/pagination";
 
-type FilterType = "tous" | "maintenance" | "intervention" | "visite" | "brouillon" | "finalise";
+type FilterType = "tous" | "maintenance" | "intervention" | "visite" | "brouillon" | "finalise" | "archive";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -14,6 +14,7 @@ interface RapportItem {
   date_intervention: string;
   type_rapport: string;
   statut: string;
+  archived_at: string | null;
   client: { nom: string } | null;
   site: { nom: string } | null;
   controles: { id: string }[] | null;
@@ -27,12 +28,18 @@ export function RapportList({ rapports }: { rapports: RapportItem[] }) {
   const filtered = useMemo(() => {
     let result = rapports;
 
+    // Exclure les archivés pour tous les filtres sauf "archive"
+    if (filter !== "archive") {
+      result = result.filter((r) => !r.archived_at);
+    }
+
     // Filtre par type/statut
     if (filter === "maintenance") result = result.filter((r) => r.type_rapport === "maintenance");
     else if (filter === "intervention") result = result.filter((r) => r.type_rapport === "intervention");
     else if (filter === "visite") result = result.filter((r) => r.type_rapport === "visite");
     else if (filter === "brouillon") result = result.filter((r) => r.statut === "brouillon");
     else if (filter === "finalise") result = result.filter((r) => r.statut === "finalise");
+    else if (filter === "archive") result = result.filter((r) => !!r.archived_at);
 
     // Recherche texte
     if (search.trim()) {
@@ -73,6 +80,7 @@ export function RapportList({ rapports }: { rapports: RapportItem[] }) {
     { value: "visite", label: "Visites" },
     { value: "brouillon", label: "Brouillons" },
     { value: "finalise", label: "Finalisés" },
+    { value: "archive", label: "📦 Archivés" },
   ];
 
   return (

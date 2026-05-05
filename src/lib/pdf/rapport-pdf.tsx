@@ -564,110 +564,147 @@ function PageIntervention({
 
   return (
     <Page size="A4" style={s.page}>
-      {/* En-tete avec logo */}
+      {/* ── En-tête : logo gauche + référence droite ── */}
       <View style={s.header}>
-        <Image style={{ width: 90, height: 50 }} src={LOGO_AAC_BASE64} />
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 9 }}>{rapport.numero_cm}</Text>
-          <Text style={{ fontSize: 9 }}>LE {formatDate(rapport.date_intervention)}</Text>
+        <View>
+          <Image style={{ width: 90, height: 50 }} src={LOGO_AAC_BASE64} />
+          <Text style={{ fontSize: 7, color: '#555', marginTop: 2 }}>Automatisme et Agencement Calédonien</Text>
         </View>
-        <View style={{ textAlign: 'right' }}>
-          <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>{rapport.client.nom}</Text>
-          {rapport.client.sous_titre && (
-            <Text style={{ fontSize: 8 }}>{rapport.client.sous_titre}</Text>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold' }}>Réf : {rapport.numero_cm}</Text>
+          <Text style={{ fontSize: 9 }}>Date : {formatDate(rapport.date_intervention)}</Text>
+          <Text style={{ fontSize: 9 }}>Page {pageNum} / {totalPages}</Text>
+        </View>
+      </View>
+
+      {/* ── Titre ── */}
+      <Text style={{ ...s.title, fontSize: 13, letterSpacing: 1 }}>RAPPORT D&apos;INTERVENTION</Text>
+
+      {/* ── 1. Informations générales ── */}
+      <View style={{ marginBottom: 12 }}>
+        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
+          1. INFORMATIONS GÉNÉRALES
+        </Text>
+        <View style={s.infoRow}>
+          <Text style={{ width: 130, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Site / Client</Text>
+          <Text style={{ fontSize: 9 }}>: {rapport.client.nom}{rapport.site.nom !== rapport.client.nom ? ` — ${rapport.site.nom}` : ''}</Text>
+        </View>
+        {rapport.site.adresse ? (
+          <View style={s.infoRow}>
+            <Text style={{ width: 130, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Adresse</Text>
+            <Text style={{ fontSize: 9 }}>: {rapport.site.adresse}</Text>
+          </View>
+        ) : null}
+        <View style={s.infoRow}>
+          <Text style={{ width: 130, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Technicien</Text>
+          <Text style={{ fontSize: 9 }}>: {rapport.technicien}</Text>
+        </View>
+        <View style={s.infoRow}>
+          <Text style={{ width: 130, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Date d&apos;intervention</Text>
+          <Text style={{ fontSize: 9 }}>: {formatDate(rapport.date_intervention)}</Text>
+        </View>
+        <View style={s.infoRow}>
+          <Text style={{ width: 130, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Bon de commande / Contrat</Text>
+          <Text style={{ fontSize: 9 }}>: {rapport.numero_cm}</Text>
+        </View>
+      </View>
+
+      {/* ── 2. Demande client / Description du problème ── */}
+      <View style={{ marginBottom: 12 }}>
+        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
+          2. DEMANDE CLIENT / DESCRIPTION DU PROBLÈME
+        </Text>
+        {rapport.installation && (
+          <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Oblique', marginBottom: 3 }}>
+            {rapport.installation.type_porte}{rapport.installation.modele ? ` ${rapport.installation.modele}` : ''} — {rapport.installation.repere}
+          </Text>
+        )}
+        <Text style={{ fontSize: 9, lineHeight: 1.5 }}>
+          {rapport.description_probleme || 'Non renseigné'}
+        </Text>
+      </View>
+
+      {/* ── 3. Diagnostic ── */}
+      <View style={{ marginBottom: 12 }}>
+        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
+          3. DIAGNOSTIC
+        </Text>
+        <Text style={{ fontSize: 9, lineHeight: 1.5 }}>
+          {rapport.diagnostic || 'Non renseigné'}
+        </Text>
+      </View>
+
+      {/* ── 4. Travaux effectués ── */}
+      <View style={{ marginBottom: 12 }}>
+        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
+          4. TRAVAUX EFFECTUÉS
+        </Text>
+        <Text style={{ fontSize: 9, lineHeight: 1.5 }}>
+          {rapport.travaux_effectues || 'Non renseigné'}
+        </Text>
+      </View>
+
+      {/* ── 5. Pièces et matériel utilisé ── */}
+      <View style={{ marginBottom: 12 }}>
+        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 6, textDecoration: 'underline' }}>
+          5. PIÈCES ET MATÉRIEL UTILISÉ
+        </Text>
+        <View style={s.tableOuter}>
+          {/* Header */}
+          <View style={s.headerRow}>
+            <View style={{ width: '42%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
+              <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Désignation</Text>
+            </View>
+            <View style={{ width: '20%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
+              <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Référence</Text>
+            </View>
+            <View style={{ width: '10%', borderRightWidth: 0.5, borderRightColor: '#999', paddingVertical: 3, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Qté</Text>
+            </View>
+            <View style={{ width: '28%', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
+              <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Montant</Text>
+            </View>
+          </View>
+          {/* Lignes */}
+          {pieces.length > 0 ? pieces.map((piece, i) => (
+            <View key={i} style={i % 2 === 0 ? s.row : s.rowAlt}>
+              <View style={{ width: '42%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
+                <Text style={{ fontSize: 9 }}>{piece.nom}</Text>
+              </View>
+              <View style={{ width: '20%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
+                <Text style={{ fontSize: 9 }}>{piece.reference || '—'}</Text>
+              </View>
+              <View style={{ width: '10%', borderRightWidth: 0.5, borderRightColor: '#999', paddingVertical: 3, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 9 }}>{piece.quantite}</Text>
+              </View>
+              <View style={{ width: '28%', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
+                <Text style={{ fontSize: 9 }}>—</Text>
+              </View>
+            </View>
+          )) : (
+            <View style={s.row}>
+              <View style={{ flex: 1, paddingLeft: 6, paddingVertical: 4 }}>
+                <Text style={{ fontSize: 9, color: '#888', fontFamily: 'Helvetica-Oblique' }}>Aucune pièce utilisée</Text>
+              </View>
+            </View>
           )}
         </View>
       </View>
 
-      {/* Titre */}
-      <Text style={s.title}>Rapport d&apos;intervention</Text>
-
-      {/* Infos site */}
-      <View style={s.infoBlock}>
-        <View style={s.infoRow}>
-          <Text style={{ width: 90, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Site</Text>
-          <Text style={{ fontSize: 9 }}>: {rapport.site.nom}</Text>
-        </View>
-        {rapport.installation && (
-          <View style={s.infoRow}>
-            <Text style={{ width: 90, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Porte</Text>
-            <Text style={{ fontSize: 9 }}>: {rapport.installation.repere} ({rapport.installation.type_porte}{rapport.installation.modele ? ` - ${rapport.installation.modele}` : ''})</Text>
-          </View>
-        )}
-        <View style={s.infoRow}>
-          <Text style={{ width: 90, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Technicien</Text>
-          <Text style={{ fontSize: 9 }}>: {rapport.technicien}</Text>
-        </View>
-      </View>
-
-      {/* Description du problème */}
-      <View style={{ marginBottom: 12 }}>
-        <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
-          Demande client / Description du probleme
-        </Text>
-        <Text style={{ fontSize: 10, lineHeight: 1.5 }}>
-          {rapport.description_probleme || 'Non renseigne'}
-        </Text>
-      </View>
-
-      {/* Diagnostic */}
-      {rapport.diagnostic ? (
+      {/* ── Notes / Observations ── */}
+      {(rapport.observations_visite || rapport.recommandations) ? (
         <View style={{ marginBottom: 12 }}>
-          <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
-            Diagnostic
+          <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
+            NOTES / OBSERVATIONS
           </Text>
-          <Text style={{ fontSize: 10, lineHeight: 1.5 }}>
-            {rapport.diagnostic}
-          </Text>
+          {rapport.observations_visite ? (
+            <Text style={{ fontSize: 9, lineHeight: 1.5 }}>{rapport.observations_visite}</Text>
+          ) : null}
+          {rapport.recommandations ? (
+            <Text style={{ fontSize: 9, lineHeight: 1.5, marginTop: 3 }}>{rapport.recommandations}</Text>
+          ) : null}
         </View>
       ) : null}
-
-      {/* Travaux effectués */}
-      <View style={{ marginBottom: 16 }}>
-        <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', marginBottom: 6, textDecoration: 'underline' }}>
-          Travaux effectues
-        </Text>
-        <Text style={{ fontSize: 10, lineHeight: 1.5 }}>
-          {rapport.travaux_effectues || 'Non renseigne'}
-        </Text>
-      </View>
-
-      {/* Pièces utilisées */}
-      {pieces.length > 0 && (
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', marginBottom: 6, textDecoration: 'underline' }}>
-            Pieces et materiel utilise
-          </Text>
-          <View style={s.tableOuter}>
-            {/* Header */}
-            <View style={s.headerRow}>
-              <View style={{ width: '50%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
-                <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Designation</Text>
-              </View>
-              <View style={{ width: '15%', borderRightWidth: 0.5, borderRightColor: '#999', paddingVertical: 3, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Qte</Text>
-              </View>
-              <View style={{ width: '35%', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
-                <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Reference</Text>
-              </View>
-            </View>
-            {/* Lignes */}
-            {pieces.map((piece, i) => (
-              <View key={i} style={i % 2 === 0 ? s.row : s.rowAlt}>
-                <View style={{ width: '50%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 9 }}>{piece.nom}</Text>
-                </View>
-                <View style={{ width: '15%', borderRightWidth: 0.5, borderRightColor: '#999', paddingVertical: 3, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 9 }}>{piece.quantite}</Text>
-                </View>
-                <View style={{ width: '35%', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 9 }}>{piece.reference || ''}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
 
       {/* Photos */}
       <PhotosSection photos={(rapport.photos || []).filter((p) => p.context === 'intervention')} title="Photos" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { saveIntervention } from "./actions";
 import type { PieceUtilisee, PhotoItem, RapportComplet, Installation } from "@/lib/types";
@@ -32,6 +32,9 @@ export function InterventionClient({
   );
   const [photos, setPhotos] = useState<PhotoItem[]>(rapport.photos || []);
   const [saving, setSaving] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function handleSelectInstallation(inst: Installation) {
     setSelectedInstallation(inst.id);
@@ -56,6 +59,36 @@ export function InterventionClient({
       return next;
     });
   }
+
+  const autoSave = useCallback(async () => {
+    setAutoSaveStatus("saving");
+    try {
+      const piecesClean = pieces.filter((p) => p.nom.trim() !== "");
+      await saveIntervention(
+        rapport.id,
+        selectedInstallation,
+        description,
+        diagnostic,
+        travaux,
+        piecesClean,
+        photos
+      );
+      setLastSaved(new Date());
+      setAutoSaveStatus("saved");
+    } catch {
+      setAutoSaveStatus("idle");
+    }
+  }, [rapport.id, selectedInstallation, description, diagnostic, travaux, pieces, photos]);
+
+  useEffect(() => {
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      autoSave();
+    }, 45000);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [description, diagnostic, travaux, pieces, selectedInstallation, autoSave]);
 
   async function handleSave() {
     setSaving(true);
@@ -252,6 +285,18 @@ export function InterventionClient({
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Indicateur auto-save */}
+      <div className="mb-16 text-center">
+        {autoSaveStatus === "saving" && (
+          <p className="text-xs text-muted">Sauvegarde automatique...</p>
+        )}
+        {autoSaveStatus === "saved" && lastSaved && (
+          <p className="text-xs text-muted">
+            Sauvegardé automatiquement à {lastSaved.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+          </p>
+        )}
       </div>
 
       {/* Actions fixes en bas */}

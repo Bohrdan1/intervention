@@ -32,3 +32,23 @@ export async function deleteRapport(rapportId: string) {
 
   revalidatePath("/");
 }
+
+export async function archiveRapport(rapportId: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("rapports")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", rapportId);
+  revalidatePath("/");
+  revalidatePath(`/rapports/${rapportId}`);
+}
+
+export async function restoreRapport(rapportId: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("rapports")
+    .update({ archived_at: null })
+    .eq("id", rapportId);
+  revalidatePath("/");
+  revalidatePath(`/rapports/${rapportId}`);
+}
