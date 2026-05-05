@@ -34,9 +34,14 @@ interface ControleData {
 }
 
 const BBG_OPTIONS = [
-  { value: "déverrouillage", label: "Déverrouillage", color: "border-green-300 text-green-700", activeColor: "bg-green-100 border-green-500 text-green-800 font-semibold" },
+  { value: "déverrouillage et ouverture", label: "Déverr. + Ouverture", color: "border-green-300 text-green-700", activeColor: "bg-green-100 border-green-500 text-green-800 font-semibold" },
   { value: "ouverture", label: "Ouverture", color: "border-blue-300 text-blue-700", activeColor: "bg-blue-100 border-blue-500 text-blue-800 font-semibold" },
-  { value: "verrouillé", label: "Verrouillé", color: "border-red-300 text-red-600", activeColor: "bg-red-100 border-red-500 text-red-800 font-semibold" },
+  { value: "non fonctionnel", label: "Non fonctionnel", color: "border-red-300 text-red-600", activeColor: "bg-red-100 border-red-500 text-red-800 font-semibold" },
+];
+
+const SSI_OPTIONS = [
+  { value: "raccordé", label: "Raccordé", color: "border-green-300 text-green-700", activeColor: "bg-green-100 border-green-500 text-green-800 font-semibold" },
+  { value: "non raccordé", label: "Non raccordé", color: "border-red-300 text-red-600", activeColor: "bg-red-100 border-red-500 text-red-800 font-semibold" },
 ];
 
 export function ChecklistClient({
@@ -206,14 +211,17 @@ export function ChecklistClient({
         </h3>
         {current.points_controle.map((point, i) => {
           const isBBG = point.nom.startsWith("boitier vert");
+          const isSSI = point.nom.startsWith("SSI");
+          const isSpecial = isBBG || isSSI;
+          const specialOptions = isBBG ? BBG_OPTIONS : isSSI ? SSI_OPTIONS : [];
           return (
             <div key={i} className="rounded-xl border border-border bg-white p-3 shadow-sm">
               <p className="text-sm font-medium mb-2">{point.nom}</p>
 
-              {isBBG ? (
-                /* Rendu spécial BBG : 3 états */
+              {isSpecial ? (
+                /* Rendu spécial BBG / SSI : boutons radio observation */
                 <div className="flex gap-1.5">
-                  {BBG_OPTIONS.map((opt) => (
+                  {specialOptions.map((opt) => (
                     <button
                       key={opt.value}
                       type="button"

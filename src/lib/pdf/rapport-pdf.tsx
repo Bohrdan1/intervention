@@ -378,19 +378,22 @@ function PageControle({
         {/* Points de controle */}
         {controle.points_controle.map((pt, i) => {
           const isBBG = pt.nom.startsWith('boitier vert');
+          const isSSI = pt.nom.startsWith('SSI');
+          const isSpecial = isBBG || isSSI;
+          const isNegative = pt.observation === 'non fonctionnel' || pt.observation === 'non raccordé';
           return (
             <View key={i} style={i % 2 === 0 ? s.row : s.rowAlt}>
               <View style={s.cellNom}>
                 <Text style={{ fontSize: 8 }}>{pt.nom}</Text>
               </View>
               <View style={s.cellEtat}>
-                {isBBG
-                  ? <Text style={{ fontSize: 7, textAlign: 'center' }}>{pt.observation || '—'}</Text>
+                {isSpecial
+                  ? <Text style={{ fontSize: 7, textAlign: 'center', color: isNegative ? '#cc0000' : '#000' }}>{pt.observation || '—'}</Text>
                   : <RenderEtat etat={pt.etat} />
                 }
               </View>
               <View style={s.cellObs}>
-                <Text style={{ fontSize: 8 }}>{isBBG ? '' : pt.observation}</Text>
+                <Text style={{ fontSize: 8 }}>{isSpecial ? '' : pt.observation}</Text>
               </View>
             </View>
           );
