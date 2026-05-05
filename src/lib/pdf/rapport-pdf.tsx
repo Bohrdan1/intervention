@@ -68,8 +68,18 @@ const s = StyleSheet.create({
     marginTop: 10,
     marginBottom: 14,
   },
+  // Titre compact (pour pages controle)
+  titleCompact: {
+    fontSize: 11,
+    fontFamily: 'Helvetica-Bold',
+    textAlign: 'center',
+    textDecoration: 'underline',
+    marginTop: 4,
+    marginBottom: 8,
+  },
   // Infos installation
   infoBlock: { marginBottom: 10 },
+  infoBlockCompact: { marginBottom: 6 },
   infoRow: { flexDirection: 'row', marginBottom: 1 },
   // ── TABLEAU ──
   table: {
@@ -77,13 +87,13 @@ const s = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    minHeight: 20,
+    minHeight: 16,
     borderBottomWidth: 0.5,
     borderBottomColor: '#ccc',
   },
   rowAlt: {
     flexDirection: 'row',
-    minHeight: 20,
+    minHeight: 16,
     borderBottomWidth: 0.5,
     borderBottomColor: '#ccc',
     backgroundColor: '#f5f5f5',
@@ -91,14 +101,14 @@ const s = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     backgroundColor: '#e0e0e0',
-    minHeight: 22,
+    minHeight: 18,
     borderBottomWidth: 1,
     borderBottomColor: '#000',
   },
   erpHeaderRow: {
     flexDirection: 'row',
     backgroundColor: '#e0e0e0',
-    minHeight: 22,
+    minHeight: 18,
     borderTopWidth: 1,
     borderTopColor: '#000',
     borderBottomWidth: 1,
@@ -109,22 +119,22 @@ const s = StyleSheet.create({
     width: '40%',
     borderRightWidth: 0.5,
     borderRightColor: '#999',
-    paddingLeft: 6,
-    paddingVertical: 3,
+    paddingLeft: 5,
+    paddingVertical: 2,
     justifyContent: 'center',
   },
   cellEtat: {
     width: '15%',
     borderRightWidth: 0.5,
     borderRightColor: '#999',
-    paddingVertical: 3,
+    paddingVertical: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cellObs: {
     width: '45%',
-    paddingLeft: 6,
-    paddingVertical: 3,
+    paddingLeft: 5,
+    paddingVertical: 2,
     justifyContent: 'center',
   },
   // Bordure extérieure du tableau
@@ -311,46 +321,42 @@ function PageControle({
   photos: PhotoItem[];
 }) {
   return (
-    <Page size="A4" style={s.page}>
+    <Page size="A4" style={{ ...s.page, paddingTop: 20, paddingBottom: 55 }}>
       {/* En-tete avec logo */}
-      <View style={s.header}>
-        <Image style={{ width: 90, height: 50 }} src={LOGO_AAC_BASE64} />
+      <View style={{ ...s.header, marginBottom: 4 }}>
+        <Image style={{ width: 75, height: 42 }} src={LOGO_AAC_BASE64} />
         <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 9 }}>{rapport.numero_cm}</Text>
-          <Text style={{ fontSize: 9 }}>LE {formatDate(rapport.date_intervention)}</Text>
+          <Text style={{ fontSize: 8 }}>{rapport.numero_cm}</Text>
+          <Text style={{ fontSize: 8 }}>LE {formatDate(rapport.date_intervention)}</Text>
         </View>
         <View style={{ textAlign: 'right' }}>
-          <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>{rapport.client.nom}</Text>
+          <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 8 }}>{rapport.client.nom}</Text>
           {rapport.client.sous_titre && (
-            <Text style={{ fontSize: 8 }}>{rapport.client.sous_titre}</Text>
+            <Text style={{ fontSize: 7 }}>{rapport.client.sous_titre}</Text>
           )}
         </View>
       </View>
 
       {/* Titre */}
-      <Text style={s.title}>Compte rendu de maintenance n° {rapport.numero_cm}</Text>
+      <Text style={s.titleCompact}>Compte rendu de maintenance n° {rapport.numero_cm}</Text>
 
       {/* Infos installation */}
-      <View style={s.infoBlock}>
+      <View style={s.infoBlockCompact}>
         <View style={s.infoRow}>
-          <Text style={{ width: 90, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Site</Text>
-          <Text style={{ fontSize: 9 }}>: {rapport.site.nom}</Text>
+          <Text style={{ width: 80, fontFamily: 'Helvetica-BoldOblique', fontSize: 8 }}>Site</Text>
+          <Text style={{ fontSize: 8 }}>: {rapport.site.nom}</Text>
         </View>
         <View style={s.infoRow}>
-          <Text style={{ width: 90, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>installation</Text>
-          <Text style={{ fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>: {installation.repere}</Text>
+          <Text style={{ width: 80, fontFamily: 'Helvetica-BoldOblique', fontSize: 8 }}>Installation</Text>
+          <Text style={{ fontFamily: 'Helvetica-BoldOblique', fontSize: 8 }}>: {installation.repere}</Text>
         </View>
         <View style={s.infoRow}>
-          <Text style={{ width: 90, fontFamily: 'Helvetica-Oblique', fontSize: 9 }}>Type</Text>
-          <Text style={{ fontSize: 9 }}>: {installation.type_porte}</Text>
+          <Text style={{ width: 80, fontFamily: 'Helvetica-Oblique', fontSize: 8 }}>Type</Text>
+          <Text style={{ fontSize: 8 }}>: {installation.type_porte}{installation.modele ? ` - ${installation.modele}` : ''}</Text>
         </View>
         <View style={s.infoRow}>
-          <Text style={{ width: 90, fontFamily: 'Helvetica-Oblique', fontSize: 9 }}>Modele</Text>
-          <Text style={{ fontSize: 9 }}>: {installation.modele || ''}</Text>
-        </View>
-        <View style={s.infoRow}>
-          <Text style={{ width: 90, fontFamily: 'Helvetica-Oblique', fontSize: 9 }}>Batterie</Text>
-          <Text style={{ fontSize: 9 }}>: {installation.avec_batterie ? 'Oui' : 'Non'}</Text>
+          <Text style={{ width: 80, fontFamily: 'Helvetica-Oblique', fontSize: 8 }}>Batterie</Text>
+          <Text style={{ fontSize: 8 }}>: {installation.avec_batterie ? 'Oui' : 'Non'}</Text>
         </View>
       </View>
 
@@ -359,13 +365,13 @@ function PageControle({
         {/* Header */}
         <View style={s.headerRow}>
           <View style={s.cellNom}>
-            <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Points de controle</Text>
+            <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 8 }}>Points de controle</Text>
           </View>
           <View style={s.cellEtat}>
-            <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Etat</Text>
+            <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 8 }}>Etat</Text>
           </View>
           <View style={s.cellObs}>
-            <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>observations</Text>
+            <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 8 }}>Observations</Text>
           </View>
         </View>
 
@@ -375,16 +381,16 @@ function PageControle({
           return (
             <View key={i} style={i % 2 === 0 ? s.row : s.rowAlt}>
               <View style={s.cellNom}>
-                <Text style={{ fontSize: 9 }}>{pt.nom}</Text>
+                <Text style={{ fontSize: 8 }}>{pt.nom}</Text>
               </View>
               <View style={s.cellEtat}>
                 {isBBG
-                  ? <Text style={{ fontSize: 8, textAlign: 'center' }}>{pt.observation || '—'}</Text>
+                  ? <Text style={{ fontSize: 7, textAlign: 'center' }}>{pt.observation || '—'}</Text>
                   : <RenderEtat etat={pt.etat} />
                 }
               </View>
               <View style={s.cellObs}>
-                <Text style={{ fontSize: 9 }}>{isBBG ? '' : pt.observation}</Text>
+                <Text style={{ fontSize: 8 }}>{isBBG ? '' : pt.observation}</Text>
               </View>
             </View>
           );
@@ -393,10 +399,10 @@ function PageControle({
         {/* Section ERP */}
         <View style={s.erpHeaderRow}>
           <View style={s.cellNom}>
-            <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 8.5 }}>normes ERP : CO48, EN16005</Text>
+            <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 8 }}>Normes ERP : CO48, EN16005</Text>
           </View>
           <View style={s.cellEtat}>
-            <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 8.5, color: '#cc0000' }}>conformite*</Text>
+            <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 8, color: '#cc0000' }}>conformite*</Text>
           </View>
           <View style={s.cellObs}>
             <Text></Text>
@@ -406,23 +412,23 @@ function PageControle({
         {controle.points_erp.map((pt, i) => (
           <View key={i} style={i % 2 === 0 ? s.row : s.rowAlt}>
             <View style={s.cellNom}>
-              <Text style={{ fontFamily: 'Helvetica-Oblique', textDecoration: 'underline', fontSize: 9 }}>{pt.nom}</Text>
+              <Text style={{ fontFamily: 'Helvetica-Oblique', textDecoration: 'underline', fontSize: 8 }}>{pt.nom}</Text>
             </View>
             <View style={s.cellEtat}>
               {pt.conforme ? <CheckMark /> : <CrossMark />}
             </View>
             <View style={s.cellObs}>
-              <Text style={{ fontSize: 9, color: pt.conforme ? '#000' : '#cc0000' }}>{pt.commentaire || ''}</Text>
+              <Text style={{ fontSize: 8, color: pt.conforme ? '#000' : '#cc0000' }}>{pt.commentaire || ''}</Text>
             </View>
           </View>
         ))}
       </View>
 
       {/* Notes */}
-      <Text style={s.noteText}>
+      <Text style={{ fontSize: 6.5, color: '#cc0000', fontFamily: 'Helvetica-BoldOblique', marginTop: 3, marginBottom: 1 }}>
         *si a l&apos;issu de l intervention l un de ces points s&apos;est revele impossible a satisfaire veuillez engager d urgence toute action necessaire pour la remise aux normes.
       </Text>
-      <Text style={s.noteSmall}>
+      <Text style={{ fontSize: 6.5, marginBottom: 1 }}>
         Correction {'->'} Intervention corrective realisee / <Text style={{ fontFamily: 'Helvetica-Bold' }}>Prevention</Text> {'->'} Intervention preventive conseillee
       </Text>
 
