@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface Site {
   id: string;
   nom: string;
   adresse?: string | null;
+  memo_prive?: string | null;
 }
 
 interface Props {
@@ -29,6 +30,9 @@ export function SiteEditItem({
   addInstallationForm,
 }: Props) {
   const [editing, setEditing] = useState(false);
+  const [editingMemo, setEditingMemo] = useState(false);
+  const [memo, setMemo] = useState(site.memo_prive ?? "");
+  const memoFormRef = useRef<HTMLFormElement>(null);
 
   return (
     <div className="rounded-lg border border-border p-3 bg-slate-50">
@@ -129,6 +133,52 @@ export function SiteEditItem({
               <button type="submit" className="text-xs text-danger hover:underline">×</button>
             </form>
           </div>
+        )}
+      </div>
+
+      {/* Mémo privé */}
+      <div className="mb-2">
+        {editingMemo ? (
+          <form
+            ref={memoFormRef}
+            action={async (fd) => {
+              fd.append("id", site.id);
+              fd.append("nom", site.nom);
+              fd.append("adresse", site.adresse ?? "");
+              await updateAction(fd);
+              setEditingMemo(false);
+            }}
+            className="mt-1"
+          >
+            <input type="hidden" name="memo_prive" value={memo} />
+            <textarea
+              value={memo}
+              onChange={(e) => setMemo(e.target.value)}
+              placeholder="Note privée (ex: envoyer copie du rapport à...)"
+              rows={2}
+              className="w-full rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs focus:border-amber-500 focus:outline-none resize-none"
+            />
+            <div className="flex gap-1 mt-1">
+              <button type="submit" className="rounded bg-primary px-2 py-0.5 text-xs text-white">✓ Enregistrer</button>
+              <button type="button" onClick={() => { setMemo(site.memo_prive ?? ""); setEditingMemo(false); }} className="rounded border border-border px-2 py-0.5 text-xs text-muted">Annuler</button>
+            </div>
+          </form>
+        ) : memo ? (
+          <div
+            onClick={() => setEditingMemo(true)}
+            className="mt-1 cursor-pointer rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800"
+            title="Cliquer pour modifier"
+          >
+            📝 {memo}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEditingMemo(true)}
+            className="mt-1 text-xs text-muted hover:text-amber-600"
+          >
+            + Note privée
+          </button>
         )}
       </div>
 

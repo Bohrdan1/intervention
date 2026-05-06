@@ -108,11 +108,16 @@ export default async function ClientsPage({
     const id = formData.get("id") as string;
     const nom = formData.get("nom") as string;
     const adresse = formData.get("adresse") as string;
+    const memo_prive = formData.get("memo_prive") as string | null;
     if (!id || !nom?.trim()) return;
-    await supabase.from("sites").update({
+    const updates: Record<string, unknown> = {
       nom: nom.trim(),
       adresse: adresse?.trim() || null,
-    }).eq("id", id);
+    };
+    if (memo_prive !== null) {
+      updates.memo_prive = memo_prive.trim() || null;
+    }
+    await supabase.from("sites").update(updates).eq("id", id);
     revalidatePath("/clients");
   }
 
@@ -282,7 +287,7 @@ export default async function ClientsPage({
 
               {/* Sites */}
               <div className="p-4 space-y-3">
-                {client.sites?.map((site: { id: string; nom: string; adresse?: string | null; installations?: { id: string; repere: string; type_porte: string; modele: string | null }[] }) => (
+                {client.sites?.map((site: { id: string; nom: string; adresse?: string | null; memo_prive?: string | null; installations?: { id: string; repere: string; type_porte: string; modele: string | null }[] }) => (
                   <SiteEditItem
                     key={site.id}
                     site={site}
