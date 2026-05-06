@@ -137,13 +137,18 @@ export default async function ClientsPage({
     const type_porte = formData.get("type_porte") as string;
     const modele = formData.get("modele") as string;
     const avec_batterie = formData.get("avec_batterie") === "true";
+    const commentaire = formData.get("commentaire") as string | null;
     if (!id || !repere?.trim()) return;
-    await supabase.from("installations").update({
+    const updates: Record<string, unknown> = {
       repere: repere.trim(),
       type_porte: type_porte?.trim() || "coulissante deux vantaux",
       modele: modele?.trim() || null,
       avec_batterie,
-    }).eq("id", id);
+    };
+    if (commentaire !== null) {
+      updates.commentaire = commentaire.trim() || null;
+    }
+    await supabase.from("installations").update(updates).eq("id", id);
     revalidatePath("/clients");
   }
 

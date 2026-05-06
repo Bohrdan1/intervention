@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const TYPES_PORTE = [
   "coulissante deux vantaux",
@@ -12,7 +12,7 @@ const TYPES_PORTE = [
 ];
 
 interface Props {
-  inst: { id: string; repere: string; type_porte: string; modele: string | null; avec_batterie: boolean };
+  inst: { id: string; repere: string; type_porte: string; modele: string | null; avec_batterie: boolean; commentaire?: string | null };
   clientId: string;
   siteId: string;
   updateAction: (formData: FormData) => Promise<void>;
@@ -29,6 +29,8 @@ export function InstallationEditItem({
   createRapportAction,
 }: Props) {
   const [editing, setEditing] = useState(false);
+  const [editingComment, setEditingComment] = useState(false);
+  const [commentaire, setCommentaire] = useState(inst.commentaire ?? "");
   const [typeCustom, setTypeCustom] = useState(!TYPES_PORTE.includes(inst.type_porte));
   const [avecBatterie, setAvecBatterie] = useState(inst.avec_batterie ?? false);
 
@@ -113,43 +115,90 @@ export function InstallationEditItem({
   }
 
   return (
-    <div className="ml-4 flex items-center justify-between border-b border-border py-1.5 last:border-0">
-      <span className="text-sm">
-        🚪 {inst.repere}
-        <span className="text-xs text-muted ml-1">
-          ({inst.type_porte}{inst.modele ? ` - ${inst.modele}` : ""}{inst.avec_batterie ? " · 🔋" : ""})
+    <div className="ml-4 border-b border-border py-1.5 last:border-0">
+      <div className="flex items-center justify-between">
+        <span className="text-sm">
+          🚪 {inst.repere}
+          <span className="text-xs text-muted ml-1">
+            ({inst.type_porte}{inst.modele ? ` - ${inst.modele}` : ""}{inst.avec_batterie ? " · 🔋" : ""})
+          </span>
         </span>
-      </span>
-      <div className="flex items-center gap-2">
-        {/* Modifier */}
+        <div className="flex items-center gap-2">
+          {/* Modifier */}
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="rounded bg-slate-50 border border-border px-2 py-0.5 text-xs text-muted hover:bg-slate-100 transition-colors"
+            title="Modifier"
+          >
+            ✏️
+          </button>
+          {/* Intervention rapide */}
+          <form action={createRapportAction}>
+            <input type="hidden" name="client_id" value={clientId} />
+            <input type="hidden" name="site_id" value={siteId} />
+            <input type="hidden" name="type_rapport" value="intervention" />
+            <input type="hidden" name="installation_id" value={inst.id} />
+            <button
+              type="submit"
+              className="rounded bg-purple-50 border border-purple-200 px-2 py-0.5 text-xs font-medium text-purple-700 hover:bg-purple-100 transition-colors"
+              title={`Intervention sur ${inst.repere}`}
+            >
+              ⚡
+            </button>
+          </form>
+          {/* Supprimer */}
+          <form action={deleteAction}>
+            <input type="hidden" name="id" value={inst.id} />
+            <button type="submit" className="text-xs text-danger hover:underline">×</button>
+          </form>
+        </div>
+      </div>
+
+      {/* Commentaire */}
+      {editingComment ? (
+        <form
+          action={async (fd) => {
+            fd.append("id", inst.id);
+            fd.append("repere", inst.repere);
+            fd.append("type_porte", inst.type_porte);
+            fd.append("modele", inst.modele ?? "");
+            fd.append("avec_batterie", inst.avec_batterie ? "true" : "false");
+            fd.append("commentaire", commentaire);
+            await updateAction(fd);
+            setEditingComment(false);
+          }}
+          className="mt-1 ml-5"
+        >
+          <textarea
+            value={commentaire}
+            onChange={(e) => setCommentaire(e.target.value)}
+            placeholder="Commentaire (ex: modèle spécifique, historique...)"
+            rows={2}
+            className="w-full rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs focus:border-amber-500 focus:outline-none resize-none"
+          />
+          <div className="flex gap-1 mt-1">
+            <button type="submit" className="rounded bg-primary px-2 py-0.5 text-xs text-white">✓ Enregistrer</button>
+            <button type="button" onClick={() => { setCommentaire(inst.commentaire ?? ""); setEditingComment(false); }} className="rounded border border-border px-2 py-0.5 text-xs text-muted">Annuler</button>
+          </div>
+        </form>
+      ) : commentaire ? (
+        <div
+          onClick={() => setEditingComment(true)}
+          className="mt-1 ml-5 cursor-pointer rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800"
+          title="Cliquer pour modifier"
+        >
+          📝 {commentaire}
+        </div>
+      ) : (
         <button
           type="button"
-          onClick={() => setEditing(true)}
-          className="rounded bg-slate-50 border border-border px-2 py-0.5 text-xs text-muted hover:bg-slate-100 transition-colors"
-          title="Modifier"
+          onClick={() => setEditingComment(true)}
+          className="mt-0.5 ml-5 text-xs text-muted hover:text-amber-600"
         >
-          ✏️
+          + Commentaire
         </button>
-        {/* Intervention rapide */}
-        <form action={createRapportAction}>
-          <input type="hidden" name="client_id" value={clientId} />
-          <input type="hidden" name="site_id" value={siteId} />
-          <input type="hidden" name="type_rapport" value="intervention" />
-          <input type="hidden" name="installation_id" value={inst.id} />
-          <button
-            type="submit"
-            className="rounded bg-purple-50 border border-purple-200 px-2 py-0.5 text-xs font-medium text-purple-700 hover:bg-purple-100 transition-colors"
-            title={`Intervention sur ${inst.repere}`}
-          >
-            ⚡
-          </button>
-        </form>
-        {/* Supprimer */}
-        <form action={deleteAction}>
-          <input type="hidden" name="id" value={inst.id} />
-          <button type="submit" className="text-xs text-danger hover:underline">×</button>
-        </form>
-      </div>
+      )}
     </div>
   );
 }

@@ -34,6 +34,7 @@ export interface Installation {
   type_porte: string;
   modele: string | null;
   avec_batterie: boolean;
+  commentaire: string | null;
   created_at: string;
   updated_at: string;
 }
