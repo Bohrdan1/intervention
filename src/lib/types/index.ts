@@ -13,6 +13,11 @@ export interface Client {
   id: string;
   nom: string;
   sous_titre: string | null;
+  prenom: string | null;
+  fonction: string | null;
+  telephone: string | null;
+  mail: string | null;
+  comptabilite: string | null;
   created_at: string;
   updated_at: string;
 }

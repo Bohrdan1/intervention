@@ -86,10 +86,20 @@ export default async function ClientsPage({
     const id = formData.get("id") as string;
     const nom = formData.get("nom") as string;
     const sous_titre = formData.get("sous_titre") as string;
+    const prenom = formData.get("prenom") as string;
+    const fonction = formData.get("fonction") as string;
+    const telephone = formData.get("telephone") as string;
+    const mail = formData.get("mail") as string;
+    const comptabilite = formData.get("comptabilite") as string;
     if (!id || !nom?.trim()) return;
     await supabase.from("clients").update({
       nom: nom.trim(),
       sous_titre: sous_titre?.trim() || null,
+      prenom: prenom?.trim() || null,
+      fonction: fonction?.trim() || null,
+      telephone: telephone?.trim() || null,
+      mail: mail?.trim() || null,
+      comptabilite: comptabilite?.trim() || null,
     }).eq("id", id);
     revalidatePath("/clients");
   }

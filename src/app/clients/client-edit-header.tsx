@@ -2,8 +2,19 @@
 
 import { useState } from "react";
 
+interface ClientData {
+  id: string;
+  nom: string;
+  sous_titre: string | null;
+  prenom: string | null;
+  fonction: string | null;
+  telephone: string | null;
+  mail: string | null;
+  comptabilite: string | null;
+}
+
 interface Props {
-  client: { id: string; nom: string; sous_titre: string | null };
+  client: ClientData;
   updateAction: (formData: FormData) => Promise<void>;
   deleteAction: (formData: FormData) => Promise<void>;
 }
@@ -11,71 +22,133 @@ interface Props {
 export function ClientEditHeader({ client, updateAction, deleteAction }: Props) {
   const [editing, setEditing] = useState(false);
 
+  const hasContact = client.prenom || client.fonction || client.telephone || client.mail || client.comptabilite;
+
   if (editing) {
     return (
-      <div className="flex items-center justify-between border-b border-border p-4">
+      <div className="border-b border-border p-4">
         <form
           action={async (fd) => {
             await updateAction(fd);
             setEditing(false);
           }}
-          className="flex flex-1 gap-2 mr-2"
+          className="space-y-2"
         >
           <input type="hidden" name="id" value={client.id} />
+
+          {/* Ligne 1 : Nom + Sous-titre */}
+          <div className="flex gap-2">
+            <input
+              name="nom"
+              defaultValue={client.nom}
+              required
+              placeholder="Nom / Société"
+              className="flex-1 rounded border border-primary px-2 py-1.5 text-sm font-bold focus:outline-none"
+            />
+            <input
+              name="sous_titre"
+              defaultValue={client.sous_titre ?? ""}
+              placeholder="Sous-titre"
+              className="flex-1 rounded border border-border px-2 py-1.5 text-sm focus:border-primary focus:outline-none"
+            />
+          </div>
+
+          {/* Ligne 2 : Prénom + Fonction */}
+          <div className="flex gap-2">
+            <input
+              name="prenom"
+              defaultValue={client.prenom ?? ""}
+              placeholder="Prénom"
+              className="flex-1 rounded border border-border px-2 py-1.5 text-sm focus:border-primary focus:outline-none"
+            />
+            <input
+              name="fonction"
+              defaultValue={client.fonction ?? ""}
+              placeholder="Fonction"
+              className="flex-1 rounded border border-border px-2 py-1.5 text-sm focus:border-primary focus:outline-none"
+            />
+          </div>
+
+          {/* Ligne 3 : Téléphone + Mail */}
+          <div className="flex gap-2">
+            <input
+              name="telephone"
+              defaultValue={client.telephone ?? ""}
+              placeholder="Téléphone"
+              className="flex-1 rounded border border-border px-2 py-1.5 text-sm focus:border-primary focus:outline-none"
+            />
+            <input
+              name="mail"
+              defaultValue={client.mail ?? ""}
+              placeholder="Mail"
+              className="flex-1 rounded border border-border px-2 py-1.5 text-sm focus:border-primary focus:outline-none"
+            />
+          </div>
+
+          {/* Ligne 4 : Comptabilité */}
           <input
-            name="nom"
-            defaultValue={client.nom}
-            required
-            placeholder="Nom du client"
-            className="flex-1 rounded border border-primary px-2 py-1 text-sm font-bold focus:outline-none"
+            name="comptabilite"
+            defaultValue={client.comptabilite ?? ""}
+            placeholder="Comptabilité (contact facturation)"
+            className="w-full rounded border border-border px-2 py-1.5 text-sm focus:border-primary focus:outline-none"
           />
-          <input
-            name="sous_titre"
-            defaultValue={client.sous_titre ?? ""}
-            placeholder="Sous-titre (ex: Casino Les Halles + Vinothèque)"
-            className="flex-[2] rounded border border-border px-2 py-1 text-sm focus:border-primary focus:outline-none"
-          />
-          <button
-            type="submit"
-            className="rounded bg-primary px-3 py-1 text-xs text-white hover:bg-primary/90"
-          >
-            ✓
-          </button>
-          <button
-            type="button"
-            onClick={() => setEditing(false)}
-            className="rounded border border-border px-3 py-1 text-xs text-muted hover:bg-slate-50"
-          >
-            Annuler
-          </button>
+
+          <div className="flex gap-2 pt-1">
+            <button
+              type="submit"
+              className="rounded bg-primary px-4 py-1.5 text-xs text-white hover:bg-primary/90"
+            >
+              ✓ Enregistrer
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="rounded border border-border px-4 py-1.5 text-xs text-muted hover:bg-slate-50"
+            >
+              Annuler
+            </button>
+          </div>
         </form>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center justify-between border-b border-border p-4">
-      <div>
-        <h3 className="font-bold">{client.nom}</h3>
-        {client.sous_titre && (
-          <p className="text-xs text-muted">{client.sous_titre}</p>
-        )}
-      </div>
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          className="text-xs text-muted hover:text-foreground"
-          title="Modifier"
-        >
-          ✏️
-        </button>
-        <form action={deleteAction}>
-          <input type="hidden" name="id" value={client.id} />
-          <button type="submit" className="text-xs text-danger hover:underline">
-            Supprimer
+    <div className="border-b border-border p-4">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="font-bold">
+            {client.nom}
+            {client.prenom && <span className="font-normal text-sm ml-1.5">— {client.prenom}</span>}
+          </h3>
+          {client.sous_titre && (
+            <p className="text-xs text-muted">{client.sous_titre}</p>
+          )}
+          {hasContact && (
+            <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted">
+              {client.fonction && <span>👤 {client.fonction}</span>}
+              {client.telephone && <span>📞 {client.telephone}</span>}
+              {client.mail && <span>✉️ {client.mail}</span>}
+              {client.comptabilite && <span>🧾 {client.comptabilite}</span>}
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="text-xs text-muted hover:text-foreground"
+            title="Modifier"
+          >
+            ✏️
           </button>
-        </form>
+          <form action={deleteAction}>
+            <input type="hidden" name="id" value={client.id} />
+            <button type="submit" className="text-xs text-danger hover:underline">
+              Supprimer
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
