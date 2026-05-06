@@ -118,15 +118,19 @@ export default async function ClientsPage({
     const id = formData.get("id") as string;
     const nom = formData.get("nom") as string;
     const adresse = formData.get("adresse") as string;
+    const contact_nom = formData.get("contact_nom") as string | null;
+    const contact_telephone = formData.get("contact_telephone") as string | null;
+    const contact_mail = formData.get("contact_mail") as string | null;
     const memo_prive = formData.get("memo_prive") as string | null;
     if (!id || !nom?.trim()) return;
     const updates: Record<string, unknown> = {
       nom: nom.trim(),
       adresse: adresse?.trim() || null,
     };
-    if (memo_prive !== null) {
-      updates.memo_prive = memo_prive.trim() || null;
-    }
+    if (contact_nom !== null) updates.contact_nom = contact_nom.trim() || null;
+    if (contact_telephone !== null) updates.contact_telephone = contact_telephone.trim() || null;
+    if (contact_mail !== null) updates.contact_mail = contact_mail.trim() || null;
+    if (memo_prive !== null) updates.memo_prive = memo_prive.trim() || null;
     await supabase.from("sites").update(updates).eq("id", id);
     revalidatePath("/clients");
   }
@@ -302,7 +306,7 @@ export default async function ClientsPage({
 
               {/* Sites */}
               <div className="p-4 space-y-3">
-                {client.sites?.map((site: { id: string; nom: string; adresse?: string | null; memo_prive?: string | null; installations?: { id: string; repere: string; type_porte: string; modele: string | null }[] }) => (
+                {client.sites?.map((site: { id: string; nom: string; adresse?: string | null; contact_nom?: string | null; contact_telephone?: string | null; contact_mail?: string | null; memo_prive?: string | null; installations?: { id: string; repere: string; type_porte: string; modele: string | null }[] }) => (
                   <SiteEditItem
                     key={site.id}
                     site={site}

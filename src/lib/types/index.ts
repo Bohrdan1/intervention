@@ -27,6 +27,9 @@ export interface Site {
   client_id: string;
   nom: string;
   adresse: string | null;
+  contact_nom: string | null;
+  contact_telephone: string | null;
+  contact_mail: string | null;
   memo_prive: string | null;
   created_at: string;
   updated_at: string;

@@ -6,6 +6,9 @@ interface Site {
   id: string;
   nom: string;
   adresse?: string | null;
+  contact_nom?: string | null;
+  contact_telephone?: string | null;
+  contact_mail?: string | null;
   memo_prive?: string | null;
 }
 
@@ -34,6 +37,8 @@ export function SiteEditItem({
   const [memo, setMemo] = useState(site.memo_prive ?? "");
   const memoFormRef = useRef<HTMLFormElement>(null);
 
+  const hasContact = site.contact_nom || site.contact_telephone || site.contact_mail;
+
   return (
     <div className="rounded-lg border border-border p-3 bg-slate-50">
       {/* En-tête site */}
@@ -44,35 +49,59 @@ export function SiteEditItem({
               await updateAction(fd);
               setEditing(false);
             }}
-            className="flex flex-1 gap-2 mr-2"
+            className="flex-1 mr-2 space-y-2"
           >
             <input type="hidden" name="id" value={site.id} />
-            <input
-              name="nom"
-              defaultValue={site.nom}
-              required
-              placeholder="Nom du site"
-              className="flex-1 rounded border border-primary px-2 py-1 text-sm font-semibold focus:outline-none"
-            />
-            <input
-              name="adresse"
-              defaultValue={site.adresse ?? ""}
-              placeholder="Adresse (ex: 12 rue de la Paix, Nouméa)"
-              className="flex-[2] rounded border border-border px-2 py-1 text-sm focus:border-primary focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="rounded bg-primary px-3 py-1 text-xs text-white hover:bg-primary/90"
-            >
-              ✓
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditing(false)}
-              className="rounded border border-border px-3 py-1 text-xs text-muted hover:bg-slate-100"
-            >
-              Annuler
-            </button>
+            <div className="flex gap-2">
+              <input
+                name="nom"
+                defaultValue={site.nom}
+                required
+                placeholder="Nom du site"
+                className="flex-1 rounded border border-primary px-2 py-1 text-sm font-semibold focus:outline-none"
+              />
+              <input
+                name="adresse"
+                defaultValue={site.adresse ?? ""}
+                placeholder="Adresse"
+                className="flex-[2] rounded border border-border px-2 py-1 text-sm focus:border-primary focus:outline-none"
+              />
+            </div>
+            <div className="flex gap-2">
+              <input
+                name="contact_nom"
+                defaultValue={site.contact_nom ?? ""}
+                placeholder="Contact sur place"
+                className="flex-1 rounded border border-border px-2 py-1 text-sm focus:border-primary focus:outline-none"
+              />
+              <input
+                name="contact_telephone"
+                defaultValue={site.contact_telephone ?? ""}
+                placeholder="Téléphone"
+                className="flex-1 rounded border border-border px-2 py-1 text-sm focus:border-primary focus:outline-none"
+              />
+              <input
+                name="contact_mail"
+                defaultValue={site.contact_mail ?? ""}
+                placeholder="Mail"
+                className="flex-1 rounded border border-border px-2 py-1 text-sm focus:border-primary focus:outline-none"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                className="rounded bg-primary px-3 py-1 text-xs text-white hover:bg-primary/90"
+              >
+                ✓
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditing(false)}
+                className="rounded border border-border px-3 py-1 text-xs text-muted hover:bg-slate-100"
+              >
+                Annuler
+              </button>
+            </div>
           </form>
         ) : (
           <div>
@@ -80,12 +109,18 @@ export function SiteEditItem({
             {site.adresse && (
               <p className="text-xs text-muted mt-0.5">{site.adresse}</p>
             )}
+            {hasContact && (
+              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted">
+                {site.contact_nom && <span>👤 {site.contact_nom}</span>}
+                {site.contact_telephone && <span>📞 {site.contact_telephone}</span>}
+                {site.contact_mail && <span>✉️ {site.contact_mail}</span>}
+              </div>
+            )}
           </div>
         )}
 
         {!editing && (
           <div className="flex items-center gap-1.5">
-            {/* Modifier site */}
             <button
               type="button"
               onClick={() => setEditing(true)}
@@ -94,7 +129,6 @@ export function SiteEditItem({
             >
               ✏️
             </button>
-            {/* Maintenance */}
             <form action={createRapportAction}>
               <input type="hidden" name="client_id" value={clientId} />
               <input type="hidden" name="site_id" value={site.id} />
@@ -105,7 +139,6 @@ export function SiteEditItem({
                 title="Nouvelle maintenance"
               >🔧</button>
             </form>
-            {/* Intervention */}
             <form action={createRapportAction}>
               <input type="hidden" name="client_id" value={clientId} />
               <input type="hidden" name="site_id" value={site.id} />
@@ -116,7 +149,6 @@ export function SiteEditItem({
                 title="Nouvelle intervention"
               >⚡</button>
             </form>
-            {/* Visite */}
             <form action={createRapportAction}>
               <input type="hidden" name="client_id" value={clientId} />
               <input type="hidden" name="site_id" value={site.id} />
@@ -127,7 +159,6 @@ export function SiteEditItem({
                 title="Nouvelle visite technique"
               >👁</button>
             </form>
-            {/* Supprimer */}
             <form action={deleteSiteAction}>
               <input type="hidden" name="id" value={site.id} />
               <button type="submit" className="text-xs text-danger hover:underline">×</button>

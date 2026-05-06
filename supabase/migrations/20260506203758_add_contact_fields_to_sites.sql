@@ -1,0 +1,4 @@
+ALTER TABLE sites
+  ADD COLUMN IF NOT EXISTS contact_nom TEXT,
+  ADD COLUMN IF NOT EXISTS contact_telephone TEXT,
+  ADD COLUMN IF NOT EXISTS contact_mail TEXT;
