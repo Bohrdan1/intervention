@@ -37,8 +37,8 @@ export async function GET(
     <RapportPDF rapport={rapportComplet} />
   );
 
-  const date = new Date(rapport.date_intervention);
-  const dateStr = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+  const [year, month, day] = rapport.date_intervention.split('T')[0].split('-');
+  const dateStr = `${parseInt(day)}-${parseInt(month)}-${year}`;
   const numero = rapport.numero_cm.replace(/\s/g, '_').replace(/\//g, '-');
   const siteName = (rapport.site as { nom: string })?.nom || '';
   const cleanSite = siteName.replace(/[^a-zA-Z0-9àâäéèêëïîôùûüçÀÂÄÉÈÊËÏÎÔÙÛÜÇ -]/g, '').replace(/\s+/g, '_');

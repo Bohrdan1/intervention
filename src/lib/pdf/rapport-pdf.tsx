@@ -241,8 +241,9 @@ const s = StyleSheet.create({
 // HELPERS
 // ============================================
 function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+  // Parse direct sans new Date() pour éviter le décalage UTC/fuseau
+  const [year, month, day] = dateStr.split('T')[0].split('-');
+  return `${parseInt(day)}/${parseInt(month)}/${year}`;
 }
 
 function RenderEtat({ etat }: { etat: string }) {

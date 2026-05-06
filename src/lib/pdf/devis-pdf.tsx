@@ -223,8 +223,8 @@ const s = StyleSheet.create({
 // HELPERS
 // ============================================
 function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+  const [year, month, day] = dateStr.split('T')[0].split('-');
+  return `${day}/${month}/${year}`;
 }
 
 function formatMontant(n: number): string {

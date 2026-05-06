@@ -131,7 +131,7 @@ export function RapportList({ rapports }: { rapports: RapportItem[] }) {
             const isIntervention = rapport.type_rapport === "intervention";
             const isVisite = rapport.type_rapport === "visite";
             const nbPortes = rapport.controles?.length || 0;
-            const date = new Date(rapport.date_intervention).toLocaleDateString("fr-FR", {
+            const date = new Date(rapport.date_intervention + 'T12:00:00').toLocaleDateString("fr-FR", {
               day: "numeric",
               month: "long",
               year: "numeric",

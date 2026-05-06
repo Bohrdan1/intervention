@@ -183,7 +183,7 @@ export default async function RapportDetailPage({
     (a: { page_number: number }, b: { page_number: number }) => a.page_number - b.page_number
   );
 
-  const date = new Date(rapport.date_intervention).toLocaleDateString("fr-FR", {
+  const date = new Date(rapport.date_intervention + 'T12:00:00').toLocaleDateString("fr-FR", {
     weekday: "long",
     day: "numeric",
     month: "long",
