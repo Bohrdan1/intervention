@@ -21,6 +21,7 @@ interface Props {
 
 export function ClientEditHeader({ client, updateAction, deleteAction }: Props) {
   const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const hasContact = client.prenom || client.fonction || client.telephone || client.mail || client.comptabilite;
 
@@ -142,12 +143,33 @@ export function ClientEditHeader({ client, updateAction, deleteAction }: Props) 
           >
             ✏️
           </button>
-          <form action={deleteAction}>
-            <input type="hidden" name="id" value={client.id} />
-            <button type="submit" className="text-xs text-danger hover:underline">
-              Supprimer
+          {confirmDelete ? (
+            <div className="flex items-center gap-1.5 rounded border border-red-300 bg-red-50 px-2 py-1">
+              <span className="text-xs text-red-700">Supprimer {client.nom} ?</span>
+              <form action={deleteAction}>
+                <input type="hidden" name="id" value={client.id} />
+                <button type="submit" className="rounded bg-red-600 px-2 py-0.5 text-xs text-white font-semibold">
+                  Confirmer
+                </button>
+              </form>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                className="text-xs text-muted hover:text-foreground"
+              >
+                Annuler
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="text-xs text-muted hover:text-danger"
+              title="Supprimer"
+            >
+              ×
             </button>
-          </form>
+          )}
         </div>
       </div>
     </div>

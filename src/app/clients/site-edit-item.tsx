@@ -33,6 +33,7 @@ export function SiteEditItem({
   addInstallationForm,
 }: Props) {
   const [editing, setEditing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [editingMemo, setEditingMemo] = useState(false);
   const [memo, setMemo] = useState(site.memo_prive ?? "");
   const memoFormRef = useRef<HTMLFormElement>(null);
@@ -159,10 +160,18 @@ export function SiteEditItem({
                 title="Nouvelle visite technique"
               >👁</button>
             </form>
-            <form action={deleteSiteAction}>
-              <input type="hidden" name="id" value={site.id} />
-              <button type="submit" className="text-xs text-danger hover:underline">×</button>
-            </form>
+            {confirmDelete ? (
+              <div className="flex items-center gap-1 rounded border border-red-300 bg-red-50 px-1.5 py-0.5">
+                <span className="text-xs text-red-700">Sûr ?</span>
+                <form action={deleteSiteAction}>
+                  <input type="hidden" name="id" value={site.id} />
+                  <button type="submit" className="rounded bg-red-600 px-1.5 py-0.5 text-xs text-white font-semibold">Oui</button>
+                </form>
+                <button type="button" onClick={() => setConfirmDelete(false)} className="text-xs text-muted">Non</button>
+              </div>
+            ) : (
+              <button type="button" onClick={() => setConfirmDelete(true)} className="text-xs text-muted hover:text-danger">×</button>
+            )}
           </div>
         )}
       </div>
