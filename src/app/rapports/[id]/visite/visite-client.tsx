@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { saveVisite, finalizeVisite } from "./actions";
 import type { PorteVisite, VisiteData, RapportComplet } from "@/lib/types";
@@ -379,6 +379,9 @@ export function VisiteClient({ rapport }: { rapport: RapportComplet }) {
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Initialiser visite_data depuis le rapport ou avec les défauts
   const existingData: VisiteData = rapport.visite_data && Object.keys(rapport.visite_data).length > 0
@@ -431,6 +434,28 @@ export function VisiteClient({ rapport }: { rapport: RapportComplet }) {
       portes: prev.portes.filter((_, i) => i !== index),
     }));
   }
+
+  // Auto-save toutes les 5 minutes
+  const autoSave = useCallback(async () => {
+    setAutoSaveStatus("saving");
+    try {
+      await saveVisite(rapport.id, data.observations_particulieres, data.preconisation, allPhotos, data);
+      setLastSaved(new Date());
+      setAutoSaveStatus("saved");
+    } catch {
+      setAutoSaveStatus("idle");
+    }
+  }, [rapport.id, data, allPhotos]);
+
+  useEffect(() => {
+    if (autoSaveTimerRef.current) clearInterval(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setInterval(() => {
+      autoSave();
+    }, 5 * 60 * 1000);
+    return () => {
+      if (autoSaveTimerRef.current) clearInterval(autoSaveTimerRef.current);
+    };
+  }, [autoSave]);
 
   // Sauvegarde brouillon
   async function handleSaveDraft() {
@@ -730,6 +755,20 @@ export function VisiteClient({ rapport }: { rapport: RapportComplet }) {
           </div>
         </div>
       </div>
+
+      {/* Indicateur auto-save */}
+      {autoSaveStatus !== "idle" && (
+        <div className="mb-16 text-center">
+          {autoSaveStatus === "saving" && (
+            <p className="text-xs text-muted">Sauvegarde automatique...</p>
+          )}
+          {autoSaveStatus === "saved" && lastSaved && (
+            <p className="text-xs text-muted">
+              Sauvegardé à {lastSaved.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* ── Actions fixes en bas ── */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-white px-4 py-3 shadow-lg">

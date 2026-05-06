@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { EtatControle, PhotoItem } from "@/lib/types";
 import { saveControle, savePhotos } from "./actions";
@@ -63,6 +63,9 @@ export function ChecklistClient({
   const [allControles, setAllControles] = useState<ControleData[]>(controles);
   const [saving, setSaving] = useState(false);
   const [photos, setPhotos] = useState<PhotoItem[]>(initialPhotos);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const current = allControles[currentIndex];
   const total = allControles.length;
@@ -106,6 +109,30 @@ export function ChecklistClient({
       return next;
     });
   }
+
+  // Auto-save toutes les 5 minutes
+  const autoSave = useCallback(async () => {
+    setAutoSaveStatus("saving");
+    try {
+      const c = allControles[currentIndex];
+      await saveControle(c.id, c.points_controle, c.points_erp, c.note_supplementaire);
+      await savePhotos(rapportId, photos);
+      setLastSaved(new Date());
+      setAutoSaveStatus("saved");
+    } catch {
+      setAutoSaveStatus("idle");
+    }
+  }, [allControles, currentIndex, photos, rapportId]);
+
+  useEffect(() => {
+    if (autoSaveTimerRef.current) clearInterval(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setInterval(() => {
+      autoSave();
+    }, 5 * 60 * 1000); // 5 minutes
+    return () => {
+      if (autoSaveTimerRef.current) clearInterval(autoSaveTimerRef.current);
+    };
+  }, [autoSave]);
 
   async function handleSaveAndNavigate(direction: "prev" | "next" | "finish") {
     setSaving(true);
@@ -339,6 +366,20 @@ export function ChecklistClient({
           onPhotosChange={handlePhotosChange}
         />
       </div>
+
+      {/* Indicateur auto-save */}
+      {autoSaveStatus !== "idle" && (
+        <div className="mb-16 text-center">
+          {autoSaveStatus === "saving" && (
+            <p className="text-xs text-muted">Sauvegarde automatique...</p>
+          )}
+          {autoSaveStatus === "saved" && lastSaved && (
+            <p className="text-xs text-muted">
+              Sauvegardé à {lastSaved.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Navigation fixe en bas */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-white px-4 py-3 shadow-lg">
