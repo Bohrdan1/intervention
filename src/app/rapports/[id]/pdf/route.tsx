@@ -37,7 +37,12 @@ export async function GET(
     <RapportPDF rapport={rapportComplet} />
   );
 
-  const filename = `${rapport.numero_cm.replace(/\s/g, '_')}.pdf`;
+  const date = new Date(rapport.date_intervention);
+  const dateStr = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+  const siteName = (rapport.site as { nom: string })?.nom || '';
+  const cleanSite = siteName.replace(/[^a-zA-Z0-9àâäéèêëïîôùûüçÀÂÄÉÈÊËÏÎÔÙÛÜÇ -]/g, '').replace(/\s+/g, '_');
+  const cleanCm = rapport.numero_cm.replace(/\s/g, '_').replace(/\//g, '-');
+  const filename = `CR_Maintenance_${cleanCm}_${dateStr}_${cleanSite}.pdf`;
   const disposition = forceDownload ? 'attachment' : 'inline';
   return new Response(new Uint8Array(buffer), {
     headers: {
