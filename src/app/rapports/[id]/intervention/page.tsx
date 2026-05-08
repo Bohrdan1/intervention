@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { InterventionClient } from "./intervention-client";
+import { getCatalogues } from "@/lib/actions/catalogue";
 
 export default async function InterventionPage({
   params,
@@ -31,9 +32,16 @@ export default async function InterventionPage({
     .eq("site_id", rapport.site_id)
     .order("repere");
 
+  // Charger le catalogue de pièces (trié par fréquence d'usage)
+  const catalogue = await getCatalogues();
+
   return (
     <div>
-      <InterventionClient rapport={rapport} installations={installations || []} />
+      <InterventionClient
+        rapport={rapport}
+        installations={installations || []}
+        catalogue={catalogue}
+      />
     </div>
   );
 }

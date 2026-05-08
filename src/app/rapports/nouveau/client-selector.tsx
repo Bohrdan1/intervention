@@ -29,9 +29,11 @@ export function ClientSiteSelectorClient({ clients }: { clients: Client[] }) {
   const initialType = typeParam === "intervention" ? "intervention" : typeParam === "visite" ? "visite" : "maintenance";
   const initialClientId = searchParams.get("client_id") || "";
 
+  const initialSiteId = searchParams.get("site_id") || "";
+
   const [typeRapport, setTypeRapport] = useState<"maintenance" | "intervention" | "visite">(initialType);
   const [selectedClientId, setSelectedClientId] = useState(initialClientId);
-  const [selectedSiteId, setSelectedSiteId] = useState("");
+  const [selectedSiteId, setSelectedSiteId] = useState(initialSiteId);
 
   const selectedClient = clients.find((c) => c.id === selectedClientId);
   const sites = selectedClient?.sites || [];

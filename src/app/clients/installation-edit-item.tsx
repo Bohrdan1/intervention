@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Link from "next/link";
 
 const TYPES_PORTE = [
   "coulissante deux vantaux",
@@ -124,6 +125,14 @@ export function InstallationEditItem({
           </span>
         </span>
         <div className="flex items-center gap-2">
+          {/* Historique */}
+          <Link
+            href={`/installations/${inst.id}`}
+            className="rounded bg-slate-50 border border-border px-2 py-0.5 text-xs text-muted hover:bg-slate-100 transition-colors"
+            title="Historique de l'équipement"
+          >
+            📋
+          </Link>
           {/* Modifier */}
           <button
             type="button"

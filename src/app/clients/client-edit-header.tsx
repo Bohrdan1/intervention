@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 interface ClientData {
   id: string;
@@ -135,6 +136,13 @@ export function ClientEditHeader({ client, updateAction, deleteAction }: Props) 
           )}
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            href={`/clients/${client.id}`}
+            className="text-xs text-muted hover:text-foreground"
+            title="Fiche client"
+          >
+            📋
+          </Link>
           <button
             type="button"
             onClick={() => setEditing(true)}

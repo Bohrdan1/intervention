@@ -31,6 +31,8 @@ export interface Site {
   contact_telephone: string | null;
   contact_mail: string | null;
   memo_prive: string | null;
+  /** Périodicité de maintenance en mois. null = pas de contrat. */
+  periodicite_maintenance: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -80,6 +82,33 @@ export interface Controle {
 }
 
 export type TypeRapport = 'maintenance' | 'intervention' | 'visite';
+
+/** Mapping centralisé : couleurs Tailwind et labels par type de rapport */
+export const TYPE_RAPPORT_CONFIG: Record<TypeRapport, {
+  label: string;
+  couleurTexte: string;
+  couleurBadge: string;
+  couleurBouton: string;
+}> = {
+  maintenance: {
+    label: 'Maintenance',
+    couleurTexte: 'text-blue-700',
+    couleurBadge: 'bg-blue-100 text-blue-700',
+    couleurBouton: 'bg-blue-600 hover:bg-blue-700',
+  },
+  intervention: {
+    label: 'Intervention',
+    couleurTexte: 'text-purple-700',
+    couleurBadge: 'bg-purple-100 text-purple-700',
+    couleurBouton: 'bg-purple-600 hover:bg-purple-700',
+  },
+  visite: {
+    label: 'Visite technique',
+    couleurTexte: 'text-teal-700',
+    couleurBadge: 'bg-teal-100 text-teal-700',
+    couleurBouton: 'bg-teal-600 hover:bg-teal-700',
+  },
+};
 
 // ── Visite technique (portes automatiques) ──
 
@@ -202,8 +231,15 @@ export interface Rapport {
   recommandations: string | null;
   visite_data: VisiteData | null;
   statut: 'brouillon' | 'finalise';
+  /** Montant facturé HT en CFP (saisi manuellement pour export/stats) */
+  montant_ht: number | null;
   signature_data: string | null;
   signature_client: string | null;
+  /** Nom de la personne qui a signé côté client */
+  nom_signataire_client: string | null;
+  /** Horodatage de la signature (ISO) */
+  date_signature: string | null;
+  archived_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -222,7 +258,7 @@ export const SOCIETE = {
   ridet: '0 934 604.003',
   rc: 'CA500000121738',
   telephone: '800808',
-  mail: 'contac@bohrdan.com',
+  mail: 'contact@bohrdan.com',
   iban: 'FR21 1415 8010 2200 3506 4W05 139',
   codeApe: '43.29B',
 } as const;

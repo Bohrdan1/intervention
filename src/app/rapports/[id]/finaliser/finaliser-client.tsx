@@ -12,6 +12,8 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
   const [constat, setConstat] = useState<ConstatItem[]>(rapport.constat_general || []);
   const [signatureData, setSignatureData] = useState<string | null>(rapport.signature_data);
   const [signatureClient, setSignatureClient] = useState<string | null>(rapport.signature_client);
+  const [nomSignataireClient, setNomSignataireClient] = useState<string>(rapport.nom_signataire_client ?? "");
+  const [dateSignature, setDateSignature] = useState<string | null>(rapport.date_signature ?? null);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -188,13 +190,17 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
     const canvas = canvasModalRef.current;
     if (!canvas) return;
     const dataUrl = canvas.toDataURL("image/png");
-    
+
     if (sigModal === "tech") {
       setSignatureData(dataUrl);
     } else if (sigModal === "client") {
       setSignatureClient(dataUrl);
+      // Horodatage automatique à la signature client
+      if (!dateSignature) {
+        setDateSignature(new Date().toISOString());
+      }
     }
-    
+
     setSigModal(null);
   }
 
@@ -215,7 +221,7 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
   async function handlePreview() {
     setGenerating(true);
     try {
-      await saveConstatAndFinalize(rapport.id, constat, signatureData, signatureClient);
+      await saveConstatAndFinalize(rapport.id, constat, signatureData, signatureClient, nomSignataireClient, dateSignature);
       const blob = await generatePdfBlob();
       const url = URL.createObjectURL(blob);
       setPreviewUrl(url);
@@ -240,7 +246,7 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
 
   async function handleSaveDraft() {
     setSaving(true);
-    await saveConstatDraft(rapport.id, constat, signatureData, signatureClient);
+    await saveConstatDraft(rapport.id, constat, signatureData, signatureClient, nomSignataireClient);
     setSaving(false);
     toast("Brouillon sauvegardé", "success");
     router.push("/");
@@ -525,20 +531,47 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
             {signatureClient && (
               <button
                 type="button"
-                onClick={clearSignatureClient}
+                onClick={() => {
+                  clearSignatureClient();
+                  setDateSignature(null);
+                }}
                 className="text-xs text-danger hover:underline"
               >
                 Effacer et resigner
               </button>
             )}
           </div>
-          <p className="text-sm text-muted mb-3">{rapport.client?.nom || "Client"}</p>
+          <p className="text-sm text-muted mb-2">{rapport.client?.nom || "Client"}</p>
+
+          {/* Champ nom signataire */}
+          <input
+            type="text"
+            value={nomSignataireClient}
+            onChange={(e) => setNomSignataireClient(e.target.value)}
+            placeholder="Nom du signataire (ex: M. Dupont)"
+            className="w-full mb-3 rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
+          />
+
           {signatureClient ? (
-            <img
-              src={signatureClient}
-              alt="Signature client"
-              className="w-full h-24 object-contain rounded-lg border border-border bg-white"
-            />
+            <div>
+              <img
+                src={signatureClient}
+                alt="Signature client"
+                className="w-full h-24 object-contain rounded-lg border border-border bg-white"
+              />
+              {dateSignature && (
+                <p className="text-xs text-muted mt-1 text-right">
+                  Signé le{" "}
+                  {new Date(dateSignature).toLocaleString("fr-FR", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              )}
+            </div>
           ) : (
             <button
               type="button"

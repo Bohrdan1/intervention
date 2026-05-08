@@ -538,10 +538,17 @@ function PageConstat({
         {/* Client */}
         <View style={{ width: '45%' }}>
           <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold' }}>Le client :</Text>
+          {rapport.nom_signataire_client ? (
+            <Text style={{ fontSize: 9, marginTop: 4, color: '#444' }}>{rapport.nom_signataire_client}</Text>
+          ) : null}
           {rapport.signature_client ? (
             <>
-              <Image style={{ width: 150, height: 80, marginTop: 10 }} src={rapport.signature_client} />
-              <Text style={{ fontSize: 9, marginTop: 6 }}>Date : {formatDate(rapport.date_intervention)}</Text>
+              <Image style={{ width: 150, height: 80, marginTop: 6 }} src={rapport.signature_client} />
+              <Text style={{ fontSize: 8, color: '#666', marginTop: 4 }}>
+                Signé le {rapport.date_signature
+                  ? new Date(rapport.date_signature).toLocaleString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                  : formatDate(rapport.date_intervention)}
+              </Text>
             </>
           ) : (
             <>
@@ -739,10 +746,17 @@ function PageIntervention({
         {/* Client */}
         <View style={{ width: '45%' }}>
           <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold' }}>Le client :</Text>
+          {rapport.nom_signataire_client ? (
+            <Text style={{ fontSize: 9, marginTop: 4, color: '#444' }}>{rapport.nom_signataire_client}</Text>
+          ) : null}
           {rapport.signature_client ? (
             <>
-              <Image style={{ width: 150, height: 80, marginTop: 10 }} src={rapport.signature_client} />
-              <Text style={{ fontSize: 9, marginTop: 6 }}>Date : {formatDate(rapport.date_intervention)}</Text>
+              <Image style={{ width: 150, height: 80, marginTop: 6 }} src={rapport.signature_client} />
+              <Text style={{ fontSize: 8, color: '#666', marginTop: 4 }}>
+                Signé le {rapport.date_signature
+                  ? new Date(rapport.date_signature).toLocaleString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                  : formatDate(rapport.date_intervention)}
+              </Text>
             </>
           ) : (
             <>

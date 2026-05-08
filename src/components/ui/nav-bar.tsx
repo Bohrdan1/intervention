@@ -11,6 +11,8 @@ export function NavBar() {
   const links = [
     { href: "/", label: "Rapports" },
     { href: "/clients", label: "Clients" },
+    { href: "/prospects", label: "Prospects" },
+    { href: "/finances", label: "Finances" },
   ];
 
   async function handleLogout() {

@@ -65,7 +65,7 @@ export function ChecklistClient({
   const [photos, setPhotos] = useState<PhotoItem[]>(initialPhotos);
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const autoSaveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const current = allControles[currentIndex];
   const total = allControles.length;
@@ -124,13 +124,14 @@ export function ChecklistClient({
     }
   }, [allControles, currentIndex, photos, rapportId]);
 
+  // Auto-save déclenché 45 secondes après le dernier changement (même pattern que intervention)
   useEffect(() => {
-    if (autoSaveTimerRef.current) clearInterval(autoSaveTimerRef.current);
-    autoSaveTimerRef.current = setInterval(() => {
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
       autoSave();
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 45000);
     return () => {
-      if (autoSaveTimerRef.current) clearInterval(autoSaveTimerRef.current);
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
   }, [autoSave]);
 

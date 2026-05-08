@@ -6,13 +6,25 @@ import { saveIntervention } from "./actions";
 import type { PieceUtilisee, PhotoItem, RapportComplet, Installation } from "@/lib/types";
 import { useToast } from "@/components/ui/toast";
 import PhotoUpload from "@/components/ui/photo-upload";
+import { PiecesInput } from "@/components/ui/pieces-input";
+
+interface PieceCatalogue {
+  id: string;
+  nom: string;
+  reference: string | null;
+  prix_ht: number | null;
+  unite: string;
+  nb_utilisations: number;
+}
 
 export function InterventionClient({
   rapport,
   installations,
+  catalogue = [],
 }: {
   rapport: RapportComplet;
   installations: Installation[];
+  catalogue?: PieceCatalogue[];
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -101,7 +113,8 @@ export function InterventionClient({
         diagnostic,
         travaux,
         piecesClean,
-        photos
+        photos,
+        true // incrémenter les usages à la finalisation
       );
       if (!result.success) {
         toast(result.error || "Erreur de sauvegarde", "error");
@@ -234,57 +247,14 @@ export function InterventionClient({
         />
       </div>
 
-      {/* Pièces utilisées */}
+      {/* Pièces utilisées — avec autocomplete catalogue */}
       <div className="mb-4 rounded-xl border border-border bg-white p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <label className="text-sm font-bold">Pièces et matériel utilisé</label>
-          <button
-            type="button"
-            onClick={addPiece}
-            className="rounded-lg bg-primary/10 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/20"
-          >
-            + Ajouter
-          </button>
-        </div>
-        <div className="space-y-3">
-          {pieces.map((piece, i) => (
-            <div key={i} className="flex gap-2 items-start">
-              <div className="flex-1 space-y-2">
-                <input
-                  type="text"
-                  value={piece.nom}
-                  onChange={(e) => updatePiece(i, "nom", e.target.value)}
-                  placeholder="Nom de la pièce"
-                  className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                />
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    value={piece.quantite}
-                    onChange={(e) => updatePiece(i, "quantite", parseInt(e.target.value) || 1)}
-                    min={1}
-                    className="w-20 rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                    placeholder="Qté"
-                  />
-                  <input
-                    type="text"
-                    value={piece.reference || ""}
-                    onChange={(e) => updatePiece(i, "reference", e.target.value)}
-                    placeholder="Référence (optionnel)"
-                    className="flex-1 rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                  />
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => removePiece(i)}
-                className="mt-2 text-red-500 hover:text-red-700 text-sm font-bold px-2"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-        </div>
+        <label className="block text-sm font-bold mb-3">Pièces et matériel utilisé</label>
+        <PiecesInput
+          pieces={pieces.filter((p) => p.nom.trim() !== "")}
+          catalogue={catalogue}
+          onChange={(updated) => setPieces(updated.length > 0 ? updated : [{ nom: "", quantite: 1 }])}
+        />
       </div>
 
       {/* Indicateur auto-save */}

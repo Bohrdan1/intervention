@@ -6,7 +6,7 @@ import { TypePorteSelect } from "./type-porte-select";
 import { InstallationEditItem } from "./installation-edit-item";
 import { SiteEditItem } from "./site-edit-item";
 import { ClientEditHeader } from "./client-edit-header";
-import { DEFAULT_POINTS_CONTROLE, DEFAULT_POINTS_ERP, DEFAULT_CONSTAT } from "@/lib/types";
+import { DEFAULT_POINTS_CONTROLE, DEFAULT_POINTS_ERP, DEFAULT_CONSTAT, type Installation } from "@/lib/types";
 
 export default async function ClientsPage({
   searchParams,
@@ -35,7 +35,7 @@ export default async function ClientsPage({
 
   // ── Actions serveur ──
 
-  async function createClient_action(formData: FormData) {
+  async function ajouterClient(formData: FormData) {
     "use server";
     const supabase = await createClient();
     const nom = formData.get("nom") as string;
@@ -122,6 +122,7 @@ export default async function ClientsPage({
     const contact_telephone = formData.get("contact_telephone") as string | null;
     const contact_mail = formData.get("contact_mail") as string | null;
     const memo_prive = formData.get("memo_prive") as string | null;
+    const periodicite_raw = formData.get("periodicite_maintenance") as string | null;
     if (!id || !nom?.trim()) return;
     const updates: Record<string, unknown> = {
       nom: nom.trim(),
@@ -131,6 +132,10 @@ export default async function ClientsPage({
     if (contact_telephone !== null) updates.contact_telephone = contact_telephone.trim() || null;
     if (contact_mail !== null) updates.contact_mail = contact_mail.trim() || null;
     if (memo_prive !== null) updates.memo_prive = memo_prive.trim() || null;
+    if (periodicite_raw !== null) {
+      const val = parseInt(periodicite_raw, 10);
+      updates.periodicite_maintenance = isNaN(val) || val <= 0 ? null : val;
+    }
     await supabase.from("sites").update(updates).eq("id", id);
     revalidatePath("/clients");
   }
@@ -265,7 +270,7 @@ export default async function ClientsPage({
       <ClientSearch initialQuery={q || ""} />
 
       {/* Formulaire ajout client */}
-      <form action={createClient_action} className="mb-8 rounded-xl border border-border bg-white p-4 shadow-sm">
+      <form action={ajouterClient} className="mb-8 rounded-xl border border-border bg-white p-4 shadow-sm">
         <h2 className="text-sm font-semibold text-muted mb-3">Nouveau client</h2>
         <div className="flex flex-col gap-3 sm:flex-row">
           <input
@@ -339,6 +344,7 @@ export default async function ClientsPage({
                       </form>
                     }
                   >
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {site.installations?.map((inst: any) => (
                       <InstallationEditItem
                         key={inst.id}

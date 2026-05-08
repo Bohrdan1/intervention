@@ -8,7 +8,9 @@ export async function saveConstatAndFinalize(
   rapportId: string,
   constat_general: ConstatItem[],
   signature_data: string | null,
-  signature_client: string | null
+  signature_client: string | null,
+  nom_signataire_client?: string | null,
+  date_signature?: string | null
 ) {
   const supabase = await createClient();
 
@@ -18,6 +20,8 @@ export async function saveConstatAndFinalize(
       constat_general,
       signature_data,
       signature_client,
+      nom_signataire_client: nom_signataire_client ?? null,
+      date_signature: date_signature ?? new Date().toISOString(),
       statut: "finalise",
     })
     .eq("id", rapportId);
@@ -35,7 +39,8 @@ export async function saveConstatDraft(
   rapportId: string,
   constat_general: ConstatItem[],
   signature_data: string | null,
-  signature_client: string | null
+  signature_client: string | null,
+  nom_signataire_client?: string | null
 ) {
   const supabase = await createClient();
 
@@ -45,6 +50,7 @@ export async function saveConstatDraft(
       constat_general,
       signature_data,
       signature_client,
+      nom_signataire_client: nom_signataire_client ?? null,
     })
     .eq("id", rapportId);
 }

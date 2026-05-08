@@ -12,6 +12,12 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: "Automatisme & Agencement - Rapports de maintenance",
   description: "Génération de rapports de maintenance préventive et corrective",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "AAC Rapports",
+  },
 };
 
 export const viewport: Viewport = {

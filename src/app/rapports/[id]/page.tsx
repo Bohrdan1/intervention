@@ -368,6 +368,18 @@ export default async function RapportDetailPage({
         </div>
       )}
 
+      {/* Ordre de travail (intervention + maintenance) */}
+      {!isVisite && (
+        <div className="mb-3">
+          <Link
+            href={`/rapports/${rapport.id}/ot`}
+            className="flex items-center justify-center gap-2 w-full rounded-xl border border-orange-200 bg-orange-50 py-2.5 text-sm font-medium text-orange-700 hover:bg-orange-100"
+          >
+            📋 Ordre de travail / Bon d&apos;intervention
+          </Link>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex gap-3">
         {isVisite ? (

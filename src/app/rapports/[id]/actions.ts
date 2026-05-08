@@ -13,7 +13,7 @@ export async function deleteRapport(rapportId: string) {
     .eq("id", rapportId)
     .single();
 
-  // Supprimer les fichiers du storage
+  // Supprimer les fichiers du storage (best-effort : ne bloque pas la suppression)
   if (rapport?.photos && Array.isArray(rapport.photos) && rapport.photos.length > 0) {
     const paths = rapport.photos
       .map((p: { path?: string }) => p.path)
@@ -24,31 +24,39 @@ export async function deleteRapport(rapportId: string) {
     }
   }
 
-  // Supprimer les contrôles associés d'abord
-  await supabase.from("controles").delete().eq("rapport_id", rapportId);
+  // Les contrôles sont supprimés automatiquement via ON DELETE CASCADE
+  const { error } = await supabase
+    .from("rapports")
+    .delete()
+    .eq("id", rapportId);
 
-  // Supprimer le rapport
-  await supabase.from("rapports").delete().eq("id", rapportId);
+  if (error) throw new Error(`Erreur suppression rapport : ${error.message}`);
 
   revalidatePath("/");
 }
 
 export async function archiveRapport(rapportId: string) {
   const supabase = await createClient();
-  await supabase
+  const { error } = await supabase
     .from("rapports")
     .update({ archived_at: new Date().toISOString() })
     .eq("id", rapportId);
+
+  if (error) throw new Error(`Erreur archivage rapport : ${error.message}`);
+
   revalidatePath("/");
   revalidatePath(`/rapports/${rapportId}`);
 }
 
 export async function restoreRapport(rapportId: string) {
   const supabase = await createClient();
-  await supabase
+  const { error } = await supabase
     .from("rapports")
     .update({ archived_at: null })
     .eq("id", rapportId);
+
+  if (error) throw new Error(`Erreur restauration rapport : ${error.message}`);
+
   revalidatePath("/");
   revalidatePath(`/rapports/${rapportId}`);
 }

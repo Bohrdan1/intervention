@@ -381,7 +381,7 @@ export function VisiteClient({ rapport }: { rapport: RapportComplet }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const autoSaveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initialiser visite_data depuis le rapport ou avec les défauts
   const existingData: VisiteData = rapport.visite_data && Object.keys(rapport.visite_data).length > 0
@@ -447,13 +447,14 @@ export function VisiteClient({ rapport }: { rapport: RapportComplet }) {
     }
   }, [rapport.id, data, allPhotos]);
 
+  // Auto-save déclenché 45 secondes après le dernier changement (même pattern que intervention)
   useEffect(() => {
-    if (autoSaveTimerRef.current) clearInterval(autoSaveTimerRef.current);
-    autoSaveTimerRef.current = setInterval(() => {
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
       autoSave();
-    }, 5 * 60 * 1000);
+    }, 45000);
     return () => {
-      if (autoSaveTimerRef.current) clearInterval(autoSaveTimerRef.current);
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
   }, [autoSave]);
 

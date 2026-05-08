@@ -2,6 +2,14 @@
 
 import { useState, useRef } from "react";
 
+const PERIODICITES = [
+  { value: "", label: "Pas de contrat" },
+  { value: "3",  label: "Trimestrielle (3 mois)" },
+  { value: "6",  label: "Semestrielle (6 mois)" },
+  { value: "12", label: "Annuelle (12 mois)" },
+  { value: "24", label: "Biennale (2 ans)" },
+];
+
 interface Site {
   id: string;
   nom: string;
@@ -10,6 +18,7 @@ interface Site {
   contact_telephone?: string | null;
   contact_mail?: string | null;
   memo_prive?: string | null;
+  periodicite_maintenance?: number | null;
 }
 
 interface Props {
@@ -88,6 +97,18 @@ export function SiteEditItem({
                 className="flex-1 rounded border border-border px-2 py-1 text-sm focus:border-primary focus:outline-none"
               />
             </div>
+            <div className="flex gap-2 items-center">
+              <label className="text-xs text-muted whitespace-nowrap">Maintenance :</label>
+              <select
+                name="periodicite_maintenance"
+                defaultValue={site.periodicite_maintenance?.toString() ?? ""}
+                className="rounded border border-border px-2 py-1 text-xs focus:border-primary focus:outline-none bg-white"
+              >
+                {PERIODICITES.map((p) => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
+                ))}
+              </select>
+            </div>
             <div className="flex gap-2">
               <button
                 type="submit"
@@ -106,7 +127,18 @@ export function SiteEditItem({
           </form>
         ) : (
           <div>
-            <h4 className="text-sm font-semibold">📍 {site.nom}</h4>
+            <div className="flex items-center gap-2">
+              <h4 className="text-sm font-semibold">📍 {site.nom}</h4>
+              {site.periodicite_maintenance && (
+                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                  🔄 {site.periodicite_maintenance === 12 ? "Annuelle" :
+                      site.periodicite_maintenance === 6  ? "Semestrielle" :
+                      site.periodicite_maintenance === 3  ? "Trimestrielle" :
+                      site.periodicite_maintenance === 24 ? "Biennale" :
+                      `${site.periodicite_maintenance} mois`}
+                </span>
+              )}
+            </div>
             {site.adresse && (
               <p className="text-xs text-muted mt-0.5">{site.adresse}</p>
             )}
