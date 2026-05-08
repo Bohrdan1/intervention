@@ -58,7 +58,7 @@ export function ExportClient({
     if (from) params.set("from", from);
     if (to) params.set("to", to);
     if (type) params.set("type", type);
-    return `/export?${params.toString()}`;
+    return `/api/export?${params.toString()}`;
   }
 
   function applyPreset(idx: number) {

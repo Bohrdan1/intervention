@@ -121,7 +121,7 @@ export default async function FinancesPage() {
           <p className="text-sm text-muted">Chiffre d&apos;affaires en CFP — {anneeEnCours}</p>
         </div>
         <Link
-          href={`/export`}
+          href={`/export`} /* kept — UI page */
           className="rounded-xl border border-border px-4 py-2 text-sm font-medium hover:bg-slate-50"
         >
           ⬇️ Export CSV
