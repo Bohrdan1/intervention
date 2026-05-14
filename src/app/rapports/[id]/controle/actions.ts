@@ -7,7 +7,9 @@ export async function saveControle(
   controleId: string,
   points_controle: PointControle[],
   points_erp: PointERP[],
-  note_supplementaire?: string
+  note_supplementaire?: string,
+  nombre_cycles?: number | null,
+  heures_fonctionnement?: number | null
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
 
@@ -17,6 +19,8 @@ export async function saveControle(
       points_controle,
       points_erp,
       note_supplementaire: note_supplementaire ?? null,
+      nombre_cycles: nombre_cycles ?? null,
+      heures_fonctionnement: heures_fonctionnement ?? null,
     })
     .eq("id", controleId);
 

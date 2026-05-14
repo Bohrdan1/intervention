@@ -77,6 +77,8 @@ export interface Controle {
   points_controle: PointControle[];
   points_erp: PointERP[];
   note_supplementaire?: string;
+  nombre_cycles?: number | null;
+  heures_fonctionnement?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -291,7 +293,8 @@ export const DEFAULT_POINTS_ERP: PointERP[] = [
   { nom: 'réouverture sur obstacle', conforme: true },
   { nom: 'ouverture par rappel mécanique', conforme: true },
   { nom: "boitier d'ouverture d'urgence", conforme: true },
-  { nom: 'ouverture sur panne réseau', conforme: true },
+  { nom: 'ouverture sur panne réseau si non verrouillé', conforme: true },
+  { nom: 'manœuvre de secours verrouillage', conforme: true },
   { nom: 'bande de visualisation', conforme: true },
   { nom: 'zone de sécurisation', conforme: true },
   { nom: 'alimentation sur disjoncteur séparé', conforme: true },

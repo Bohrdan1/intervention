@@ -31,14 +31,20 @@ supabase/
 - Ne jamais desactiver la RLS en production
 
 ### Migrations SQL
-- Utiliser `npx supabase migration new nom_migration` pour creer des migrations
+- Créer le fichier SQL dans `supabase/migrations/` (nommage : `YYYYMMDDNNNNNN_nom.sql`)
+- **Appliquer via MCP Supabase** (`apply_migration`, project_id : `agldccxurgtrrvaublza`)
+- Pas de Docker local, pas de `supabase db push`
 - Chaque migration doit etre idempotente quand possible (IF NOT EXISTS)
 - Toujours inclure les policies RLS dans la meme migration que la table
 
+### Workflow de déploiement
+1. Modifier le code
+2. Appliquer les migrations via MCP Supabase (`apply_migration`)
+3. `git push` → Vercel déploie automatiquement
+
 ### Typage TypeScript
-- Apres chaque modification de schema, regenerer les types :
-  `npx supabase gen types typescript --local > src/lib/supabase/database.types.ts`
-- Utiliser le type `Database` dans les clients Supabase pour le typage complet
+- Pas de génération locale des types (pas de Docker)
+- Mettre à jour manuellement `src/lib/supabase/database.types.ts` si nécessaire
 
 ### Client Supabase
 - Cote client (composants 'use client') : utiliser `createClient()` de `@/lib/supabase/client`
@@ -58,9 +64,7 @@ supabase/
 
 ## Commandes utiles
 ```bash
-npx supabase start          # Demarrer Supabase en local
-npx supabase db reset        # Reset la base locale
-npx supabase migration new   # Nouvelle migration
-npx supabase gen types typescript --local > src/lib/supabase/database.types.ts  # Generer les types
-npm run dev                  # Demarrer Next.js en dev
+npm run dev                  # Demarrer Next.js en dev (pas de Docker)
+# Migrations : via MCP Supabase apply_migration (project agldccxurgtrrvaublza)
+# Deploy : git push → Vercel auto
 ```

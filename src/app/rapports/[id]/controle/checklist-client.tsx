@@ -25,6 +25,8 @@ interface ControleData {
   points_controle: PointControle[];
   points_erp: PointERP[];
   note_supplementaire?: string;
+  nombre_cycles?: number | null;
+  heures_fonctionnement?: number | null;
   installation: {
     id: string;
     repere: string;
@@ -115,7 +117,7 @@ export function ChecklistClient({
     setAutoSaveStatus("saving");
     try {
       const c = allControles[currentIndex];
-      await saveControle(c.id, c.points_controle, c.points_erp, c.note_supplementaire);
+      await saveControle(c.id, c.points_controle, c.points_erp, c.note_supplementaire, c.nombre_cycles, c.heures_fonctionnement);
       await savePhotos(rapportId, photos);
       setLastSaved(new Date());
       setAutoSaveStatus("saved");
@@ -137,7 +139,7 @@ export function ChecklistClient({
 
   async function handleSaveAndNavigate(direction: "prev" | "next" | "finish") {
     setSaving(true);
-    const result = await saveControle(current.id, current.points_controle, current.points_erp, current.note_supplementaire);
+    const result = await saveControle(current.id, current.points_controle, current.points_erp, current.note_supplementaire, current.nombre_cycles, current.heures_fonctionnement);
     const photoResult = await savePhotos(rapportId, photos);
 
     if (!result.success || !photoResult.success) {
@@ -163,7 +165,7 @@ export function ChecklistClient({
   async function handleJumpTo(index: number) {
     if (index === currentIndex) return;
     setSaving(true);
-    const result = await saveControle(current.id, current.points_controle, current.points_erp, current.note_supplementaire);
+    const result = await saveControle(current.id, current.points_controle, current.points_erp, current.note_supplementaire, current.nombre_cycles, current.heures_fonctionnement);
     const photoResult = await savePhotos(rapportId, photos);
     setSaving(false);
 
@@ -344,8 +346,53 @@ export function ChecklistClient({
         ))}
       </div>
 
-      {/* Note supplémentaire */}
+      {/* Compteurs porte */}
       <div className="mt-6 rounded-xl border border-border bg-white p-4 shadow-sm">
+        <h3 className="text-sm font-bold text-muted uppercase tracking-wide mb-3">
+          Compteurs
+        </h3>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-muted mb-1">Nombre de cycles</label>
+            <input
+              type="number"
+              inputMode="numeric"
+              placeholder="ex : 125000"
+              value={current.nombre_cycles ?? ""}
+              onChange={(e) => {
+                const val = e.target.value === "" ? null : parseInt(e.target.value, 10);
+                setAllControles((prev) => {
+                  const next = [...prev];
+                  next[currentIndex] = { ...next[currentIndex], nombre_cycles: val };
+                  return next;
+                });
+              }}
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-muted mb-1">Heures de fonctionnement</label>
+            <input
+              type="number"
+              inputMode="numeric"
+              placeholder="ex : 2400"
+              value={current.heures_fonctionnement ?? ""}
+              onChange={(e) => {
+                const val = e.target.value === "" ? null : parseInt(e.target.value, 10);
+                setAllControles((prev) => {
+                  const next = [...prev];
+                  next[currentIndex] = { ...next[currentIndex], heures_fonctionnement: val };
+                  return next;
+                });
+              }}
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Note supplémentaire */}
+      <div className="mt-4 rounded-xl border border-border bg-white p-4 shadow-sm">
         <h3 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">
           Observations supplémentaires
         </h3>
