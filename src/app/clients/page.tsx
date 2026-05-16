@@ -132,6 +132,14 @@ export default async function ClientsPage({
     if (contact_telephone !== null) updates.contact_telephone = contact_telephone.trim() || null;
     if (contact_mail !== null) updates.contact_mail = contact_mail.trim() || null;
     if (memo_prive !== null) updates.memo_prive = memo_prive.trim() || null;
+    const contact_fonction = formData.get("contact_fonction") as string | null;
+    const horaires = formData.get("horaires") as string | null;
+    const code_acces = formData.get("code_acces") as string | null;
+    const notes_site = formData.get("notes_site") as string | null;
+    if (contact_fonction !== null) updates.contact_fonction = contact_fonction.trim() || null;
+    if (horaires !== null) updates.horaires = horaires.trim() || null;
+    if (code_acces !== null) updates.code_acces = code_acces.trim() || null;
+    if (notes_site !== null) updates.notes_site = notes_site.trim() || null;
     if (periodicite_raw !== null) {
       const val = parseInt(periodicite_raw, 10);
       updates.periodicite_maintenance = isNaN(val) || val <= 0 ? null : val;

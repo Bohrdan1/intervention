@@ -14,7 +14,8 @@ interface RapportItem {
   type_rapport: string;
   statut: string;
   archived_at: string | null;
-  client: { nom: string } | null;
+  client_id: string | null;
+  client: { id: string; nom: string } | null;
   site: { nom: string } | null;
   controles: { id: string }[] | null;
 }
@@ -179,9 +180,16 @@ export function RapportList({
                           </span>
                         )}
                       </div>
-                      <p className="font-semibold truncate">
-                        {rapport.client?.nom || "Client inconnu"}
-                      </p>
+                      {rapport.client ? (
+                        <Link
+                          href={`/clients/${rapport.client.id}`}
+                          className="relative z-10 font-semibold truncate hover:underline hover:text-primary"
+                        >
+                          {rapport.client.nom}
+                        </Link>
+                      ) : (
+                        <p className="font-semibold truncate text-muted">Client inconnu</p>
+                      )}
                       <p className="text-sm text-muted">
                         {rapport.site?.nom || "Site inconnu"}
                         {rapport.type_rapport !== "intervention"

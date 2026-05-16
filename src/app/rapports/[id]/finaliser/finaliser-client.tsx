@@ -16,6 +16,7 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
   const [dateSignature, setDateSignature] = useState<string | null>(rapport.date_signature ?? null);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [navigating, setNavigating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasClientRef = useRef<HTMLCanvasElement>(null);
@@ -242,6 +243,13 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
   function closePreview() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
+  }
+
+  async function handleNavigateAway(href: string) {
+    setNavigating(true);
+    await saveConstatDraft(rapport.id, constat, signatureData, signatureClient, nomSignataireClient);
+    setNavigating(false);
+    router.push(href);
   }
 
   async function handleSaveDraft() {
@@ -586,7 +594,25 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
 
       {/* Actions fixes en bas */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-white px-4 py-3 shadow-lg">
-        <div className="mx-auto flex max-w-5xl gap-3">
+        <div className="mx-auto flex max-w-5xl gap-2">
+          {/* Bouton Modifier contextuel — sauvegarde avant navigation */}
+          {isIntervention ? (
+            <button
+              onClick={() => handleNavigateAway(`/rapports/${rapport.id}/intervention`)}
+              disabled={navigating}
+              className="flex-1 rounded-xl border border-border py-3 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
+            >
+              {navigating ? "Sauvegarde..." : "← Modifier"}
+            </button>
+          ) : !isVisite ? (
+            <button
+              onClick={() => handleNavigateAway(`/rapports/${rapport.id}/controle`)}
+              disabled={navigating}
+              className="flex-1 rounded-xl border border-border py-3 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
+            >
+              {navigating ? "Sauvegarde..." : "← Contrôles"}
+            </button>
+          ) : null}
           <button
             onClick={handleSaveDraft}
             disabled={saving}

@@ -219,7 +219,13 @@ export default async function RapportDetailPage({
             {rapport.statut === "finalise" ? "Finalisé" : "Brouillon"}
           </span>
         </div>
-        <h1 className="text-2xl font-bold">{rapport.client?.nom}</h1>
+        {rapport.client?.id ? (
+          <Link href={`/clients/${rapport.client.id}`} className="text-2xl font-bold hover:underline hover:text-primary">
+            {rapport.client.nom}
+          </Link>
+        ) : (
+          <h1 className="text-2xl font-bold">{rapport.client?.nom}</h1>
+        )}
         <p className="text-sm text-muted">
           {rapport.site?.nom} · {date}
         </p>

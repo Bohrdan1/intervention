@@ -123,7 +123,8 @@ export default async function Dashboard({
       type_rapport,
       statut,
       archived_at,
-      client:clients(nom),
+      client_id,
+      client:clients(id, nom),
       site:sites(nom),
       controles(id)
     `)

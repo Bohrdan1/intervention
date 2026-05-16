@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ClientDetailClient } from "./client-detail-client";
+import { CodeAccesToggle } from "./code-acces-toggle";
 
 const PERIODICITE_LABEL: Record<number, string> = {
   3: "Trim.",
@@ -144,49 +146,8 @@ export default async function ClientDetailPage({
         <span className="font-medium text-foreground">{client.nom}</span>
       </div>
 
-      {/* En-tête client */}
-      <div className="mb-4 rounded-xl border border-border bg-white p-4 shadow-sm">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-bold">{client.nom}</h1>
-            {client.sous_titre && (
-              <p className="text-sm text-muted">{client.sous_titre}</p>
-            )}
-          </div>
-          <Link
-            href={`/clients?edit=${id}`}
-            className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-slate-50"
-          >
-            ✏️ Modifier
-          </Link>
-        </div>
-
-        {/* Contacts */}
-        <div className="mt-3 flex flex-wrap gap-3">
-          {client.telephone && (
-            <a
-              href={`tel:${client.telephone}`}
-              className="flex items-center gap-1.5 rounded-lg bg-slate-50 px-3 py-1.5 text-sm hover:bg-slate-100"
-            >
-              📞 <span>{client.telephone}</span>
-            </a>
-          )}
-          {client.mail && (
-            <a
-              href={`mailto:${client.mail}`}
-              className="flex items-center gap-1.5 rounded-lg bg-slate-50 px-3 py-1.5 text-sm hover:bg-slate-100"
-            >
-              ✉️ <span className="truncate max-w-[180px]">{client.mail}</span>
-            </a>
-          )}
-          {client.prenom && (
-            <span className="flex items-center gap-1.5 rounded-lg bg-slate-50 px-3 py-1.5 text-sm">
-              👤 {client.prenom}
-              {client.fonction ? ` · ${client.fonction}` : ""}
-            </span>
-          )}
-        </div>
-      </div>
+      {/* En-tête client — édition inline */}
+      <ClientDetailClient client={client} />
 
       {/* Stats */}
       <div className="mb-4 grid grid-cols-3 gap-3">
@@ -261,7 +222,7 @@ export default async function ClientDetailPage({
                 prochaineCM = d.toISOString().split("T")[0];
                 joursAvantCM = joursAvant(prochaineCM);
               } else {
-                joursAvantCM = null; // jamais effectuée
+                joursAvantCM = null;
               }
             }
 
@@ -318,9 +279,7 @@ export default async function ClientDetailPage({
                               <span>·</span>
                               <span>
                                 Prochaine :{" "}
-                                {new Date(
-                                  prochaineCM + "T12:00:00"
-                                ).toLocaleDateString("fr-FR", {
+                                {new Date(prochaineCM + "T12:00:00").toLocaleDateString("fr-FR", {
                                   day: "numeric",
                                   month: "short",
                                   year: "numeric",
@@ -336,12 +295,30 @@ export default async function ClientDetailPage({
                     </div>
                   )}
 
-                  {/* Contact site */}
-                  {site.contact_nom && (
+                  {/* Contact + nouveaux champs site */}
+                  {(site.contact_nom || site.contact_telephone || site.contact_mail || site.contact_fonction) && (
                     <p className="mt-1 text-xs text-muted">
-                      👤 {site.contact_nom}
-                      {site.contact_telephone ? ` · ${site.contact_telephone}` : ""}
+                      👤 {[site.contact_nom, site.contact_fonction].filter(Boolean).join(" · ")}
+                      {site.contact_telephone && (
+                        <> · <a href={`tel:${site.contact_telephone}`} className="hover:text-primary">{site.contact_telephone}</a></>
+                      )}
+                      {site.contact_mail && (
+                        <> · <a href={`mailto:${site.contact_mail}`} className="hover:text-primary">{site.contact_mail}</a></>
+                      )}
                     </p>
+                  )}
+                  {site.horaires && (
+                    <p className="mt-0.5 text-xs text-muted">🕐 {site.horaires}</p>
+                  )}
+                  {site.code_acces && (
+                    <div className="mt-0.5">
+                      <CodeAccesToggle code={site.code_acces} />
+                    </div>
+                  )}
+                  {site.notes_site && (
+                    <div className="mt-1.5 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-800">
+                      📝 {site.notes_site}
+                    </div>
                   )}
                 </div>
 
@@ -368,9 +345,7 @@ export default async function ClientDetailPage({
                               {inst.modele ? ` · ${inst.modele}` : ""}
                               {derniere ? (
                                 <> · {derniere.type === "maintenance" ? "CM" : "Intervention"}{" "}
-                                  {new Date(
-                                    derniere.date + "T12:00:00"
-                                  ).toLocaleDateString("fr-FR", {
+                                  {new Date(derniere.date + "T12:00:00").toLocaleDateString("fr-FR", {
                                     day: "numeric",
                                     month: "short",
                                     year: "numeric",

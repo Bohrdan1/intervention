@@ -18,6 +18,14 @@ export interface Client {
   telephone: string | null;
   mail: string | null;
   comptabilite: string | null;
+  denomination_legale: string | null;
+  ridet: string | null;
+  adresse_facturation: string | null;
+  telephone_secondaire: string | null;
+  mail_comptabilite: string | null;
+  site_web: string | null;
+  notes_internes: string | null;
+  type_client: 'professionnel' | 'particulier';
   created_at: string;
   updated_at: string;
 }
@@ -33,6 +41,10 @@ export interface Site {
   memo_prive: string | null;
   /** Périodicité de maintenance en mois. null = pas de contrat. */
   periodicite_maintenance: number | null;
+  contact_fonction: string | null;
+  horaires: string | null;
+  code_acces: string | null;
+  notes_site: string | null;
   created_at: string;
   updated_at: string;
 }

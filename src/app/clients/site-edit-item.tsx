@@ -19,6 +19,10 @@ interface Site {
   contact_mail?: string | null;
   memo_prive?: string | null;
   periodicite_maintenance?: number | null;
+  contact_fonction?: string | null;
+  horaires?: string | null;
+  code_acces?: string | null;
+  notes_site?: string | null;
 }
 
 interface Props {
@@ -97,6 +101,32 @@ export function SiteEditItem({
                 className="flex-1 rounded border border-border px-2 py-1 text-sm focus:border-primary focus:outline-none"
               />
             </div>
+            <div className="flex gap-2">
+              <input
+                name="contact_fonction"
+                defaultValue={site.contact_fonction ?? ""}
+                placeholder="Fonction contact"
+                className="flex-1 rounded border border-border px-2 py-1 text-sm focus:border-primary focus:outline-none"
+              />
+              <input
+                name="horaires"
+                defaultValue={site.horaires ?? ""}
+                placeholder="Horaires"
+                className="flex-1 rounded border border-border px-2 py-1 text-sm focus:border-primary focus:outline-none"
+              />
+              <input
+                name="code_acces"
+                defaultValue={site.code_acces ?? ""}
+                placeholder="Code d'accès"
+                className="flex-1 rounded border border-border px-2 py-1 text-sm focus:border-primary focus:outline-none"
+              />
+            </div>
+            <input
+              name="notes_site"
+              defaultValue={site.notes_site ?? ""}
+              placeholder="Notes site"
+              className="w-full rounded border border-amber-300 bg-amber-50 px-2 py-1 text-sm focus:border-amber-500 focus:outline-none"
+            />
             <div className="flex gap-2 items-center">
               <label className="text-xs text-muted whitespace-nowrap">Maintenance :</label>
               <select
