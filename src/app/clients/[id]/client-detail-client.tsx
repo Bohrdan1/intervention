@@ -357,13 +357,6 @@ export function ClientDetailClient({
                           🔄 {periodiciteLabel(site.periodicite_maintenance)}
                         </span>
                       )}
-                      <Link
-                        href={`/rapports/nouveau?client_id=${clientId}&site_id=${site.id}&type=maintenance`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-blue-700"
-                      >
-                        + CM
-                      </Link>
                       <span className="text-xs text-muted whitespace-nowrap">
                         {isOpen ? "▼" : "▶"} Modifier
                       </span>
