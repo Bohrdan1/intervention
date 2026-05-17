@@ -63,6 +63,22 @@ export default async function ClientDetailPage({
     }
   }
 
+  // ── Prochains RDV du client (à partir d'aujourd'hui heure Nouméa) ──
+  const NC_OFFSET_MS = 11 * 60 * 60 * 1000;
+  const nowNC = new Date(Date.now() + NC_OFFSET_MS);
+  const debutJourNC = new Date(
+    Date.UTC(nowNC.getUTCFullYear(), nowNC.getUTCMonth(), nowNC.getUTCDate()) - NC_OFFSET_MS
+  ).toISOString();
+
+  const { data: prochainRdvs } = await supabase
+    .from("rdvs")
+    .select("id, date_rdv, duree_minutes, type_rdv, statut, notes, dossier_id, dossier:dossiers(id, reference)")
+    .eq("client_id", id)
+    .gte("date_rdv", debutJourNC)
+    .neq("statut", "annule")
+    .order("date_rdv")
+    .limit(10);
+
   // ── Stats globales ──
   const { count: nbRapports } = await supabase
     .from("rapports")
@@ -127,6 +143,80 @@ export default async function ClientDetailPage({
           </div>
         ))}
       </div>
+
+      {/* Prochains RDV */}
+      {(() => {
+        const NC_OFFSET = 11 * 60 * 60 * 1000;
+        const typeColors: Record<string, string> = {
+          diagnostic:   "border-gray-200 bg-gray-50 text-gray-700",
+          intervention: "border-purple-200 bg-purple-50 text-purple-700",
+          maintenance:  "border-blue-200 bg-blue-50 text-blue-700",
+          visite:       "border-teal-200 bg-teal-50 text-teal-700",
+        };
+        const typeLabels: Record<string, string> = {
+          diagnostic:   "Diagnostic",
+          intervention: "Intervention",
+          maintenance:  "Maintenance",
+          visite:       "Visite",
+        };
+        const formatNC = (iso: string) => {
+          const nc = new Date(new Date(iso).getTime() + NC_OFFSET);
+          const day = String(nc.getUTCDate()).padStart(2, "0");
+          const month = String(nc.getUTCMonth() + 1).padStart(2, "0");
+          const year = nc.getUTCFullYear();
+          const hh = String(nc.getUTCHours()).padStart(2, "0");
+          const mm = String(nc.getUTCMinutes()).padStart(2, "0");
+          return { date: `${day}/${month}/${year}`, time: `${hh}h${mm}` };
+        };
+        return (
+          <div className="mt-6 mb-4">
+            <h2 className="mb-2 text-sm font-semibold text-muted uppercase tracking-wide">Prochains RDV</h2>
+            {(prochainRdvs ?? []).length === 0 ? (
+              <p className="rounded-xl border border-border bg-white px-4 py-3 text-sm text-muted shadow-sm">
+                Aucun RDV à venir
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {(prochainRdvs ?? []).map((rdv) => {
+                  const { date, time } = formatNC(rdv.date_rdv);
+                  const colorClass = typeColors[rdv.type_rdv] ?? typeColors.diagnostic;
+                  const label = typeLabels[rdv.type_rdv] ?? rdv.type_rdv;
+                  const dossier = Array.isArray(rdv.dossier) ? rdv.dossier[0] : rdv.dossier;
+                  return (
+                    <div key={rdv.id} className="rounded-xl border border-border bg-white px-4 py-3 shadow-sm">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold">{date}</span>
+                            <span className="text-sm text-muted">{time}</span>
+                            {rdv.duree_minutes && (
+                              <span className="text-xs text-muted">({rdv.duree_minutes} min)</span>
+                            )}
+                          </div>
+                          {dossier && (
+                            <Link
+                              href={`/dossiers/${dossier.id}`}
+                              className="text-xs text-blue-600 hover:underline"
+                            >
+                              Dossier {dossier.reference}
+                            </Link>
+                          )}
+                          {rdv.notes && (
+                            <p className="text-xs text-muted mt-0.5 line-clamp-2">{rdv.notes}</p>
+                          )}
+                        </div>
+                        <span className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium ${colorClass}`}>
+                          {label}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Actions rapides */}
       <div className="mb-4 flex gap-2">
