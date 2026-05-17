@@ -13,13 +13,16 @@ type Props = {
 
 export function RapportPageClient({ rapport, currentDossier, dossierChoix }: Props) {
   const [modeEdition, setModeEdition] = useState(false);
-  if (!modeEdition) {
+  const isFinalize = rapport.statut === "finalise";
+
+  // Un rapport finalisé reste en lecture seule
+  if (!modeEdition || isFinalize) {
     return (
       <RapportLecture
         rapport={rapport}
         currentDossier={currentDossier}
         dossierChoix={dossierChoix}
-        onModifier={() => setModeEdition(true)}
+        onModifier={isFinalize ? undefined : () => setModeEdition(true)}
       />
     );
   }

@@ -326,7 +326,7 @@ type Props = {
   rapport: RapportComplet;
   currentDossier: { id: string; reference: string } | null;
   dossierChoix: DossierChoix[];
-  onModifier: () => void;
+  onModifier?: () => void;
 };
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -512,12 +512,18 @@ export function RapportLecture({ rapport, currentDossier, dossierChoix, onModifi
 
       {/* Actions */}
       <div className="mt-6 space-y-2">
-        <button
-          onClick={onModifier}
-          className="w-full min-h-[44px] rounded-xl border border-border bg-white py-2.5 text-sm font-medium hover:bg-slate-50"
-        >
-          ✏️ Modifier
-        </button>
+        {rapport.statut === "finalise" ? (
+          <div className="w-full min-h-[44px] flex items-center justify-center rounded-xl border border-green-200 bg-green-50 py-2.5 text-sm font-semibold text-green-700">
+            ✓ Rapport finalisé
+          </div>
+        ) : (
+          <button
+            onClick={onModifier}
+            className="w-full min-h-[44px] rounded-xl border border-border bg-white py-2.5 text-sm font-medium hover:bg-slate-50"
+          >
+            ✏️ Modifier
+          </button>
+        )}
         {rapport.statut === "finalise" && (
           <a
             href={`/rapports/${rapport.id}/pdf?download=1`}

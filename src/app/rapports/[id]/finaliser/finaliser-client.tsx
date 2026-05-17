@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { saveConstatAndFinalize, saveConstatDraft } from "./actions";
+import { saveConstatDraft, validerRapport } from "./actions";
 import type { ConstatItem, RapportComplet } from "@/lib/types";
 import { useToast } from "@/components/ui/toast";
 
@@ -17,6 +17,8 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [navigating, setNavigating] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [validating, setValidating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasClientRef = useRef<HTMLCanvasElement>(null);
@@ -222,7 +224,8 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
   async function handlePreview() {
     setGenerating(true);
     try {
-      await saveConstatAndFinalize(rapport.id, constat, signatureData, signatureClient, nomSignataireClient, dateSignature);
+      // Sauvegarde en brouillon uniquement — la finalisation se fait via "Valider"
+      await saveConstatDraft(rapport.id, constat, signatureData, signatureClient, nomSignataireClient);
       const blob = await generatePdfBlob();
       const url = URL.createObjectURL(blob);
       setPreviewUrl(url);
@@ -231,6 +234,26 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
       toast("Erreur lors de la génération du PDF", "error");
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function handleValider() {
+    setValidating(true);
+    try {
+      await validerRapport(
+        rapport.id,
+        constat,
+        signatureData,
+        signatureClient,
+        nomSignataireClient,
+        dateSignature
+      );
+      router.push(`/rapports/${rapport.id}`);
+    } catch (error) {
+      console.error("Erreur validation:", error);
+      toast("Erreur lors de la validation du rapport", "error");
+      setValidating(false);
+      setConfirmOpen(false);
     }
   }
 
@@ -375,6 +398,34 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
             >
               ✓ Valider la signature
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal confirmation validation */}
+      {confirmOpen && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-bold mb-2">Valider ce rapport ?</h3>
+            <p className="text-sm text-muted mb-6">
+              Cette action finalise le rapport définitivement. Vous ne pourrez plus le modifier.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmOpen(false)}
+                disabled={validating}
+                className="flex-1 min-h-[44px] rounded-xl border border-border py-2.5 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleValider}
+                disabled={validating}
+                className="flex-[2] min-h-[44px] rounded-xl bg-green-600 py-2.5 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50"
+              >
+                {validating ? "Validation…" : "✓ Valider"}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -594,38 +645,49 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
 
       {/* Actions fixes en bas */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-white px-4 py-3 shadow-lg">
-        <div className="mx-auto flex max-w-5xl gap-2">
-          {/* Bouton Modifier contextuel — sauvegarde avant navigation */}
-          {isIntervention ? (
+        <div className="mx-auto max-w-5xl space-y-2">
+          {/* Ligne 1 : navigation + brouillon + aperçu */}
+          <div className="flex gap-2">
+            {isIntervention ? (
+              <button
+                onClick={() => handleNavigateAway(`/rapports/${rapport.id}/intervention`)}
+                disabled={navigating}
+                className="flex-1 rounded-xl border border-border py-3 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
+              >
+                {navigating ? "Sauvegarde..." : "← Modifier"}
+              </button>
+            ) : !isVisite ? (
+              <button
+                onClick={() => handleNavigateAway(`/rapports/${rapport.id}/controle`)}
+                disabled={navigating}
+                className="flex-1 rounded-xl border border-border py-3 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
+              >
+                {navigating ? "Sauvegarde..." : "← Contrôles"}
+              </button>
+            ) : null}
             <button
-              onClick={() => handleNavigateAway(`/rapports/${rapport.id}/intervention`)}
-              disabled={navigating}
+              onClick={handleSaveDraft}
+              disabled={saving}
               className="flex-1 rounded-xl border border-border py-3 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
             >
-              {navigating ? "Sauvegarde..." : "← Modifier"}
+              {saving ? "Sauvegarde..." : "💾 Brouillon"}
             </button>
-          ) : !isVisite ? (
             <button
-              onClick={() => handleNavigateAway(`/rapports/${rapport.id}/controle`)}
-              disabled={navigating}
-              className="flex-1 rounded-xl border border-border py-3 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
+              onClick={handlePreview}
+              disabled={generating}
+              className="flex-[2] rounded-xl bg-primary py-3 text-sm font-semibold text-white hover:bg-primary-light disabled:opacity-50"
             >
-              {navigating ? "Sauvegarde..." : "← Contrôles"}
+              {generating ? "Génération..." : "👁 Aperçu PDF"}
             </button>
-          ) : null}
+          </div>
+
+          {/* Ligne 2 : Valider — pleine largeur, proéminent */}
           <button
-            onClick={handleSaveDraft}
-            disabled={saving}
-            className="flex-1 rounded-xl border border-border py-3 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
+            onClick={() => setConfirmOpen(true)}
+            disabled={generating || saving || navigating || validating}
+            className="w-full min-h-[48px] rounded-xl bg-green-600 py-3 text-base font-bold text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
           >
-            {saving ? "Sauvegarde..." : "💾 Brouillon"}
-          </button>
-          <button
-            onClick={handlePreview}
-            disabled={generating}
-            className="flex-[2] rounded-xl bg-primary py-3 text-sm font-semibold text-white hover:bg-primary-light disabled:opacity-50"
-          >
-            {generating ? "Génération..." : "👁 Aperçu PDF"}
+            ✓ Valider le rapport
           </button>
         </div>
       </div>
