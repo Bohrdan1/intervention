@@ -1,155 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
-import Link from "next/link";
-import { DeleteButton } from "./delete-button";
-import { ArchiveButton } from "./archive-button";
-import Image from "next/image";
-import type { PhotoItem, VisiteData, PorteVisite, RapportComplet, PieceUtilisee } from "@/lib/types";
-import { RattacherDossierButton } from "@/components/rapports/RattacherDossierButton";
+import { notFound } from "next/navigation";
+import { RapportPageClient } from "@/components/rapports/RapportPageClient";
+import type { RapportComplet } from "@/lib/types";
 import type { DossierChoix } from "@/components/rapports/RattacherDossierModal";
-
-function getTypePorteLabel(porte: PorteVisite): string {
-  if (porte.type_porte === "coulissante") {
-    const type = porte.type_coulissante === "telescopique" ? "Télesco." : "Simple";
-    return `Coulissante ${type} ${porte.vantaux}V${porte.parties_fixes > 0 ? ` + ${porte.parties_fixes}F` : ""}`;
-  }
-  if (porte.type_porte === "battante") {
-    const sens = porte.sens_ouverture === "tirant" ? "Tirant" : "Poussant";
-    return `Battante ${porte.vantaux}V ${sens}`;
-  }
-  return porte.type_autre || "Autre";
-}
-
-function getSupportLabel(s: string, autre?: string): string {
-  const labels: Record<string, string> = { beton: "Béton", metal: "Métal", placo: "Placo renforcé", autre: "Autre" };
-  if (s === "autre" && autre) return autre;
-  return labels[s] || s;
-}
-
-function VisiteDetail({ rapport, photos }: { rapport: RapportComplet; photos: PhotoItem[] }) {
-  const data: VisiteData | null = rapport.visite_data;
-  const hasData = data && Object.keys(data).length > 0;
-
-  if (!hasData) {
-    return (
-      <div className="mb-6">
-        <div className="rounded-xl border-2 border-dashed border-border bg-white p-8 text-center">
-          <p className="text-muted text-sm">Aucune information saisie pour cette visite.</p>
-        </div>
-      </div>
-    );
-  }
-
-  const env = data.environnement || { acces: "", electricite: [], securite: [], activation: [] };
-  const elecLabels: Record<string, string> = { "230v": "230V dispo", disjoncteur: "Disjoncteur dédié", a_prevoir: "À prévoir" };
-  const secuLabels: Record<string, string> = { rideau_laser: "Rideau laser", cellules: "Cellules", barre_palpeuse: "Barre palpeuse", das: "DAS" };
-  const actLabels: Record<string, string> = { radar: "Radar", bouton: "Bouton", digicode: "Digicode", badge: "Badge", telecommande: "Télécommande" };
-  const visitePhotos = photos.filter((p) => p.context === "visite");
-
-  return (
-    <div className="mb-6 space-y-4">
-      {/* Infos */}
-      {(data.adresse || data.contact_sur_place) && (
-        <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">Informations</h2>
-          {data.adresse && <p className="text-sm"><span className="font-semibold">Adresse :</span> {data.adresse}</p>}
-          {data.contact_sur_place && (
-            <p className="text-sm">
-              <span className="font-semibold">Contact :</span> {data.contact_sur_place}
-              {data.telephone_contact ? ` (${data.telephone_contact})` : ""}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Travaux */}
-      {data.travaux_envisages && (
-        <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">Travaux envisagés</h2>
-          <p className="text-sm whitespace-pre-wrap">{data.travaux_envisages}</p>
-        </div>
-      )}
-
-      {/* Portes */}
-      {data.portes && data.portes.length > 0 && (
-        <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-3">
-            Portes ({data.portes.length})
-          </h2>
-          <div className="space-y-3">
-            {data.portes.map((porte, i) => (
-              <div key={porte.id || i} className="rounded-lg bg-slate-50 p-3">
-                <p className="text-sm font-semibold mb-1">Porte {i + 1} — {getTypePorteLabel(porte)}</p>
-                <div className="grid grid-cols-3 gap-2 text-xs text-muted">
-                  {porte.hauteur && <span>H: {porte.hauteur} mm</span>}
-                  {porte.largeur && <span>L: {porte.largeur} mm</span>}
-                  {porte.passage_utile && <span>PU: {porte.passage_utile} mm</span>}
-                  {porte.linteau && <span>Linteau: {porte.linteau} mm</span>}
-                  {porte.profondeur && <span>Prof: {porte.profondeur} mm</span>}
-                  <span>Support: {getSupportLabel(porte.support, porte.support_autre)}</span>
-                </div>
-                {porte.debattement === "obstacle" && (
-                  <p className="text-xs text-orange-600 mt-1">
-                    Obstacle : {porte.debattement_detail || "Non précisé"}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Environnement */}
-      <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-        <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">Environnement</h2>
-        <div className="space-y-1 text-sm">
-          {env.acces && <p><span className="font-semibold">Accès :</span> {env.acces}</p>}
-          {env.electricite.length > 0 && (
-            <p><span className="font-semibold">Électricité :</span> {env.electricite.map((v) => elecLabels[v] || v).join(", ")}</p>
-          )}
-          {env.securite.length > 0 && (
-            <p><span className="font-semibold">Sécurité :</span> {env.securite.map((v) => secuLabels[v] || v).join(", ")}</p>
-          )}
-          {env.activation.length > 0 && (
-            <p><span className="font-semibold">Activation :</span> {env.activation.map((v) => actLabels[v] || v).join(", ")}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Observations */}
-      {(data.observations_particulieres || data.preconisation) && (
-        <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">Observations & Recommandations</h2>
-          {data.observations_particulieres && (
-            <div className="mb-2">
-              <p className="text-xs font-semibold text-muted">Observations</p>
-              <p className="text-sm whitespace-pre-wrap">{data.observations_particulieres}</p>
-            </div>
-          )}
-          {data.preconisation && (
-            <div>
-              <p className="text-xs font-semibold text-muted">Préconisation</p>
-              <p className="text-sm whitespace-pre-wrap">{data.preconisation}</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Photos */}
-      {visitePhotos.length > 0 && (
-        <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-3">Photos</h2>
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {visitePhotos.map((photo) => (
-              <Image key={photo.id} src={photo.url} alt={photo.label || "Photo"} width={200} height={96} className="h-24 w-full rounded-lg object-cover" unoptimized />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default async function RapportDetailPage({
   params,
@@ -159,27 +12,38 @@ export default async function RapportDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: rapport } = await supabase
+  const { data: raw } = await supabase
     .from("rapports")
-    .select(`
-      *,
-      client:clients(*),
-      site:sites(*),
-      controles(
-        *,
-        equipement:equipements(*)
-      )
-    `)
+    .select(`*, client:clients(*), site:sites(*), controles(*, equipement:equipements(*))`)
     .eq("id", id)
     .single();
 
-  if (!rapport) {
-    redirect("/");
+  if (!raw) notFound();
+
+  // Normaliser les FK joins (reverse FK peut retourner un tableau)
+  function normalise<T>(val: T | T[] | null | undefined): T | null {
+    if (val === null || val === undefined) return null;
+    return Array.isArray(val) ? (val[0] ?? null) : val;
   }
 
-  // Dossier actuel du rapport (si rattaché)
-  type DossierRow = { id: string; reference: string };
-  let currentDossier: DossierRow | null = null;
+  const controles = ((raw as { controles?: unknown[] }).controles ?? []).map((c) => {
+    const cc = c as Record<string, unknown>;
+    return {
+      ...cc,
+      equipement: normalise(cc.equipement as unknown),
+      installation: normalise(cc.equipement as unknown),
+    };
+  });
+
+  const rapport = {
+    ...raw,
+    client: normalise((raw as Record<string, unknown>).client),
+    site: normalise((raw as Record<string, unknown>).site),
+    controles,
+  } as unknown as RapportComplet;
+
+  // Dossier courant
+  let currentDossier: { id: string; reference: string } | null = null;
   if (rapport.dossier_id) {
     const { data } = await supabase
       .from("dossiers")
@@ -189,8 +53,8 @@ export default async function RapportDetailPage({
     currentDossier = data ?? null;
   }
 
-  // Tous les dossiers ouverts pour le modal de rattachement
-  type DossierModalRow = {
+  // Dossiers pour RattacherDossierButton
+  type DossierRow = {
     id: string;
     reference: string;
     type_dossier: string;
@@ -204,360 +68,27 @@ export default async function RapportDetailPage({
     .order("reference", { ascending: false });
 
   const dossierChoix: DossierChoix[] = (rawDossiers ?? []).map((d) => {
-    const raw = d as unknown as DossierModalRow;
-    const clientNom = Array.isArray(raw.client)
-      ? (raw.client[0]?.nom ?? "—")
-      : (raw.client?.nom ?? "—");
-    const siteNom = Array.isArray(raw.site)
-      ? (raw.site[0]?.nom ?? null)
-      : (raw.site?.nom ?? null);
+    const raw2 = d as unknown as DossierRow;
+    const clientNom = Array.isArray(raw2.client)
+      ? (raw2.client[0]?.nom ?? "—")
+      : (raw2.client?.nom ?? "—");
+    const siteNom = Array.isArray(raw2.site)
+      ? (raw2.site[0]?.nom ?? null)
+      : (raw2.site?.nom ?? null);
     return {
-      id: raw.id,
-      reference: raw.reference,
+      id: raw2.id,
+      reference: raw2.reference,
       clientNom,
       siteNom,
-      typeDossier: raw.type_dossier,
+      typeDossier: raw2.type_dossier,
     };
   });
 
-  const isIntervention = rapport.type_rapport === "intervention";
-  const isVisite = rapport.type_rapport === "visite";
-  const photos: PhotoItem[] = rapport.photos || [];
-
-  const controles = (rapport.controles || []).sort(
-    (a: { page_number: number }, b: { page_number: number }) => a.page_number - b.page_number
-  );
-
-  const date = new Date(rapport.date_intervention + 'T12:00:00').toLocaleDateString("fr-FR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
   return (
-    <div>
-      {/* En-tête */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-sm font-mono font-semibold text-primary">
-            {rapport.numero_cm}
-          </span>
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-              isVisite
-                ? "bg-teal-100 text-teal-700"
-                : isIntervention
-                  ? "bg-purple-100 text-purple-700"
-                  : "bg-blue-100 text-blue-700"
-            }`}
-          >
-            {isVisite ? "Visite technique" : isIntervention ? "Intervention" : "Maintenance"}
-          </span>
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-              rapport.statut === "finalise"
-                ? "bg-green-100 text-green-700"
-                : "bg-amber-100 text-amber-700"
-            }`}
-          >
-            {rapport.statut === "finalise" ? "Finalisé" : "Brouillon"}
-          </span>
-        </div>
-        {rapport.client?.id ? (
-          <Link href={`/clients/${rapport.client.id}`} className="text-2xl font-bold hover:underline hover:text-primary">
-            {rapport.client.nom}
-          </Link>
-        ) : (
-          <h1 className="text-2xl font-bold">{rapport.client?.nom}</h1>
-        )}
-        <p className="text-sm text-muted">
-          {rapport.site?.nom} · {date}
-        </p>
-        {/* Dossier rattaché */}
-        <div className="mt-2 flex items-center gap-2">
-          {currentDossier ? (
-            <Link
-              href={`/dossiers/${currentDossier.id}`}
-              className="inline-flex items-center gap-1 rounded-lg border border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
-            >
-              📁 {currentDossier.reference}
-            </Link>
-          ) : (
-            <span className="text-xs text-muted">Non rattaché à un dossier</span>
-          )}
-        </div>
-      </div>
-
-      {/* Bouton rattacher */}
-      <div className="mb-4">
-        <RattacherDossierButton
-          rapportId={rapport.id}
-          currentDossierId={rapport.dossier_id ?? null}
-          dossiers={dossierChoix}
-        />
-      </div>
-
-      {/* Contenu selon le type */}
-      {isVisite ? (
-        <VisiteDetail rapport={rapport} photos={photos} />
-      ) : isIntervention ? (
-        <div className="mb-6 space-y-4">
-          {rapport.description_probleme && (
-            <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">
-                Description du problème
-              </h2>
-              <p className="text-sm whitespace-pre-wrap">{rapport.description_probleme}</p>
-            </div>
-          )}
-
-          {rapport.travaux_effectues && (
-            <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">
-                Travaux effectués
-              </h2>
-              <p className="text-sm whitespace-pre-wrap">{rapport.travaux_effectues}</p>
-            </div>
-          )}
-
-          {/* Photos intervention */}
-          {photos.filter((p) => p.context === "intervention").length > 0 && (
-            <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-3">
-                Photos
-              </h2>
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {photos
-                  .filter((p) => p.context === "intervention")
-                  .map((photo) => (
-                    <Image
-                      key={photo.id}
-                      src={photo.url}
-                      alt={photo.label || "Photo"}
-                      width={200}
-                      height={96}
-                      className="h-24 w-full rounded-lg object-cover"
-                      unoptimized
-                    />
-                  ))}
-              </div>
-            </div>
-          )}
-
-          {rapport.pieces_utilisees && rapport.pieces_utilisees.length > 0 && (
-            <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-bold text-muted uppercase tracking-wide mb-2">
-                Pièces et matériel
-              </h2>
-              <div className="space-y-2">
-                {rapport.pieces_utilisees.map((piece: PieceUtilisee, i: number) => (
-                  <div key={i} className="flex items-center gap-2 text-sm">
-                    <span className="font-medium">{piece.nom}</span>
-                    <span className="text-muted">x{piece.quantite}</span>
-                    {piece.reference && (
-                      <span className="text-xs text-muted">({piece.reference})</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {!rapport.description_probleme && !rapport.travaux_effectues && (
-            <div className="rounded-xl border-2 border-dashed border-border bg-white p-8 text-center">
-              <p className="text-muted text-sm">
-                Aucune information saisie pour cette intervention.
-              </p>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="mb-6 space-y-3">
-          <h2 className="text-sm font-bold text-muted uppercase tracking-wide">
-            Portes contrôlées ({controles.length})
-          </h2>
-          {controles.map((controle: RapportComplet["controles"][number]) => {
-            const nbOk = controle.points_controle.filter((p) => p.etat === "ok").length;
-            const total = controle.points_controle.length;
-            const controlePhotos = photos.filter(
-              (p) => p.context === `controle:${controle.equipement?.id}`
-            );
-
-            return (
-              <div
-                key={controle.id}
-                className="rounded-xl border border-border bg-white p-4 shadow-sm"
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="font-semibold">🚪 {controle.equipement?.repere}</p>
-                    <p className="text-xs text-muted">
-                      {controle.equipement?.type_porte}
-                      {controle.equipement?.modele ? ` · ${controle.equipement.modele}` : ""}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-green-600">
-                      {nbOk}/{total} OK
-                    </p>
-                  </div>
-                </div>
-                {/* Observations non-OK */}
-                {controle.points_controle
-                  .filter((p) => p.etat !== "ok" && p.etat !== "na")
-                  .map((p, i) => (
-                    <div key={i} className="mt-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2">
-                      <span className={`text-xs font-medium ${
-                        p.etat === "correction" ? "text-red-700" : "text-orange-700"
-                      }`}>
-                        {p.etat === "correction" ? "Correction" : "Prévention"}
-                      </span>
-                      <span className="text-xs text-muted"> · {p.nom}</span>
-                      {p.observation && (
-                        <p className="text-xs mt-0.5">{p.observation}</p>
-                      )}
-                    </div>
-                  ))}
-                {/* Photos de cette porte */}
-                {controlePhotos.length > 0 && (
-                  <div className="mt-3 grid grid-cols-4 gap-1.5">
-                    {controlePhotos.map((photo) => (
-                      <Image
-                        key={photo.id}
-                        src={photo.url}
-                        alt={photo.label || "Photo"}
-                        width={160}
-                        height={64}
-                        className="h-16 w-full rounded-lg object-cover"
-                        unoptimized
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Ordre de travail (intervention + maintenance) */}
-      {!isVisite && (
-        <div className="mb-3">
-          <Link
-            href={`/rapports/${rapport.id}/ot`}
-            className="flex items-center justify-center gap-2 w-full rounded-xl border border-orange-200 bg-orange-50 py-2.5 text-sm font-medium text-orange-700 hover:bg-orange-100"
-          >
-            📋 Ordre de travail / Bon d&apos;intervention
-          </Link>
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className="flex gap-3">
-        {isVisite ? (
-          <>
-            <Link
-              href={`/rapports/${rapport.id}/visite`}
-              className="flex-1 rounded-xl border border-border bg-white py-3 text-center text-sm font-medium hover:bg-slate-50"
-            >
-              Modifier
-            </Link>
-            <Link
-              href={`/rapports/${rapport.id}/devis`}
-              className="flex-1 rounded-xl bg-primary py-3 text-center text-sm font-semibold text-white hover:bg-primary-light"
-            >
-              Devis
-            </Link>
-          </>
-        ) : isIntervention ? (
-          <>
-            <Link
-              href={`/rapports/${rapport.id}/intervention`}
-              className="flex-1 rounded-xl border border-border bg-white py-3 text-center text-sm font-medium hover:bg-slate-50"
-            >
-              Modifier l&apos;intervention
-            </Link>
-            {rapport.statut === 'finalise' ? (
-              <a
-                href={`/rapports/${rapport.id}/pdf?download=1`}
-                className="flex-1 rounded-xl bg-primary py-3 text-center text-sm font-semibold text-white hover:bg-primary-light"
-              >
-                📥 Télécharger PDF
-              </a>
-            ) : (
-              <form
-                action={async () => {
-                  'use server';
-                  const supabase = await createClient();
-                  await supabase
-                    .from('rapports')
-                    .update({ statut: 'finalise', updated_at: new Date().toISOString() })
-                    .eq('id', rapport.id);
-                  revalidatePath(`/rapports/${rapport.id}`);
-                  redirect(`/rapports/${rapport.id}/pdf?download=1`);
-                }}
-                className="flex-1"
-              >
-                <button
-                  type="submit"
-                  className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white hover:bg-primary-light"
-                >
-                  Valider
-                </button>
-              </form>
-            )}
-          </>
-        ) : (
-          <>
-            <Link
-              href={`/rapports/${rapport.id}/controle`}
-              className="flex-1 rounded-xl border border-border bg-white py-3 text-center text-sm font-medium hover:bg-slate-50"
-            >
-              Modifier les contrôles
-            </Link>
-            {rapport.statut === 'finalise' ? (
-              <a
-                href={`/rapports/${rapport.id}/pdf?download=1`}
-                className="flex-1 rounded-xl bg-primary py-3 text-center text-sm font-semibold text-white hover:bg-primary-light"
-              >
-                📥 Télécharger PDF
-              </a>
-            ) : (
-              <form
-                action={async () => {
-                  'use server';
-                  const supabase = await createClient();
-                  await supabase
-                    .from('rapports')
-                    .update({ statut: 'finalise', updated_at: new Date().toISOString() })
-                    .eq('id', rapport.id);
-                  revalidatePath(`/rapports/${rapport.id}`);
-                  redirect(`/rapports/${rapport.id}/pdf?download=1`);
-                }}
-                className="flex-1"
-              >
-                <button
-                  type="submit"
-                  className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white hover:bg-primary-light"
-                >
-                  Valider
-                </button>
-              </form>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Archiver */}
-      <div className="mt-4">
-        <ArchiveButton rapportId={rapport.id} isArchived={!!rapport.archived_at} />
-      </div>
-
-      {/* Supprimer */}
-      <div className="mt-2">
-        <DeleteButton rapportId={rapport.id} isFinalise={rapport.statut === "finalise"} />
-      </div>
-    </div>
+    <RapportPageClient
+      rapport={rapport}
+      currentDossier={currentDossier}
+      dossierChoix={dossierChoix}
+    />
   );
 }

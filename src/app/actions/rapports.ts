@@ -2,6 +2,19 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+// ── Finaliser un rapport et rediriger vers le PDF ────────────────────────
+
+export async function finaliserRapport(rapportId: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase
+    .from("rapports")
+    .update({ statut: "finalise", updated_at: new Date().toISOString() })
+    .eq("id", rapportId);
+  revalidatePath(`/rapports/${rapportId}`);
+  redirect(`/rapports/${rapportId}/pdf?download=1`);
+}
 
 // ── Rattacher un rapport à un dossier ─────────────────────────────────────
 
