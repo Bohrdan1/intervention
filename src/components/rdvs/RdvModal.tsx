@@ -42,10 +42,20 @@ const DUREES = [
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-/** Convertit une ISO string en valeur pour input[datetime-local] */
+const NC_OFFSET_MS = 11 * 60 * 60 * 1000; // UTC+11, Nouméa (pas de DST)
+
+/**
+ * Convertit une ISO UTC string en valeur pour input[datetime-local]
+ * en heure Nouméa (UTC+11).
+ * Ex : "2026-05-18T08:15:00Z" → "2026-05-18T19:15"
+ */
 function toDatetimeLocal(iso: string): string {
-  // "2026-05-19T09:00:00+11:00" → "2026-05-19T09:00"
-  return iso.substring(0, 16);
+  const nc = new Date(new Date(iso).getTime() + NC_OFFSET_MS);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    `${nc.getUTCFullYear()}-${pad(nc.getUTCMonth() + 1)}-${pad(nc.getUTCDate())}` +
+    `T${pad(nc.getUTCHours())}:${pad(nc.getUTCMinutes())}`
+  );
 }
 
 // ── Component ──────────────────────────────────────────────────────────────

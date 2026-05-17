@@ -5,6 +5,15 @@ import { revalidatePath } from "next/cache";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
+/**
+ * Convertit une valeur datetime-local saisie en heure Nouméa (UTC+11)
+ * vers une ISO string UTC pour stockage dans Supabase (timestamptz).
+ * Ex : "2026-05-18T19:15" → "2026-05-18T08:15:00.000Z"
+ */
+function ncLocalToUtc(datetimeLocal: string): string {
+  return new Date(`${datetimeLocal}:00+11:00`).toISOString();
+}
+
 function invalidate(dossier_id?: string | null) {
   revalidatePath("/agenda");
   revalidatePath("/");
@@ -19,7 +28,7 @@ export async function createRdv(formData: FormData): Promise<void> {
   const supabase = await createClient();
 
   const dossier_id = formData.get("dossier_id") as string;
-  const date_rdv = formData.get("date_rdv") as string;
+  const date_rdv = ncLocalToUtc(formData.get("date_rdv") as string);
   const duree_raw = parseInt(formData.get("duree_minutes") as string, 10);
   const type_rdv = (formData.get("type_rdv") as string) || "intervention";
   const statut = (formData.get("statut") as string) || "planifie";
@@ -56,7 +65,7 @@ export async function updateRdv(
 ): Promise<void> {
   const supabase = await createClient();
 
-  const date_rdv = formData.get("date_rdv") as string;
+  const date_rdv = ncLocalToUtc(formData.get("date_rdv") as string);
   const duree_raw = parseInt(formData.get("duree_minutes") as string, 10);
   const type_rdv = (formData.get("type_rdv") as string) || "intervention";
   const statut = (formData.get("statut") as string) || "planifie";
