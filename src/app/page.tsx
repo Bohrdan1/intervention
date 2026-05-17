@@ -72,10 +72,15 @@ export default async function DossiersDashboard() {
   });
 
   // ── RDV du jour ─────────────────────────────────────────────────────────
-  const aujourdhuiDebut = new Date();
-  aujourdhuiDebut.setHours(0, 0, 0, 0);
-  const demainDebut = new Date(aujourdhuiDebut);
-  demainDebut.setDate(demainDebut.getDate() + 1);
+  // Calcul de la plage du jour en heure Nouméa (UTC+11, pas de DST)
+  const NC_OFFSET_MS = 11 * 60 * 60 * 1000;
+  const nowNC = new Date(Date.now() + NC_OFFSET_MS);
+  const debutJourNC = new Date(
+    Date.UTC(nowNC.getUTCFullYear(), nowNC.getUTCMonth(), nowNC.getUTCDate()) - NC_OFFSET_MS
+  );
+  const finJourNC = new Date(
+    Date.UTC(nowNC.getUTCFullYear(), nowNC.getUTCMonth(), nowNC.getUTCDate() + 1) - NC_OFFSET_MS
+  );
 
   const { data: rawRdvsDuJour } = await supabase
     .from("rdvs")
@@ -88,8 +93,8 @@ export default async function DossiersDashboard() {
       dossier:dossiers(id, reference),
       client:clients(id, nom)
     `)
-    .gte("date_rdv", aujourdhuiDebut.toISOString())
-    .lt("date_rdv", demainDebut.toISOString())
+    .gte("date_rdv", debutJourNC.toISOString())
+    .lt("date_rdv", finJourNC.toISOString())
     .neq("statut", "annule")
     .order("date_rdv");
 

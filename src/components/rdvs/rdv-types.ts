@@ -60,30 +60,44 @@ export const RDV_STATUT_CONFIG: Record<
   annule:    { label: "Annulé",    badge: "bg-gray-100 text-gray-500" },
 };
 
-// ── Helpers de formatage ───────────────────────────────────────────────────
+// ── Helpers de formatage (heure Nouméa UTC+11) ────────────────────────────
 
-const JOURS = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
-const MOIS = [
-  "janvier", "février", "mars", "avril", "mai", "juin",
-  "juillet", "août", "septembre", "octobre", "novembre", "décembre",
-];
+const TZ_NC = "Pacific/Noumea";
 
 export function formatRdvDate(dateStr: string): string {
   const d = new Date(dateStr);
-  const jour = JOURS[d.getDay()];
-  const num = d.getDate();
-  const mois = MOIS[d.getMonth()];
-  const annee = d.getFullYear();
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${jour} ${num} ${mois} ${annee} — ${hh}h${mm}`;
+  const datePart = d.toLocaleDateString("fr-FR", {
+    timeZone: TZ_NC,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const timePart = d
+    .toLocaleTimeString("fr-FR", {
+      timeZone: TZ_NC,
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+    .replace(":", "h");
+  return `${datePart} — ${timePart}`;
 }
 
 export function formatRdvDateCourt(dateStr: string): string {
   const d = new Date(dateStr);
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${d.getDate()}/${d.getMonth() + 1} ${hh}h${mm}`;
+  const datePart = d.toLocaleDateString("fr-FR", {
+    timeZone: TZ_NC,
+    day: "numeric",
+    month: "numeric",
+  });
+  const timePart = d
+    .toLocaleTimeString("fr-FR", {
+      timeZone: TZ_NC,
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+    .replace(":", "h");
+  return `${datePart} ${timePart}`;
 }
 
 export function formatDuree(minutes: number | null): string {
