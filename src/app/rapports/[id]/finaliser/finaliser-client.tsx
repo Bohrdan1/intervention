@@ -462,32 +462,70 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
       {isIntervention && (
         <div className="mb-6 rounded-xl border border-border bg-white p-4 shadow-sm">
           <h2 className="text-base font-bold mb-3">⚡ Résumé de l&apos;intervention</h2>
-          {rapport.description_probleme && (
-            <div className="mb-3">
-              <p className="text-xs font-semibold text-muted uppercase">Problème</p>
-              <p className="text-sm mt-1">{rapport.description_probleme}</p>
+
+          {rapport.interventions_equipements && rapport.interventions_equipements.length > 0 ? (
+            // Nouveau format multi-équipements
+            <div className="space-y-4">
+              {rapport.interventions_equipements.map((ie, i) => (
+                <div key={i} className="border-t border-border/50 pt-3 first:border-0 first:pt-0">
+                  <p className="text-sm font-semibold mb-1">🚪 {ie.repere}</p>
+                  {ie.diagnostic && (
+                    <div className="mb-1">
+                      <p className="text-xs font-semibold text-muted uppercase">Diagnostic</p>
+                      <p className="text-sm">{ie.diagnostic}</p>
+                    </div>
+                  )}
+                  {ie.travaux_effectues && (
+                    <div className="mb-1">
+                      <p className="text-xs font-semibold text-muted uppercase">Travaux</p>
+                      <p className="text-sm">{ie.travaux_effectues}</p>
+                    </div>
+                  )}
+                  {ie.pieces_utilisees.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold text-muted uppercase">Pièces</p>
+                      <ul className="text-sm mt-0.5 list-disc list-inside">
+                        {ie.pieces_utilisees.map((p, j) => (
+                          <li key={j}>{p.nom} x{p.quantite}{p.reference ? ` (${p.reference})` : ""}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-          )}
-          {rapport.travaux_effectues && (
-            <div className="mb-3">
-              <p className="text-xs font-semibold text-muted uppercase">Travaux</p>
-              <p className="text-sm mt-1">{rapport.travaux_effectues}</p>
-          {rapport.diagnostic && (
-            <div className="mb-3">
-              <p className="text-xs font-semibold text-muted uppercase">Diagnostic</p>
-              <p className="text-sm mt-1 whitespace-pre-wrap">{rapport.diagnostic}</p>
-            </div>
-          )}            </div>
-          )}
-          {rapport.pieces_utilisees?.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-muted uppercase">Pièces</p>
-              <ul className="text-sm mt-1 list-disc list-inside">
-                {rapport.pieces_utilisees.map((p, i) => (
-                  <li key={i}>{p.nom} x{p.quantite}{p.reference ? ` (${p.reference})` : ""}</li>
-                ))}
-              </ul>
-            </div>
+          ) : (
+            // Ancien format
+            <>
+              {rapport.description_probleme && (
+                <div className="mb-3">
+                  <p className="text-xs font-semibold text-muted uppercase">Problème</p>
+                  <p className="text-sm mt-1">{rapport.description_probleme}</p>
+                </div>
+              )}
+              {rapport.diagnostic && (
+                <div className="mb-3">
+                  <p className="text-xs font-semibold text-muted uppercase">Diagnostic</p>
+                  <p className="text-sm mt-1 whitespace-pre-wrap">{rapport.diagnostic}</p>
+                </div>
+              )}
+              {rapport.travaux_effectues && (
+                <div className="mb-3">
+                  <p className="text-xs font-semibold text-muted uppercase">Travaux</p>
+                  <p className="text-sm mt-1">{rapport.travaux_effectues}</p>
+                </div>
+              )}
+              {rapport.pieces_utilisees?.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-muted uppercase">Pièces</p>
+                  <ul className="text-sm mt-1 list-disc list-inside">
+                    {rapport.pieces_utilisees.map((p, i) => (
+                      <li key={i}>{p.nom} x{p.quantite}{p.reference ? ` (${p.reference})` : ""}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

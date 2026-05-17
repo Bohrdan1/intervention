@@ -16,6 +16,7 @@ import type {
   PhotoItem,
   VisiteData,
   PorteVisite,
+  InterventionEquipement,
 } from "@/lib/types";
 import type { DossierChoix } from "./RattacherDossierModal";
 
@@ -109,6 +110,40 @@ function PhotoGrid({ photos }: { photos: PhotoItem[] }) {
         </div>
       )}
     </>
+  );
+}
+
+function InterventionEquipementCard({ ie }: { ie: InterventionEquipement }) {
+  return (
+    <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+      <p className="font-semibold text-sm mb-3">🚪 {ie.repere}</p>
+      {ie.diagnostic && (
+        <div className="mb-2">
+          <p className="text-xs font-semibold text-muted uppercase mb-1">Diagnostic</p>
+          <p className="text-sm whitespace-pre-wrap">{ie.diagnostic}</p>
+        </div>
+      )}
+      {ie.travaux_effectues && (
+        <div className="mb-2">
+          <p className="text-xs font-semibold text-muted uppercase mb-1">Travaux effectués</p>
+          <p className="text-sm whitespace-pre-wrap">{ie.travaux_effectues}</p>
+        </div>
+      )}
+      {ie.pieces_utilisees.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-muted uppercase mb-1">Pièces</p>
+          <div className="divide-y divide-border">
+            {ie.pieces_utilisees.map((p, i) => (
+              <div key={i} className="flex items-center gap-3 py-1.5 text-sm">
+                <span className="flex-1 font-medium">{p.nom}</span>
+                <span className="text-muted">x{p.quantite}</span>
+                {p.reference && <span className="text-xs text-muted">({p.reference})</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -432,7 +467,18 @@ export function RapportLecture({ rapport, currentDossier, dossierChoix, onModifi
               <VisiteDataLecture data={rapport.visite_data} />
             )}
           </>
+        ) : rapport.interventions_equipements && rapport.interventions_equipements.length > 0 ? (
+          // Nouveau format multi-équipements
+          <div className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-muted">
+              {rapport.interventions_equipements.length} porte{rapport.interventions_equipements.length > 1 ? "s" : ""} traitée{rapport.interventions_equipements.length > 1 ? "s" : ""}
+            </p>
+            {rapport.interventions_equipements.map((ie, i) => (
+              <InterventionEquipementCard key={i} ie={ie} />
+            ))}
+          </div>
         ) : (
+          // Ancien format
           <>
             {rapport.demande_client && (
               <Section title="Demande client">

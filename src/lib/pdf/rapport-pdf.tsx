@@ -10,7 +10,7 @@ import {
   Svg,
   Path,
 } from '@react-pdf/renderer';
-import type { RapportComplet, PhotoItem, VisiteData, PorteVisite, PieceUtilisee } from '@/lib/types';
+import type { RapportComplet, PhotoItem, VisiteData, PorteVisite, PieceUtilisee, InterventionEquipement } from '@/lib/types';
 import { SOCIETE } from '@/lib/types';
 import { LOGO_AAC_BASE64 } from './logo';
 
@@ -566,6 +566,95 @@ function PageConstat({
 }
 
 // ============================================
+// Tableau pièces (réutilisé dans PDF)
+// ============================================
+function PiecesTablePdf({ pieces }: { pieces: PieceUtilisee[] }) {
+  return (
+    <View style={s.tableOuter}>
+      <View style={s.headerRow}>
+        <View style={{ width: '42%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
+          <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Désignation</Text>
+        </View>
+        <View style={{ width: '20%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
+          <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Référence</Text>
+        </View>
+        <View style={{ width: '10%', borderRightWidth: 0.5, borderRightColor: '#999', paddingVertical: 3, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Qté</Text>
+        </View>
+        <View style={{ width: '28%', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
+          <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Montant</Text>
+        </View>
+      </View>
+      {pieces.length > 0 ? pieces.map((piece, i) => (
+        <View key={i} style={i % 2 === 0 ? s.row : s.rowAlt}>
+          <View style={{ width: '42%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
+            <Text style={{ fontSize: 9 }}>{piece.nom}</Text>
+          </View>
+          <View style={{ width: '20%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
+            <Text style={{ fontSize: 9 }}>{piece.reference || '—'}</Text>
+          </View>
+          <View style={{ width: '10%', borderRightWidth: 0.5, borderRightColor: '#999', paddingVertical: 3, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontSize: 9 }}>{piece.quantite}</Text>
+          </View>
+          <View style={{ width: '28%', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
+            <Text style={{ fontSize: 9 }}>—</Text>
+          </View>
+        </View>
+      )) : (
+        <View style={s.row}>
+          <View style={{ flex: 1, paddingLeft: 6, paddingVertical: 4 }}>
+            <Text style={{ fontSize: 9, color: '#888', fontFamily: 'Helvetica-Oblique' }}>Aucune pièce utilisée</Text>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ── Bloc signatures (réutilisé) ──────────────────────────────────────────────
+function SignaturesBlock({ rapport }: { rapport: RapportComplet }) {
+  return (
+    <View wrap={false} style={{ flexDirection: 'row', marginTop: 30, justifyContent: 'space-between' }}>
+      <View style={{ width: '45%' }}>
+        <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold' }}>Le technicien :</Text>
+        <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', textDecoration: 'underline', marginTop: 4 }}>
+          {rapport.technicien}
+        </Text>
+        {rapport.signature_data ? (
+          <Image style={{ width: 150, height: 80, marginTop: 10 }} src={rapport.signature_data} />
+        ) : (
+          <View style={{ width: 150, height: 80, marginTop: 10, borderWidth: 1, borderColor: '#999', borderStyle: 'dashed', backgroundColor: '#f9f9f9', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontSize: 8, color: '#666' }}>Signature</Text>
+          </View>
+        )}
+      </View>
+      <View style={{ width: '45%' }}>
+        <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold' }}>Le client :</Text>
+        {rapport.nom_signataire_client ? (
+          <Text style={{ fontSize: 9, marginTop: 4, color: '#444' }}>{rapport.nom_signataire_client}</Text>
+        ) : null}
+        {rapport.signature_client ? (
+          <>
+            <Image style={{ width: 150, height: 80, marginTop: 6 }} src={rapport.signature_client} />
+            <Text style={{ fontSize: 8, color: '#666', marginTop: 4 }}>
+              Signé le {rapport.date_signature
+                ? new Date(rapport.date_signature).toLocaleString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                : formatDate(rapport.date_intervention)}
+            </Text>
+          </>
+        ) : (
+          <>
+            <Text style={{ fontSize: 9, marginTop: 6 }}>Signature :</Text>
+            <View style={{ width: 180, height: 70, marginTop: 4, borderWidth: 0.5, borderColor: '#999', borderStyle: 'dashed' }} />
+            <Text style={{ fontSize: 9, marginTop: 8 }}>Date : ____/____/________</Text>
+          </>
+        )}
+      </View>
+    </View>
+  );
+}
+
+// ============================================
 // Page intervention (rapport libre)
 // ============================================
 function PageIntervention({
@@ -577,197 +666,138 @@ function PageIntervention({
   pageNum: number;
   totalPages: number;
 }) {
+  const isMulti = Array.isArray(rapport.interventions_equipements) && rapport.interventions_equipements.length > 0;
+  const interventions = rapport.interventions_equipements as InterventionEquipement[] | null;
   const pieces: PieceUtilisee[] = rapport.pieces_utilisees || [];
+
+  // En-tête commun
+  const header = (
+    <View style={s.header}>
+      <View>
+        <Image style={{ width: 90, height: 50 }} src={LOGO_AAC_BASE64} />
+        <Text style={{ fontSize: 7, color: '#555', marginTop: 2 }}>Automatisme et Agencement Calédonien</Text>
+      </View>
+      <View style={{ alignItems: 'flex-end' }}>
+        <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold' }}>Réf : {rapport.numero_cm}</Text>
+        <Text style={{ fontSize: 9 }}>Date : {formatDate(rapport.date_intervention)}</Text>
+        <Text style={{ fontSize: 9 }}>Page {pageNum} / {totalPages}</Text>
+      </View>
+    </View>
+  );
+
+  const infosGenerales = (
+    <View style={{ marginBottom: 12 }}>
+      <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
+        1. INFORMATIONS GÉNÉRALES
+      </Text>
+      <View style={s.infoRow}>
+        <Text style={{ width: 130, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Site / Client</Text>
+        <Text style={{ fontSize: 9 }}>: {rapport.client.nom}{rapport.site.nom !== rapport.client.nom ? ` — ${rapport.site.nom}` : ''}</Text>
+      </View>
+      {rapport.site.adresse ? (
+        <View style={s.infoRow}>
+          <Text style={{ width: 130, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Adresse</Text>
+          <Text style={{ fontSize: 9 }}>: {rapport.site.adresse}</Text>
+        </View>
+      ) : null}
+      <View style={s.infoRow}>
+        <Text style={{ width: 130, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Technicien</Text>
+        <Text style={{ fontSize: 9 }}>: {rapport.technicien}</Text>
+      </View>
+      <View style={s.infoRow}>
+        <Text style={{ width: 130, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Date d&apos;intervention</Text>
+        <Text style={{ fontSize: 9 }}>: {formatDate(rapport.date_intervention)}</Text>
+      </View>
+      <View style={s.infoRow}>
+        <Text style={{ width: 130, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Bon de commande / Contrat</Text>
+        <Text style={{ fontSize: 9 }}>: {rapport.numero_cm}</Text>
+      </View>
+    </View>
+  );
 
   return (
     <Page size="A4" style={s.page}>
-      {/* ── En-tête : logo gauche + référence droite ── */}
-      <View style={s.header}>
-        <View>
-          <Image style={{ width: 90, height: 50 }} src={LOGO_AAC_BASE64} />
-          <Text style={{ fontSize: 7, color: '#555', marginTop: 2 }}>Automatisme et Agencement Calédonien</Text>
-        </View>
-        <View style={{ alignItems: 'flex-end' }}>
-          <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold' }}>Réf : {rapport.numero_cm}</Text>
-          <Text style={{ fontSize: 9 }}>Date : {formatDate(rapport.date_intervention)}</Text>
-          <Text style={{ fontSize: 9 }}>Page {pageNum} / {totalPages}</Text>
-        </View>
-      </View>
-
-      {/* ── Titre ── */}
+      {header}
       <Text style={{ ...s.title, fontSize: 13, letterSpacing: 1 }}>RAPPORT D&apos;INTERVENTION</Text>
+      {infosGenerales}
 
-      {/* ── 1. Informations générales ── */}
-      <View style={{ marginBottom: 12 }}>
-        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
-          1. INFORMATIONS GÉNÉRALES
-        </Text>
-        <View style={s.infoRow}>
-          <Text style={{ width: 130, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Site / Client</Text>
-          <Text style={{ fontSize: 9 }}>: {rapport.client.nom}{rapport.site.nom !== rapport.client.nom ? ` — ${rapport.site.nom}` : ''}</Text>
-        </View>
-        {rapport.site.adresse ? (
-          <View style={s.infoRow}>
-            <Text style={{ width: 130, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Adresse</Text>
-            <Text style={{ fontSize: 9 }}>: {rapport.site.adresse}</Text>
-          </View>
-        ) : null}
-        <View style={s.infoRow}>
-          <Text style={{ width: 130, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Technicien</Text>
-          <Text style={{ fontSize: 9 }}>: {rapport.technicien}</Text>
-        </View>
-        <View style={s.infoRow}>
-          <Text style={{ width: 130, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Date d&apos;intervention</Text>
-          <Text style={{ fontSize: 9 }}>: {formatDate(rapport.date_intervention)}</Text>
-        </View>
-        <View style={s.infoRow}>
-          <Text style={{ width: 130, fontFamily: 'Helvetica-BoldOblique', fontSize: 9 }}>Bon de commande / Contrat</Text>
-          <Text style={{ fontSize: 9 }}>: {rapport.numero_cm}</Text>
-        </View>
-      </View>
-
-      {/* ── 2. Demande client / Description du problème ── */}
-      <View style={{ marginBottom: 12 }}>
-        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
-          2. DEMANDE CLIENT / DESCRIPTION DU PROBLÈME
-        </Text>
-        {rapport.installation && (
-          <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Oblique', marginBottom: 3 }}>
-            {rapport.installation.type_porte}{rapport.installation.modele ? ` ${rapport.installation.modele}` : ''} — {rapport.installation.repere}
-          </Text>
-        )}
-        <Text style={{ fontSize: 9, lineHeight: 1.5 }}>
-          {rapport.description_probleme || 'Non renseigné'}
-        </Text>
-      </View>
-
-      {/* ── 3. Diagnostic ── */}
-      <View style={{ marginBottom: 12 }}>
-        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
-          3. DIAGNOSTIC
-        </Text>
-        <Text style={{ fontSize: 9, lineHeight: 1.5 }}>
-          {rapport.diagnostic || 'Non renseigné'}
-        </Text>
-      </View>
-
-      {/* ── 4. Travaux effectués ── */}
-      <View style={{ marginBottom: 12 }}>
-        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
-          4. TRAVAUX EFFECTUÉS
-        </Text>
-        <Text style={{ fontSize: 9, lineHeight: 1.5 }}>
-          {rapport.travaux_effectues || 'Non renseigné'}
-        </Text>
-      </View>
-
-      {/* ── 5. Pièces et matériel utilisé ── */}
-      <View style={{ marginBottom: 12 }}>
-        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 6, textDecoration: 'underline' }}>
-          5. PIÈCES ET MATÉRIEL UTILISÉ
-        </Text>
-        <View style={s.tableOuter}>
-          {/* Header */}
-          <View style={s.headerRow}>
-            <View style={{ width: '42%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
-              <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Désignation</Text>
-            </View>
-            <View style={{ width: '20%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
-              <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Référence</Text>
-            </View>
-            <View style={{ width: '10%', borderRightWidth: 0.5, borderRightColor: '#999', paddingVertical: 3, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Qté</Text>
-            </View>
-            <View style={{ width: '28%', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
-              <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 9 }}>Montant</Text>
-            </View>
-          </View>
-          {/* Lignes */}
-          {pieces.length > 0 ? pieces.map((piece, i) => (
-            <View key={i} style={i % 2 === 0 ? s.row : s.rowAlt}>
-              <View style={{ width: '42%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
-                <Text style={{ fontSize: 9 }}>{piece.nom}</Text>
-              </View>
-              <View style={{ width: '20%', borderRightWidth: 0.5, borderRightColor: '#999', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
-                <Text style={{ fontSize: 9 }}>{piece.reference || '—'}</Text>
-              </View>
-              <View style={{ width: '10%', borderRightWidth: 0.5, borderRightColor: '#999', paddingVertical: 3, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 9 }}>{piece.quantite}</Text>
-              </View>
-              <View style={{ width: '28%', paddingLeft: 6, paddingVertical: 3, justifyContent: 'center' }}>
-                <Text style={{ fontSize: 9 }}>—</Text>
-              </View>
-            </View>
-          )) : (
-            <View style={s.row}>
-              <View style={{ flex: 1, paddingLeft: 6, paddingVertical: 4 }}>
-                <Text style={{ fontSize: 9, color: '#888', fontFamily: 'Helvetica-Oblique' }}>Aucune pièce utilisée</Text>
-              </View>
-            </View>
-          )}
-        </View>
-      </View>
-
-      {/* ── Notes / Observations ── */}
-      {(rapport.observations_visite || rapport.recommandations) ? (
-        <View style={{ marginBottom: 12 }}>
-          <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
-            NOTES / OBSERVATIONS
-          </Text>
-          {rapport.observations_visite ? (
-            <Text style={{ fontSize: 9, lineHeight: 1.5 }}>{rapport.observations_visite}</Text>
-          ) : null}
-          {rapport.recommandations ? (
-            <Text style={{ fontSize: 9, lineHeight: 1.5, marginTop: 3 }}>{rapport.recommandations}</Text>
-          ) : null}
-        </View>
-      ) : null}
-
-      {/* Photos */}
-      <PhotosSection photos={(rapport.photos || []).filter((p) => p.context === 'intervention')} title="Photos" />
-
-      {/* Signatures côte à côte */}
-      <View wrap={false} style={{ flexDirection: 'row', marginTop: 30, justifyContent: 'space-between' }}>
-        {/* Technicien */}
-        <View style={{ width: '45%' }}>
-          <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold' }}>Le technicien :</Text>
-          <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold', textDecoration: 'underline', marginTop: 4 }}>
-            {rapport.technicien}
-          </Text>
-          {rapport.signature_data ? (
-            <Image style={{ width: 150, height: 80, marginTop: 10 }} src={rapport.signature_data} />
-          ) : (
-            <View style={{ width: 150, height: 80, marginTop: 10, borderWidth: 1, borderColor: '#999', borderStyle: 'dashed', backgroundColor: '#f9f9f9', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 8, color: '#666' }}>Signature</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Client */}
-        <View style={{ width: '45%' }}>
-          <Text style={{ fontSize: 11, fontFamily: 'Helvetica-Bold' }}>Le client :</Text>
-          {rapport.nom_signataire_client ? (
-            <Text style={{ fontSize: 9, marginTop: 4, color: '#444' }}>{rapport.nom_signataire_client}</Text>
-          ) : null}
-          {rapport.signature_client ? (
-            <>
-              <Image style={{ width: 150, height: 80, marginTop: 6 }} src={rapport.signature_client} />
-              <Text style={{ fontSize: 8, color: '#666', marginTop: 4 }}>
-                Signé le {rapport.date_signature
-                  ? new Date(rapport.date_signature).toLocaleString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-                  : formatDate(rapport.date_intervention)}
+      {isMulti && interventions ? (
+        // ── Nouveau format : une section par équipement ──
+        <>
+          {interventions.map((ie, i) => (
+            <View key={i} style={{ marginBottom: 14 }}>
+              <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 4, textDecoration: 'underline' }}>
+                {i + 1 < 10 ? `${i + 1 + 1}.` : `${i + 2}.`} PORTE : {ie.repere}
               </Text>
-            </>
-          ) : (
-            <>
-              <Text style={{ fontSize: 9, marginTop: 6 }}>Signature :</Text>
-              <View style={{ width: 180, height: 70, marginTop: 4, borderWidth: 0.5, borderColor: '#999', borderStyle: 'dashed' }} />
-              <Text style={{ fontSize: 9, marginTop: 8 }}>Date : ____/____/________</Text>
-            </>
-          )}
-        </View>
-      </View>
+              {ie.diagnostic ? (
+                <View style={{ marginBottom: 6 }}>
+                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', marginBottom: 2 }}>Diagnostic :</Text>
+                  <Text style={{ fontSize: 9, lineHeight: 1.5 }}>{ie.diagnostic}</Text>
+                </View>
+              ) : null}
+              {ie.travaux_effectues ? (
+                <View style={{ marginBottom: 6 }}>
+                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', marginBottom: 2 }}>Travaux effectués :</Text>
+                  <Text style={{ fontSize: 9, lineHeight: 1.5 }}>{ie.travaux_effectues}</Text>
+                </View>
+              ) : null}
+              {ie.pieces_utilisees.length > 0 && (
+                <View>
+                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', marginBottom: 4 }}>Pièces utilisées :</Text>
+                  <PiecesTablePdf pieces={ie.pieces_utilisees} />
+                </View>
+              )}
+            </View>
+          ))}
+        </>
+      ) : (
+        // ── Ancien format ──
+        <>
+          <View style={{ marginBottom: 12 }}>
+            <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
+              2. DEMANDE CLIENT / DESCRIPTION DU PROBLÈME
+            </Text>
+            {rapport.installation && (
+              <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Oblique', marginBottom: 3 }}>
+                {rapport.installation.type_porte}{rapport.installation.modele ? ` ${rapport.installation.modele}` : ''} — {rapport.installation.repere}
+              </Text>
+            )}
+            <Text style={{ fontSize: 9, lineHeight: 1.5 }}>
+              {rapport.description_probleme || 'Non renseigné'}
+            </Text>
+          </View>
+          <View style={{ marginBottom: 12 }}>
+            <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
+              3. DIAGNOSTIC
+            </Text>
+            <Text style={{ fontSize: 9, lineHeight: 1.5 }}>{rapport.diagnostic || 'Non renseigné'}</Text>
+          </View>
+          <View style={{ marginBottom: 12 }}>
+            <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
+              4. TRAVAUX EFFECTUÉS
+            </Text>
+            <Text style={{ fontSize: 9, lineHeight: 1.5 }}>{rapport.travaux_effectues || 'Non renseigné'}</Text>
+          </View>
+          <View style={{ marginBottom: 12 }}>
+            <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 6, textDecoration: 'underline' }}>
+              5. PIÈCES ET MATÉRIEL UTILISÉ
+            </Text>
+            <PiecesTablePdf pieces={pieces} />
+          </View>
+          {(rapport.observations_visite || rapport.recommandations) ? (
+            <View style={{ marginBottom: 12 }}>
+              <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 5, textDecoration: 'underline' }}>
+                NOTES / OBSERVATIONS
+              </Text>
+              {rapport.observations_visite ? <Text style={{ fontSize: 9, lineHeight: 1.5 }}>{rapport.observations_visite}</Text> : null}
+              {rapport.recommandations ? <Text style={{ fontSize: 9, lineHeight: 1.5, marginTop: 3 }}>{rapport.recommandations}</Text> : null}
+            </View>
+          ) : null}
+        </>
+      )}
 
+      <PhotosSection photos={(rapport.photos || []).filter((p) => p.context === 'intervention')} title="Photos" />
+      <SignaturesBlock rapport={rapport} />
       <Footer pageNum={pageNum} totalPages={totalPages} />
     </Page>
   );

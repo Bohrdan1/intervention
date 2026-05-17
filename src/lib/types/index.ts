@@ -238,6 +238,14 @@ export interface PieceUtilisee {
   reference?: string;
 }
 
+export interface InterventionEquipement {
+  equipement_id: string;
+  repere: string;
+  diagnostic: string;
+  travaux_effectues: string;
+  pieces_utilisees: PieceUtilisee[];
+}
+
 export interface Rapport {
   id: string;
   numero_cm: string;
@@ -257,6 +265,8 @@ export interface Rapport {
   diagnostic: string | null;
   travaux_effectues: string | null;
   pieces_utilisees: PieceUtilisee[];
+  /** Nouveau format multi-équipements. null = ancien format (rétrocompat). */
+  interventions_equipements: InterventionEquipement[] | null;
   // Champs visite technique
   observations_visite: string | null;
   recommandations: string | null;
