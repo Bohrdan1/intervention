@@ -7,70 +7,100 @@ import { RDV_TYPE_CONFIG, formatDuree } from "./rdv-types";
 
 // ── Constantes ──────────────────────────────────────────────────────────────
 
-const HEURE_DEBUT = 7;   // 07:00
-const HEURE_FIN   = 19;  // 19:00 (exclue)
-const NB_SLOTS    = (HEURE_FIN - HEURE_DEBUT) * 2; // 24 créneaux de 30 min
+const HEURE_DEBUT  = 7;
+const HEURE_FIN    = 19;
+const NB_SLOTS     = (HEURE_FIN - HEURE_DEBUT) * 2; // 24 créneaux × 30 min
 
 const JOURS_COURTS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
-const MOIS_COURTS = [
+const MOIS_COURTS  = [
   "jan", "fév", "mar", "avr", "mai", "jun",
   "jul", "aoû", "sep", "oct", "nov", "déc",
 ];
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+/**
+ * Décalage Nouméa par rapport à UTC, en ms.
+ * Nouvelle-Calédonie = UTC+11, sans heure d'été.
+ */
+const NC_OFFSET_MS = 11 * 60 * 60 * 1000;
 
-/** Retourne le lundi de la semaine contenant `date` */
-function getMonday(date: Date): Date {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  const day = d.getDay(); // 0=dim, 1=lun
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  return d;
-}
+// ── Helpers timezone ─────────────────────────────────────────────────────────
 
-/** Ajoute `days` jours à `date` (sans mutation) */
-function addDays(date: Date, days: number): Date {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
+/**
+ * Retourne un Date dont les méthodes getUTC*() donnent l'heure locale
+ * à Nouméa (UTC+11).  Tous les calculs calendaires doivent passer par là.
+ */
+function toNC(date: Date | string): Date {
+  const ms = (typeof date === "string" ? new Date(date) : date).getTime();
+  return new Date(ms + NC_OFFSET_MS);
 }
 
 /**
- * Calcule la position CSS grid d'un RDV.
- * Retourne null si hors plage horaire 07:00-19:00.
+ * Date "minuit UTC" représentant un jour calendaire Nouméa.
+ * Permet les comparaisons >= / <= entre jours.
  */
+function ncMidnight(nc: Date): Date {
+  return new Date(
+    Date.UTC(nc.getUTCFullYear(), nc.getUTCMonth(), nc.getUTCDate())
+  );
+}
+
+/** Lundi de la semaine contenant `nc` (résultat = ncMidnight). */
+function getMonday(nc: Date): Date {
+  const d = ncMidnight(nc);
+  const dow = d.getUTCDay(); // 0 = dim, 1 = lun …
+  const diff = dow === 0 ? -6 : 1 - dow;
+  d.setUTCDate(d.getUTCDate() + diff);
+  return d;
+}
+
+/** Ajoute `days` jours à une date ncMidnight (sans mutation). */
+function addDays(date: Date, days: number): Date {
+  const d = new Date(date);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d;
+}
+
+function isToday(d: Date): boolean {
+  // d et today sont tous les deux des ncMidnight
+  const today = ncMidnight(toNC(new Date()));
+  return d.getTime() === today.getTime();
+}
+
+// ── Positionnement CSS grid ───────────────────────────────────────────────────
+
 type GridPos = {
   rowStart: number;
   rowSpan: number;
-  col: number; // 2=lun … 8=dim
+  col: number; // 2 = lun … 8 = dim
 };
 
+/**
+ * Calcule la position grid d'un RDV en heure Nouméa.
+ * Retourne null si le RDV est hors de la plage 07:00-19:00 ou hors semaine.
+ */
 function getGridPos(rdv: RdvWithDossier, lundi: Date): GridPos | null {
-  const d = new Date(rdv.date_rdv);
-  const h = d.getHours();
-  const m = d.getMinutes();
+  const nc  = toNC(rdv.date_rdv);
+  const h   = nc.getUTCHours();
+  const m   = nc.getUTCMinutes();
 
-  // Hors plage horaire
   if (h < HEURE_DEBUT || h >= HEURE_FIN) return null;
 
-  // Jour de la semaine par rapport au lundi
-  const msPerDay = 86_400_000;
-  const diff = Math.round((d.setHours(0, 0, 0, 0), d.getTime() - lundi.getTime()) / msPerDay);
+  const dateOnly = ncMidnight(nc);
+  const diff = Math.round(
+    (dateOnly.getTime() - lundi.getTime()) / 86_400_000
+  );
   if (diff < 0 || diff > 6) return null;
 
   const slotStart = (h - HEURE_DEBUT) * 2 + Math.floor(m / 30);
-  const rowStart = slotStart + 2; // +1 header, +1 row-start=1
-
+  const rowStart  = slotStart + 2; // +1 header row, row-start base 1
   const dureeMins = rdv.duree_minutes ?? 60;
-  const rowSpan = Math.max(1, Math.ceil(dureeMins / 30));
-
-  const col = diff + 2; // 2=lun…8=dim
+  const rowSpan   = Math.max(1, Math.ceil(dureeMins / 30));
+  const col       = diff + 2; // 2 = lundi … 8 = dimanche
 
   return { rowStart, rowSpan, col };
 }
 
-// ── Labels d'heures (colonne de gauche) ───────────────────────────────────
+// ── Labels horaires ───────────────────────────────────────────────────────────
 
 function timeLabel(slot: number): string {
   const h = HEURE_DEBUT + Math.floor(slot / 2);
@@ -87,28 +117,28 @@ type Props = {
 export function RdvCalendrierSemaine({ rdvs }: Props) {
   const [weekOffset, setWeekOffset] = useState(0);
 
-  const lundi = addDays(getMonday(new Date()), weekOffset * 7);
+  // Lundi/dimanche de la semaine affichée, en heure Nouméa
+  const lundi    = addDays(getMonday(toNC(new Date())), weekOffset * 7);
   const dimanche = addDays(lundi, 6);
 
-  // Formatage du titre de semaine
-  const titreDebut = `${lundi.getDate()} ${MOIS_COURTS[lundi.getMonth()]}`;
-  const titreFin = `${dimanche.getDate()} ${MOIS_COURTS[dimanche.getMonth()]} ${dimanche.getFullYear()}`;
+  // Titre de la semaine
+  const titreDebut   = `${lundi.getUTCDate()} ${MOIS_COURTS[lundi.getUTCMonth()]}`;
+  const titreFin     = `${dimanche.getUTCDate()} ${MOIS_COURTS[dimanche.getUTCMonth()]} ${dimanche.getUTCFullYear()}`;
   const titreSemaine = `${titreDebut} – ${titreFin}`;
 
-  // RDVs de cette semaine seulement
+  // Filtrage des RDVs de la semaine en heure Nouméa
   const rdvsSemaine = rdvs.filter((r) => {
-    const d = new Date(r.date_rdv);
-    d.setHours(0, 0, 0, 0);
+    const d = ncMidnight(toNC(r.date_rdv));
     return d >= lundi && d <= dimanche;
   });
 
-  // Jours de la semaine (labels + dates)
+  // Labels des jours (en-tête colonne)
   const joursDates = Array.from({ length: 7 }, (_, i) => {
     const d = addDays(lundi, i);
-    return { label: JOURS_COURTS[i], num: d.getDate(), isToday: isToday(d) };
+    return { label: JOURS_COURTS[i], num: d.getUTCDate(), isToday: isToday(d) };
   });
 
-  const SLOT_H = "2rem"; // hauteur d'un créneau de 30 min
+  const SLOT_H = "2rem";
 
   return (
     <div>
@@ -151,7 +181,6 @@ export function RdvCalendrierSemaine({ rdvs }: Props) {
           }}
         >
           {/* ── En-têtes jours ────────────────────────────────────── */}
-          {/* Cellule coin */}
           <div
             className="sticky top-0 bg-white border-b border-r border-border z-10"
             style={{ gridRow: 1, gridColumn: 1 }}
@@ -182,11 +211,7 @@ export function RdvCalendrierSemaine({ rdvs }: Props) {
             <div
               key={`t-${slot}`}
               className="border-b border-r border-border/40 pr-1 flex items-start justify-end"
-              style={{
-                gridRow: slot + 2,
-                gridColumn: 1,
-                height: SLOT_H,
-              }}
+              style={{ gridRow: slot + 2, gridColumn: 1, height: SLOT_H }}
             >
               {slot % 2 === 0 && (
                 <span className="text-[0.6rem] text-muted leading-none pt-0.5">
@@ -196,7 +221,7 @@ export function RdvCalendrierSemaine({ rdvs }: Props) {
             </div>
           ))}
 
-          {/* ── Cellules de fond (grille) ─────────────────────────── */}
+          {/* ── Cellules de fond ──────────────────────────────────── */}
           {Array.from({ length: NB_SLOTS }, (_, slot) =>
             Array.from({ length: 7 }, (_, day) => (
               <div
@@ -220,11 +245,14 @@ export function RdvCalendrierSemaine({ rdvs }: Props) {
 
             const cfg =
               RDV_TYPE_CONFIG[rdv.type_rdv as keyof typeof RDV_TYPE_CONFIG] ??
-              ({ label: rdv.type_rdv, badge: "bg-gray-100 text-gray-600", bloc: "bg-gray-400" } as const);
+              ({
+                label: rdv.type_rdv,
+                badge: "bg-gray-100 text-gray-600",
+                bloc: "bg-gray-400",
+              } as const);
 
-            const href = rdv.dossier ? `/dossiers/${rdv.dossier.id}` : "#";
-            const label =
-              rdv.dossier?.client?.nom ?? rdv.dossier?.reference ?? cfg.label;
+            const href  = rdv.dossier ? `/dossiers/${rdv.dossier.id}` : "#";
+            const label = rdv.dossier?.client?.nom ?? rdv.dossier?.reference ?? cfg.label;
 
             return (
               <Link
@@ -257,16 +285,5 @@ export function RdvCalendrierSemaine({ rdvs }: Props) {
         </p>
       )}
     </div>
-  );
-}
-
-// ── Util ───────────────────────────────────────────────────────────────────
-
-function isToday(d: Date): boolean {
-  const today = new Date();
-  return (
-    d.getDate() === today.getDate() &&
-    d.getMonth() === today.getMonth() &&
-    d.getFullYear() === today.getFullYear()
   );
 }
