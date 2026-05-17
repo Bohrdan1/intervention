@@ -13,7 +13,7 @@ export type DossierRow = {
   date_ouverture: string;
   date_cloture: string | null;
   montant_total_ht: number | null;
-  client: { nom: string } | null;
+  client: { id: string; nom: string } | null;
   site: { nom: string } | null;
   rapports: { id: string }[];
 };
@@ -78,10 +78,14 @@ export function DossierCard({ dossier }: { dossier: DossierRow }) {
   const nbRapports = dossier.rapports.length;
 
   return (
-    <Link
-      href={`/dossiers/${dossier.id}`}
-      className="block rounded-xl border border-border bg-white p-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all active:scale-[0.99]"
-    >
+    <div className="relative rounded-xl border border-border bg-white p-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all active:scale-[0.99]">
+      {/* Lien principal couvrant toute la carte */}
+      <Link
+        href={`/dossiers/${dossier.id}`}
+        className="absolute inset-0 rounded-xl"
+        aria-label={`Dossier ${dossier.reference}`}
+      />
+
       {/* Badges + référence */}
       <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
@@ -104,7 +108,14 @@ export function DossierCard({ dossier }: { dossier: DossierRow }) {
 
       {/* Client · Site */}
       <p className="text-sm text-foreground/80">
-        {dossier.client?.nom ?? "—"}
+        {dossier.client ? (
+          <Link
+            href={`/clients/${dossier.client.id}`}
+            className="relative z-10 font-medium text-primary hover:underline"
+          >
+            {dossier.client.nom}
+          </Link>
+        ) : "—"}
         {dossier.site?.nom && (
           <span className="text-muted"> · {dossier.site.nom}</span>
         )}
@@ -128,6 +139,6 @@ export function DossierCard({ dossier }: { dossier: DossierRow }) {
           )}
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

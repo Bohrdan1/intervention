@@ -16,13 +16,13 @@ type RawRdv = {
     | {
         id: string;
         reference: string;
-        client: { nom: string } | { nom: string }[] | null;
+        client: { id: string; nom: string } | { id: string; nom: string }[] | null;
         site: { nom: string } | { nom: string }[] | null;
       }
     | {
         id: string;
         reference: string;
-        client: { nom: string } | { nom: string }[] | null;
+        client: { id: string; nom: string } | { id: string; nom: string }[] | null;
         site: { nom: string } | { nom: string }[] | null;
       }[]
     | null;
@@ -31,7 +31,7 @@ type RawRdv = {
 type RawDossier = {
   id: string;
   reference: string;
-  client: { nom: string } | { nom: string }[] | null;
+  client: { id: string; nom: string } | { id: string; nom: string }[] | null;
   site: { nom: string } | { nom: string }[] | null;
 };
 
@@ -56,7 +56,7 @@ function normaliseRdv(raw: RawRdv): RdvWithDossier {
       ? {
           id: dossier.id,
           reference: dossier.reference,
-          client: normaliseFK(dossier.client),
+          client: normaliseFK(dossier.client) as { id: string; nom: string } | null,
           site: normaliseFK(dossier.site),
         }
       : null,
@@ -89,7 +89,7 @@ export default async function AgendaPage() {
       dossier:dossiers(
         id,
         reference,
-        client:clients(nom),
+        client:clients(id, nom),
         site:sites(nom)
       )
     `)

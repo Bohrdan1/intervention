@@ -92,7 +92,14 @@ export function RdvCard({ rdv, dossiers }: Props) {
         {rdv.dossier && (
           <div className="mb-2">
             <p className="text-sm text-foreground/80">
-              {rdv.dossier.client?.nom ?? "—"}
+              {rdv.dossier.client ? (
+                <Link
+                  href={`/clients/${rdv.dossier.client.id}`}
+                  className="font-medium text-primary hover:underline"
+                >
+                  {rdv.dossier.client.nom}
+                </Link>
+              ) : "—"}
               {rdv.dossier.site?.nom && (
                 <span className="text-muted"> · {rdv.dossier.site.nom}</span>
               )}

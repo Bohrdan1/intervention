@@ -23,7 +23,7 @@ export type RdvWithDossier = {
   dossier: {
     id: string;
     reference: string;
-    client: { nom: string } | null;
+    client: { id: string; nom: string } | null;
     site: { nom: string } | null;
   } | null;
 };

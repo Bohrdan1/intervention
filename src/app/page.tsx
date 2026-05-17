@@ -18,7 +18,7 @@ type RdvAujourdhui = {
   type_rdv: string;
   statut: string;
   dossier: { id: string; reference: string } | null;
-  client: { nom: string } | null;
+  client: { id: string; nom: string } | null;
 };
 
 export default async function DossiersDashboard() {
@@ -36,7 +36,7 @@ export default async function DossiersDashboard() {
       date_ouverture,
       date_cloture,
       montant_total_ht,
-      client:clients(nom),
+      client:clients(id, nom),
       site:sites(nom),
       rapports(id)
     `)
@@ -52,7 +52,7 @@ export default async function DossiersDashboard() {
       date_ouverture: string;
       date_cloture: string | null;
       montant_total_ht: number | null;
-      client: { nom: string } | { nom: string }[] | null;
+      client: { id: string; nom: string } | { id: string; nom: string }[] | null;
       site: { nom: string } | { nom: string }[] | null;
       rapports: { id: string }[];
     };
@@ -86,7 +86,7 @@ export default async function DossiersDashboard() {
       type_rdv,
       statut,
       dossier:dossiers(id, reference),
-      client:clients(nom)
+      client:clients(id, nom)
     `)
     .gte("date_rdv", aujourdhuiDebut.toISOString())
     .lt("date_rdv", demainDebut.toISOString())
@@ -101,7 +101,7 @@ export default async function DossiersDashboard() {
       type_rdv: string;
       statut: string;
       dossier: { id: string; reference: string } | { id: string; reference: string }[] | null;
-      client: { nom: string } | { nom: string }[] | null;
+      client: { id: string; nom: string } | { id: string; nom: string }[] | null;
     };
     const dossier = Array.isArray(raw.dossier) ? (raw.dossier[0] ?? null) : raw.dossier;
     const client = Array.isArray(raw.client) ? (raw.client[0] ?? null) : raw.client;
@@ -170,7 +170,14 @@ export default async function DossiersDashboard() {
                       </span>
                     </p>
                     <p className="text-xs text-muted truncate">
-                      {rdv.client?.nom ?? "—"}
+                      {rdv.client ? (
+                        <Link
+                          href={`/clients/${rdv.client.id}`}
+                          className="font-medium text-primary hover:underline"
+                        >
+                          {rdv.client.nom}
+                        </Link>
+                      ) : "—"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
