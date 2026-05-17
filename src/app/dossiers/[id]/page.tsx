@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DossierRdvSection } from "@/components/rdvs/DossierRdvSection";
+import { FacturationSection } from "./facturation-section";
+import type { FacturationStatut, ReglementMode } from "@/lib/types";
 import type { RdvSimple, DossierOption } from "@/components/rdvs/rdv-types";
 import { DeleteDossierButton } from "@/components/dossiers/DeleteDossierButton";
 import { AjouterRapportButton } from "@/components/dossiers/AjouterRapportButton";
@@ -77,6 +79,12 @@ type DossierDetail = {
   description: string | null;
   notes: string | null;
   montant_total_ht: number | null;
+  facture_statut: string;
+  facture_numero: string | null;
+  facture_date: string | null;
+  facture_montant_ttc: number | null;
+  reglement_date: string | null;
+  reglement_mode: string | null;
   client: ClientJoin | ClientJoin[];
   site: SiteJoin | SiteJoin[];
   rapports: RapportJoin[];
@@ -121,6 +129,12 @@ export default async function DossierDetailPage({
       description,
       notes,
       montant_total_ht,
+      facture_statut,
+      facture_numero,
+      facture_date,
+      facture_montant_ttc,
+      reglement_date,
+      reglement_mode,
       client:clients(id, nom, telephone, mail),
       site:sites(id, nom, adresse),
       rapports(
@@ -401,11 +415,19 @@ export default async function DossierDetailPage({
         />
       </div>
 
-      {/* ── Placeholder Facturation ────────────────────────────────────── */}
-      <div className="rounded-xl border border-dashed border-border bg-white/50 p-6 text-center">
-        <p className="mb-1 text-2xl">💰</p>
-        <p className="text-sm font-medium text-muted">Facturation</p>
-        <p className="mt-1 text-xs text-muted">Bientôt disponible</p>
+      {/* ── Facturation ───────────────────────────────────────────────── */}
+      <div className="mb-4">
+        <FacturationSection
+          dossierId={dossier.id}
+          facturation={{
+            facture_statut: (dossier.facture_statut || "non_facture") as FacturationStatut,
+            facture_numero: dossier.facture_numero,
+            facture_date: dossier.facture_date,
+            facture_montant_ttc: dossier.facture_montant_ttc,
+            reglement_date: dossier.reglement_date,
+            reglement_mode: (dossier.reglement_mode as ReglementMode | null),
+          }}
+        />
       </div>
 
       {/* ── Zone danger ─────────────────────────────────────────────────── */}

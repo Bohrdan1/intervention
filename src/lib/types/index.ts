@@ -10,6 +10,8 @@ export interface PhotoItem {
 }
 
 export type ClientType = 'prospect' | 'actif' | 'inactif';
+export type FacturationStatut = 'non_facture' | 'facture' | 'paye' | 'en_retard';
+export type ReglementMode = 'virement' | 'cheque' | 'especes' | 'carte';
 
 export interface Client {
   id: string;
@@ -288,6 +290,13 @@ export interface Dossier {
   date_cloture: string | null;
   montant_total_ht: number | null;
   notes: string | null;
+  // Suivi facturation (Facture+ reste l'outil de facturation)
+  facture_statut: FacturationStatut;
+  facture_numero: string | null;
+  facture_date: string | null;
+  facture_montant_ttc: number | null;
+  reglement_date: string | null;
+  reglement_mode: ReglementMode | null;
   created_at: string;
   updated_at: string;
 }

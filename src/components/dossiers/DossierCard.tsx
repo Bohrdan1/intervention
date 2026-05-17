@@ -13,6 +13,7 @@ export type DossierRow = {
   date_ouverture: string;
   date_cloture: string | null;
   montant_total_ht: number | null;
+  facture_statut?: string;
   client: { id: string; nom: string } | null;
   site: { nom: string } | null;
   rapports: { id: string }[];
@@ -126,7 +127,23 @@ export function DossierCard({ dossier }: { dossier: DossierRow }) {
         <p className="text-xs text-muted">
           Ouvert le {formatDate(dossier.date_ouverture)}
         </p>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {/* Badges facturation */}
+          {dossier.statut === "termine" && dossier.facture_statut === "non_facture" && (
+            <span className="rounded-full px-2 py-0.5 text-xs font-semibold bg-orange-100 text-orange-700">
+              Non facturé
+            </span>
+          )}
+          {dossier.facture_statut === "en_retard" && (
+            <span className="rounded-full px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-700">
+              En retard
+            </span>
+          )}
+          {dossier.facture_statut === "paye" && (
+            <span className="rounded-full px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-700">
+              Payé ✓
+            </span>
+          )}
           {nbRapports > 0 && (
             <span className="text-xs text-muted">
               📋 {nbRapports} rapport{nbRapports > 1 ? "s" : ""}

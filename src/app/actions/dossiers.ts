@@ -113,6 +113,28 @@ export async function createDossier(
   return { ok: true, dossierId: dossier.id };
 }
 
+// ── Mise à jour facturation ───────────────────────────────────────────────
+
+export type FacturationData = {
+  facture_statut: string;
+  facture_numero: string | null;
+  facture_date: string | null;
+  facture_montant_ttc: number | null;
+  reglement_date: string | null;
+  reglement_mode: string | null;
+};
+
+export async function updateFacturation(
+  dossierId: string,
+  data: FacturationData
+): Promise<void> {
+  const supabase = await createClient();
+  await supabase.from("dossiers").update(data).eq("id", dossierId);
+  revalidatePath(`/dossiers/${dossierId}`);
+  revalidatePath("/finances");
+  revalidatePath("/");
+}
+
 // ── Suppression d'un dossier ───────────────────────────────────────────────
 
 export async function deleteDossier(id: string): Promise<void> {
