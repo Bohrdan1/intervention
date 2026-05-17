@@ -724,31 +724,39 @@ function PageIntervention({
       {isMulti && interventions ? (
         // ── Nouveau format : une section par équipement ──
         <>
-          {interventions.map((ie, i) => (
-            <View key={i} style={{ marginBottom: 14 }}>
-              <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 4, textDecoration: 'underline' }}>
-                {i + 1 < 10 ? `${i + 1 + 1}.` : `${i + 2}.`} PORTE : {ie.repere}
-              </Text>
-              {ie.diagnostic ? (
-                <View style={{ marginBottom: 6 }}>
-                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', marginBottom: 2 }}>Diagnostic :</Text>
-                  <Text style={{ fontSize: 9, lineHeight: 1.5 }}>{ie.diagnostic}</Text>
-                </View>
-              ) : null}
-              {ie.travaux_effectues ? (
-                <View style={{ marginBottom: 6 }}>
-                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', marginBottom: 2 }}>Travaux effectués :</Text>
-                  <Text style={{ fontSize: 9, lineHeight: 1.5 }}>{ie.travaux_effectues}</Text>
-                </View>
-              ) : null}
-              {ie.pieces_utilisees.length > 0 && (
-                <View>
-                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', marginBottom: 4 }}>Pièces utilisées :</Text>
-                  <PiecesTablePdf pieces={ie.pieces_utilisees} />
-                </View>
-              )}
-            </View>
-          ))}
+          {interventions.map((ie, i) => {
+            const equipPhotos = (rapport.photos || []).filter(
+              (p) => p.context === `intervention:${ie.equipement_id}`
+            );
+            return (
+              <View key={i} style={{ marginBottom: 14 }}>
+                <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 4, textDecoration: 'underline' }}>
+                  {i + 2}. PORTE : {ie.repere}
+                </Text>
+                {ie.diagnostic ? (
+                  <View style={{ marginBottom: 6 }}>
+                    <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', marginBottom: 2 }}>Diagnostic :</Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.5 }}>{ie.diagnostic}</Text>
+                  </View>
+                ) : null}
+                {ie.travaux_effectues ? (
+                  <View style={{ marginBottom: 6 }}>
+                    <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', marginBottom: 2 }}>Travaux effectués :</Text>
+                    <Text style={{ fontSize: 9, lineHeight: 1.5 }}>{ie.travaux_effectues}</Text>
+                  </View>
+                ) : null}
+                {ie.pieces_utilisees.length > 0 && (
+                  <View style={{ marginBottom: 6 }}>
+                    <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', marginBottom: 4 }}>Pièces utilisées :</Text>
+                    <PiecesTablePdf pieces={ie.pieces_utilisees} />
+                  </View>
+                )}
+                {equipPhotos.length > 0 && (
+                  <PhotosSection photos={equipPhotos} title={`Photos — ${ie.repere}`} />
+                )}
+              </View>
+            );
+          })}
         </>
       ) : (
         // ── Ancien format ──

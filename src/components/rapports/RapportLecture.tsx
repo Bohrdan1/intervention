@@ -113,7 +113,8 @@ function PhotoGrid({ photos }: { photos: PhotoItem[] }) {
   );
 }
 
-function InterventionEquipementCard({ ie }: { ie: InterventionEquipement }) {
+function InterventionEquipementCard({ ie, photos }: { ie: InterventionEquipement; photos: PhotoItem[] }) {
+  const equipPhotos = photos.filter((p) => p.context === `intervention:${ie.equipement_id}`);
   return (
     <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
       <p className="font-semibold text-sm mb-3">🚪 {ie.repere}</p>
@@ -130,7 +131,7 @@ function InterventionEquipementCard({ ie }: { ie: InterventionEquipement }) {
         </div>
       )}
       {ie.pieces_utilisees.length > 0 && (
-        <div>
+        <div className="mb-2">
           <p className="text-xs font-semibold text-muted uppercase mb-1">Pièces</p>
           <div className="divide-y divide-border">
             {ie.pieces_utilisees.map((p, i) => (
@@ -141,6 +142,11 @@ function InterventionEquipementCard({ ie }: { ie: InterventionEquipement }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+      {equipPhotos.length > 0 && (
+        <div className="border-t border-border/50 pt-3 mt-2">
+          <PhotoGrid photos={equipPhotos} />
         </div>
       )}
     </div>
@@ -474,7 +480,7 @@ export function RapportLecture({ rapport, currentDossier, dossierChoix, onModifi
               {rapport.interventions_equipements.length} porte{rapport.interventions_equipements.length > 1 ? "s" : ""} traitée{rapport.interventions_equipements.length > 1 ? "s" : ""}
             </p>
             {rapport.interventions_equipements.map((ie, i) => (
-              <InterventionEquipementCard key={i} ie={ie} />
+              <InterventionEquipementCard key={i} ie={ie} photos={photos} />
             ))}
           </div>
         ) : (

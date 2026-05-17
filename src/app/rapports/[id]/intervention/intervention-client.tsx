@@ -281,12 +281,25 @@ export function InterventionClient({
             </div>
 
             {/* Pièces */}
-            <div>
+            <div className="mb-3">
               <label className="block text-xs font-semibold text-muted uppercase mb-2">Pièces utilisées</label>
               <PiecesInput
                 pieces={ie.pieces_utilisees.filter((p) => p.nom.trim() !== "")}
                 catalogue={catalogue}
                 onChange={(updated) => updateIntervPieces(index, updated)}
+              />
+            </div>
+
+            {/* Photos de cette porte */}
+            <div className="border-t border-border/50 pt-3">
+              <PhotoUpload
+                rapportId={rapport.id}
+                context={`intervention:${ie.equipement_id}`}
+                photos={photos.filter((p) => p.context === `intervention:${ie.equipement_id}`)}
+                onPhotosChange={(updated) => {
+                  const ctx = `intervention:${ie.equipement_id}`;
+                  setPhotos((prev) => [...prev.filter((p) => p.context !== ctx), ...updated]);
+                }}
               />
             </div>
           </div>
@@ -338,19 +351,6 @@ export function InterventionClient({
             Aucune porte ajoutée. Appuyez sur &quot;+ Ajouter une porte&quot; pour commencer.
           </p>
         )}
-
-        {/* Photos */}
-        <div className="mb-4 rounded-xl border border-border bg-white p-4 shadow-sm">
-          <PhotoUpload
-            rapportId={rapport.id}
-            context="intervention"
-            photos={photos.filter((p) => p.context === "intervention")}
-            onPhotosChange={(updated) => {
-              const otherPhotos = photos.filter((p) => p.context !== "intervention");
-              setPhotos([...otherPhotos, ...updated]);
-            }}
-          />
-        </div>
 
         {/* Auto-save */}
         <div className="mb-16 text-center">
