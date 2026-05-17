@@ -288,19 +288,31 @@ export interface Dossier {
   updated_at: string;
 }
 
+export type RdvType = "diagnostic" | "intervention" | "maintenance" | "visite";
+export type RdvStatut = "planifie" | "confirme" | "realise" | "annule";
+
 export interface Rdv {
   id: string;
   dossier_id: string | null;
   client_id: string;
   site_id: string | null;
-  type_rdv: string;
+  type_rdv: RdvType;
   date_rdv: string;
   duree_minutes: number | null;
-  statut: 'planifie' | 'confirme' | 'realise' | 'annule';
+  statut: RdvStatut;
   notes: string | null;
   created_at: string;
   updated_at: string;
 }
+
+export type RdvFormData = {
+  dossier_id: string;
+  date_rdv: string;
+  duree_minutes: number | null;
+  type_rdv: RdvType;
+  statut: RdvStatut;
+  notes: string | null;
+};
 
 export interface Facture {
   id: string;

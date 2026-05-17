@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DossierRdvSection } from "@/components/rdvs/DossierRdvSection";
+import type { RdvSimple, DossierOption } from "@/components/rdvs/rdv-types";
 
 // ── Config ─────────────────────────────────────────────────────────────────
 
@@ -86,6 +88,22 @@ export default async function DossierDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+
+  // RDV du dossier (toutes statuts, triés par date)
+  const { data: rawRdvs } = await supabase
+    .from("rdvs")
+    .select("id, date_rdv, duree_minutes, type_rdv, statut, notes")
+    .eq("dossier_id", id)
+    .order("date_rdv");
+
+  const rdvs: RdvSimple[] = (rawRdvs ?? []).map((r) => ({
+    id: r.id,
+    date_rdv: r.date_rdv,
+    duree_minutes: r.duree_minutes,
+    type_rdv: r.type_rdv,
+    statut: r.statut,
+    notes: r.notes,
+  }));
 
   const { data: rawDossier } = await supabase
     .from("dossiers")
@@ -321,18 +339,25 @@ export default async function DossierDetailPage({
         )}
       </div>
 
-      {/* ── Placeholders RDV / Facturation ────────────────────────────── */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-dashed border-border bg-white/50 p-6 text-center">
-          <p className="mb-1 text-2xl">📅</p>
-          <p className="text-sm font-medium text-muted">RDV &amp; planning</p>
-          <p className="mt-1 text-xs text-muted">Bientôt disponible</p>
-        </div>
-        <div className="rounded-xl border border-dashed border-border bg-white/50 p-6 text-center">
-          <p className="mb-1 text-2xl">💰</p>
-          <p className="text-sm font-medium text-muted">Facturation</p>
-          <p className="mt-1 text-xs text-muted">Bientôt disponible</p>
-        </div>
+      {/* ── RDV ───────────────────────────────────────────────────────── */}
+      <div className="mb-4">
+        <DossierRdvSection
+          dossierId={dossier.id}
+          lockedDossier={{
+            id: dossier.id,
+            reference: dossier.reference,
+            clientNom: client?.nom ?? "—",
+            siteNom: site?.nom ?? null,
+          } satisfies DossierOption}
+          rdvs={rdvs}
+        />
+      </div>
+
+      {/* ── Placeholder Facturation ────────────────────────────────────── */}
+      <div className="rounded-xl border border-dashed border-border bg-white/50 p-6 text-center">
+        <p className="mb-1 text-2xl">💰</p>
+        <p className="text-sm font-medium text-muted">Facturation</p>
+        <p className="mt-1 text-xs text-muted">Bientôt disponible</p>
       </div>
     </div>
   );
