@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DossierRdvSection } from "@/components/rdvs/DossierRdvSection";
 import type { RdvSimple, DossierOption } from "@/components/rdvs/rdv-types";
+import { DeleteDossierButton } from "@/components/dossiers/DeleteDossierButton";
 
 // ── Config ─────────────────────────────────────────────────────────────────
 
@@ -358,6 +359,14 @@ export default async function DossierDetailPage({
         <p className="mb-1 text-2xl">💰</p>
         <p className="text-sm font-medium text-muted">Facturation</p>
         <p className="mt-1 text-xs text-muted">Bientôt disponible</p>
+      </div>
+
+      {/* ── Zone danger ─────────────────────────────────────────────────── */}
+      <div className="mt-8 flex justify-center border-t border-border/50 pt-6">
+        <DeleteDossierButton
+          dossierId={dossier.id}
+          dossierReference={dossier.reference}
+        />
       </div>
     </div>
   );

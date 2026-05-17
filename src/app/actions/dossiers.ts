@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -110,4 +111,25 @@ export async function createDossier(
 
   revalidatePath("/");
   return { ok: true, dossierId: dossier.id };
+}
+
+// ── Suppression d'un dossier ───────────────────────────────────────────────
+
+export async function deleteDossier(id: string): Promise<void> {
+  const supabase = await createClient();
+
+  // 1. Détacher les rapports (conservés, mais plus liés au dossier)
+  await supabase
+    .from("rapports")
+    .update({ dossier_id: null })
+    .eq("dossier_id", id);
+
+  // 2. Supprimer les RDV du dossier
+  await supabase.from("rdvs").delete().eq("dossier_id", id);
+
+  // 3. Supprimer le dossier lui-même
+  await supabase.from("dossiers").delete().eq("id", id);
+
+  revalidatePath("/");
+  redirect("/");
 }
