@@ -9,7 +9,8 @@ export function NavBar() {
   const router = useRouter();
 
   const links = [
-    { href: "/", label: "Rapports" },
+    { href: "/", label: "Dossiers" },
+    { href: "/rapports", label: "Rapports" },
     { href: "/clients", label: "Clients" },
     { href: "/prospects", label: "Prospects" },
     { href: "/finances", label: "Finances" },
@@ -36,7 +37,7 @@ export function NavBar() {
           {links.map((link) => {
             const isActive =
               link.href === "/"
-                ? pathname === "/"
+                ? pathname === "/" || pathname.startsWith("/dossiers")
                 : pathname.startsWith(link.href);
 
             return (

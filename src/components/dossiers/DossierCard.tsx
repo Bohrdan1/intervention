@@ -1,0 +1,133 @@
+"use client";
+
+import Link from "next/link";
+
+// ── Types ──────────────────────────────────────────────────────────────────
+
+export type DossierRow = {
+  id: string;
+  reference: string;
+  titre: string | null;
+  type_dossier: string;
+  statut: string;
+  date_ouverture: string;
+  date_cloture: string | null;
+  montant_total_ht: number | null;
+  client: { nom: string } | null;
+  site: { nom: string } | null;
+  rapports: { id: string }[];
+};
+
+// ── Config ─────────────────────────────────────────────────────────────────
+
+type KnownType =
+  | "urgent"
+  | "contrat"
+  | "visite"
+  | "maintenance"
+  | "installation"
+  | "remplacement"
+  | "intervention"
+  | "autre";
+
+type KnownStatut =
+  | "ouvert"
+  | "en_cours"
+  | "en_attente"
+  | "termine"
+  | "annule";
+
+const TYPE_CONFIG: Record<KnownType, { label: string; badge: string }> = {
+  urgent:        { label: "Urgent",        badge: "bg-red-100 text-red-800" },
+  contrat:       { label: "Contrat",       badge: "bg-blue-100 text-blue-800" },
+  visite:        { label: "Visite",        badge: "bg-teal-100 text-teal-800" },
+  maintenance:   { label: "Maintenance",   badge: "bg-sky-100 text-sky-700" },
+  installation:  { label: "Installation",  badge: "bg-purple-100 text-purple-800" },
+  remplacement:  { label: "Remplacement",  badge: "bg-orange-100 text-orange-800" },
+  intervention:  { label: "Intervention",  badge: "bg-violet-100 text-violet-700" },
+  autre:         { label: "Autre",         badge: "bg-gray-100 text-gray-600" },
+};
+
+const STATUT_CONFIG: Record<KnownStatut, { label: string; badge: string }> = {
+  ouvert:     { label: "Ouvert",     badge: "bg-yellow-100 text-yellow-800" },
+  en_cours:   { label: "En cours",   badge: "bg-orange-100 text-orange-800" },
+  en_attente: { label: "En attente", badge: "bg-gray-100 text-gray-600" },
+  termine:    { label: "Terminé",    badge: "bg-green-100 text-green-700" },
+  annule:     { label: "Annulé",     badge: "bg-red-50 text-red-500" },
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function formatDate(dateStr: string): string {
+  const parts = dateStr.split("T")[0].split("-");
+  if (parts.length < 3) return dateStr;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+// ── Component ──────────────────────────────────────────────────────────────
+
+export function DossierCard({ dossier }: { dossier: DossierRow }) {
+  const typeCfg =
+    TYPE_CONFIG[dossier.type_dossier as KnownType] ??
+    ({ label: dossier.type_dossier, badge: "bg-gray-100 text-gray-600" } as const);
+
+  const statutCfg =
+    STATUT_CONFIG[dossier.statut as KnownStatut] ??
+    ({ label: dossier.statut, badge: "bg-gray-100 text-gray-600" } as const);
+
+  const nbRapports = dossier.rapports.length;
+
+  return (
+    <Link
+      href={`/dossiers/${dossier.id}`}
+      className="block rounded-xl border border-border bg-white p-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all active:scale-[0.99]"
+    >
+      {/* Badges + référence */}
+      <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${typeCfg.badge}`}>
+            {typeCfg.label}
+          </span>
+          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statutCfg.badge}`}>
+            {statutCfg.label}
+          </span>
+        </div>
+        <span className="text-xs text-muted shrink-0">{dossier.reference}</span>
+      </div>
+
+      {/* Titre */}
+      {dossier.titre && (
+        <p className="font-semibold text-foreground text-sm mb-1 line-clamp-1">
+          {dossier.titre}
+        </p>
+      )}
+
+      {/* Client · Site */}
+      <p className="text-sm text-foreground/80">
+        {dossier.client?.nom ?? "—"}
+        {dossier.site?.nom && (
+          <span className="text-muted"> · {dossier.site.nom}</span>
+        )}
+      </p>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50">
+        <p className="text-xs text-muted">
+          Ouvert le {formatDate(dossier.date_ouverture)}
+        </p>
+        <div className="flex items-center gap-3">
+          {nbRapports > 0 && (
+            <span className="text-xs text-muted">
+              📋 {nbRapports} rapport{nbRapports > 1 ? "s" : ""}
+            </span>
+          )}
+          {dossier.montant_total_ht != null && (
+            <span className="text-xs font-medium text-foreground">
+              {dossier.montant_total_ht.toLocaleString("fr-FR")} CFP
+            </span>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}

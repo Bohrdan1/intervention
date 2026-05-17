@@ -7,9 +7,9 @@ import { ClientSiteSelectorClient } from "./client-selector";
 export default async function NouveauRapportPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erreur?: string }>;
+  searchParams: Promise<{ erreur?: string; dossier_id?: string }>;
 }) {
-  const { erreur } = await searchParams;
+  const { erreur, dossier_id } = await searchParams;
   const supabase = await createClient();
 
   const { data: clients } = await supabase
@@ -26,6 +26,7 @@ export default async function NouveauRapportPage({
     const site_id = formData.get("site_id") as string;
     const date_intervention = formData.get("date_intervention") as string;
     const equipementIds = formData.getAll("installations") as string[];
+    const dossier_id = (formData.get("dossier_id") as string) || null;
 
     if (!client_id || !site_id) return;
     if (type_rapport === "maintenance" && equipementIds.length === 0) return;
@@ -85,6 +86,7 @@ export default async function NouveauRapportPage({
         date_intervention: date_intervention || new Date().toISOString().split("T")[0],
         client_id,
         site_id,
+        dossier_id: dossier_id || null,
         constat_general: type_rapport === "maintenance" ? DEFAULT_CONSTAT : [],
       })
       .select()
@@ -110,11 +112,23 @@ export default async function NouveauRapportPage({
       }));
 
       await supabase.from("controles").insert(controles);
-      redirect(`/rapports/${rapport.id}/controle`);
+      if (dossier_id) {
+        redirect(`/dossiers/${dossier_id}`);
+      } else {
+        redirect(`/rapports/${rapport.id}/controle`);
+      }
     } else if (type_rapport === "visite") {
-      redirect(`/rapports/${rapport.id}/visite`);
+      if (dossier_id) {
+        redirect(`/dossiers/${dossier_id}`);
+      } else {
+        redirect(`/rapports/${rapport.id}/visite`);
+      }
     } else {
-      redirect(`/rapports/${rapport.id}/intervention`);
+      if (dossier_id) {
+        redirect(`/dossiers/${dossier_id}`);
+      } else {
+        redirect(`/rapports/${rapport.id}/intervention`);
+      }
     }
   }
 
@@ -144,6 +158,11 @@ export default async function NouveauRapportPage({
         </div>
       ) : (
         <form action={creerRapport} className="space-y-6">
+          {/* dossier_id transmis en champ caché si présent */}
+          {dossier_id && (
+            <input type="hidden" name="dossier_id" value={dossier_id} />
+          )}
+
           {/* Sélecteur de type */}
           <Suspense fallback={null}>
             <ClientSiteSelectorClient clients={clients} />

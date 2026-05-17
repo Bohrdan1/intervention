@@ -1,232 +1,114 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { RapportList } from "@/components/dashboard/rapport-list";
-import { MaintenanceAlerts } from "@/components/dashboard/maintenance-alerts";
-import type { AlerteMaintenance } from "@/components/dashboard/maintenance-alerts";
-import { TYPE_RAPPORT_CONFIG } from "@/lib/types";
-import type { TypeRapport } from "@/lib/types";
+import { DossierFilters } from "@/components/dossiers/DossierFilters";
+import type { DossierRow } from "@/components/dossiers/DossierCard";
 
-type SearchParams = {
-  type?: string;
-  statut?: string;
-  archive?: string;
-  q?: string;
-  page?: string;
-  client_id?: string;
-};
-
-export default async function Dashboard({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
-  const params = await searchParams;
+export default async function DossiersDashboard() {
   const supabase = await createClient();
 
-  // ── Requête stats globales (toujours sans filtre) ──
-  const { data: allRapports } = await supabase
-    .from("rapports")
-    .select("id, type_rapport, statut, archived_at");
-
-  const all = allRapports || [];
-  const actifs = all.filter((r) => !r.archived_at);
-  const nbFinalises = actifs.filter((r) => r.statut === "finalise").length;
-  const nbMaintenance = actifs.filter((r) => r.type_rapport === "maintenance").length;
-  const nbIntervention = actifs.filter((r) => r.type_rapport === "intervention").length;
-  const nbVisite = actifs.filter((r) => r.type_rapport === "visite").length;
-  const totalActifs = actifs.length;
-
-  // ── Alertes de maintenance préventive ──
-  // Sites ayant un contrat (periodicite_maintenance non null)
-  const { data: sitesAvecContrat } = await supabase
-    .from("sites")
+  const { data: rawDossiers } = await supabase
+    .from("dossiers")
     .select(`
       id,
-      nom,
-      periodicite_maintenance,
-      client:clients(id, nom)
+      reference,
+      titre,
+      type_dossier,
+      statut,
+      date_ouverture,
+      date_cloture,
+      montant_total_ht,
+      client:clients(nom),
+      site:sites(nom),
+      rapports(id)
     `)
-    .not("periodicite_maintenance", "is", null);
+    .order("date_ouverture", { ascending: false });
 
-  // Dernière CM finalisée par site
-  const { data: dernieresCM } = await supabase
-    .from("rapports")
-    .select("site_id, date_intervention")
-    .eq("type_rapport", "maintenance")
-    .eq("statut", "finalise")
-    .is("archived_at", null)
-    .order("date_intervention", { ascending: false });
-
-  // Construire un Map site_id → date dernière CM
-  const derniereCMParSite = new Map<string, string>();
-  for (const r of dernieresCM ?? []) {
-    if (!derniereCMParSite.has(r.site_id)) {
-      derniereCMParSite.set(r.site_id, r.date_intervention);
-    }
-  }
-
-  // Calculer les alertes : sites en retard ou à moins de 60 jours
-  const SEUIL_JOURS = 60;
-  const aujourd_hui = new Date();
-
-  const alertes: AlerteMaintenance[] = [];
-  for (const site of sitesAvecContrat ?? []) {
-    const client = Array.isArray(site.client) ? site.client[0] : site.client;
-    if (!client) continue;
-    const derniereCM = derniereCMParSite.get(site.id) ?? null;
-    let joursRestants: number | null = null;
-    let prochaineCM: string | null = null;
-
-    if (derniereCM) {
-      const dateProchaine = new Date(derniereCM + "T12:00:00");
-      dateProchaine.setMonth(dateProchaine.getMonth() + (site.periodicite_maintenance ?? 12));
-      prochaineCM = dateProchaine.toISOString().split("T")[0];
-      joursRestants = Math.round((dateProchaine.getTime() - aujourd_hui.getTime()) / 86_400_000);
-    }
-
-    // Afficher si : jamais faite, en retard, ou échéance < SEUIL_JOURS jours
-    const doitAlerter = joursRestants === null || joursRestants <= SEUIL_JOURS;
-    if (doitAlerter) {
-      alertes.push({
-        siteId: site.id,
-        siteNom: site.nom,
-        clientNom: client.nom,
-        clientId: client.id,
-        periodicite: site.periodicite_maintenance ?? 12,
-        derniereCM,
-        prochaineCM,
-        joursRestants,
-      });
-    }
-  }
-
-  // Trier : en retard d'abord, puis jamais faite, puis par date croissante
-  alertes.sort((a, b) => {
-    if (a.joursRestants === null && b.joursRestants === null) return 0;
-    if (a.joursRestants === null) return -1;
-    if (b.joursRestants === null) return 1;
-    return a.joursRestants - b.joursRestants;
+  // Normalise FK joins (Supabase peut retourner un tableau pour les FK directes)
+  const dossiers: DossierRow[] = (rawDossiers ?? []).map((d) => {
+    const raw = d as unknown as {
+      id: string;
+      reference: string;
+      titre: string | null;
+      type_dossier: string;
+      statut: string;
+      date_ouverture: string;
+      date_cloture: string | null;
+      montant_total_ht: number | null;
+      client: { nom: string } | { nom: string }[] | null;
+      site: { nom: string } | { nom: string }[] | null;
+      rapports: { id: string }[];
+    };
+    return {
+      id: raw.id,
+      reference: raw.reference,
+      titre: raw.titre,
+      type_dossier: raw.type_dossier,
+      statut: raw.statut,
+      date_ouverture: raw.date_ouverture,
+      date_cloture: raw.date_cloture,
+      montant_total_ht: raw.montant_total_ht,
+      client: Array.isArray(raw.client) ? (raw.client[0] ?? null) : raw.client,
+      site: Array.isArray(raw.site) ? (raw.site[0] ?? null) : raw.site,
+      rapports: Array.isArray(raw.rapports) ? raw.rapports : [],
+    };
   });
 
-  // ── Requête liste filtrée côté serveur ──
-  const showArchived = params.archive === "1";
-  const typeFilter = params.type as TypeRapport | undefined;
-  const statutFilter = params.statut;
-  const clientIdFilter = params.client_id;
-
-  let query = supabase
-    .from("rapports")
-    .select(`
-      id,
-      numero_cm,
-      date_intervention,
-      type_rapport,
-      statut,
-      archived_at,
-      client_id,
-      client:clients(id, nom),
-      site:sites(nom),
-      controles(id)
-    `)
-    .order("date_intervention", { ascending: false });
-
-  // Filtre archivage
-  if (showArchived) {
-    query = query.not("archived_at", "is", null);
-  } else {
-    query = query.is("archived_at", null);
-  }
-
-  // Filtre type
-  if (typeFilter && ["maintenance", "intervention", "visite"].includes(typeFilter)) {
-    query = query.eq("type_rapport", typeFilter);
-  }
-
-  // Filtre statut
-  if (statutFilter === "brouillon" || statutFilter === "finalise") {
-    query = query.eq("statut", statutFilter);
-  }
-
-  // Filtre client
-  if (clientIdFilter) {
-    query = query.eq("client_id", clientIdFilter);
-  }
-
-  const { data: rapports } = await query;
-  const liste = rapports || [];
+  // ── Stats ────────────────────────────────────────────────────────────────
+  const actifs = dossiers.filter(
+    (d) => d.statut !== "termine" && d.statut !== "annule"
+  );
+  const nbUrgents = actifs.filter((d) => d.type_dossier === "urgent").length;
+  const nbContrats = actifs.filter((d) => d.type_dossier === "contrat").length;
+  const nbEnCours = actifs.filter((d) => d.statut === "en_cours").length;
 
   return (
     <div>
-      {/* En-tête */}
+      {/* ── En-tête ─────────────────────────────────────────────────────── */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Rapports</h1>
+          <h1 className="text-2xl font-bold">Dossiers</h1>
           <p className="text-sm text-muted">
-            {totalActifs} rapport{totalActifs > 1 ? "s" : ""}
+            {actifs.length} dossier{actifs.length !== 1 ? "s" : ""} actif
+            {actifs.length !== 1 ? "s" : ""}
           </p>
         </div>
         <Link
-          href="/rapports/nouveau"
+          href="/dossiers/new"
           className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-md hover:bg-primary-light active:scale-95 transition-all"
         >
-          + Nouveau rapport
+          + Nouveau dossier
         </Link>
       </div>
 
-      {/* Stats cliquables — appliquent le filtre côté serveur */}
-      {totalActifs > 0 && (
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
-          <Link
-            href="/"
-            className={`rounded-xl border p-4 shadow-sm transition-all hover:shadow-md ${
-              !typeFilter && !statutFilter && !showArchived
-                ? "border-primary bg-primary/5"
-                : "border-border bg-white"
-            }`}
-          >
-            <p className="text-2xl font-bold text-foreground">{totalActifs}</p>
-            <p className="text-xs text-muted">Total</p>
-          </Link>
-          <Link
-            href="/?statut=finalise"
-            className={`rounded-xl border p-4 shadow-sm transition-all hover:shadow-md ${
-              statutFilter === "finalise" ? "border-green-400 bg-green-50" : "border-border bg-white"
-            }`}
-          >
-            <p className="text-2xl font-bold text-green-600">{nbFinalises}</p>
-            <p className="text-xs text-muted">Finalisés</p>
-          </Link>
-          {(Object.entries(TYPE_RAPPORT_CONFIG) as [TypeRapport, typeof TYPE_RAPPORT_CONFIG[TypeRapport]][]).map(
-            ([type, cfg]) => {
-              const count = type === "maintenance" ? nbMaintenance : type === "intervention" ? nbIntervention : nbVisite;
-              const isActive = typeFilter === type;
-              return (
-                <Link
-                  key={type}
-                  href={`/?type=${type}`}
-                  className={`rounded-xl border p-4 shadow-sm transition-all hover:shadow-md ${
-                    isActive ? `border-current bg-white` : "border-border bg-white"
-                  }`}
-                >
-                  <p className={`text-2xl font-bold ${cfg.couleurTexte}`}>{count}</p>
-                  <p className="text-xs text-muted">{cfg.label}</p>
-                </Link>
-              );
-            }
-          )}
+      {/* ── Stats ───────────────────────────────────────────────────────── */}
+      {dossiers.length > 0 && (
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+            <p className="text-2xl font-bold text-foreground">{actifs.length}</p>
+            <p className="text-xs text-muted">Actifs</p>
+          </div>
+          <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 shadow-sm">
+            <p className="text-2xl font-bold text-orange-700">{nbEnCours}</p>
+            <p className="text-xs text-muted">En cours</p>
+          </div>
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
+            <p className="text-2xl font-bold text-red-700">{nbUrgents}</p>
+            <p className="text-xs text-muted">Urgents</p>
+          </div>
+          <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
+            <p className="text-2xl font-bold text-blue-700">{nbContrats}</p>
+            <p className="text-xs text-muted">Contrats</p>
+          </div>
         </div>
       )}
 
-      {/* Alertes maintenance préventive */}
-      <MaintenanceAlerts alertes={alertes} />
-
-      {/* Liste des rapports */}
-      {totalActifs === 0 ? (
+      {/* ── Contenu ─────────────────────────────────────────────────────── */}
+      {dossiers.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-border bg-white p-12 text-center">
-          <p className="text-4xl mb-4">📋</p>
-          <h2 className="text-lg font-semibold mb-2">Aucun rapport</h2>
+          <p className="text-4xl mb-4">📁</p>
+          <h2 className="text-lg font-semibold mb-2">Aucun dossier</h2>
           <p className="text-sm text-muted mb-6">
-            Commencez par créer un client, puis générez votre premier rapport.
+            Créez votre premier dossier pour organiser vos interventions et contrats.
           </p>
           <div className="flex justify-center gap-3">
             <Link
@@ -236,21 +118,15 @@ export default async function Dashboard({
               Gérer les clients
             </Link>
             <Link
-              href="/rapports/nouveau"
+              href="/dossiers/new"
               className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-light"
             >
-              Créer un rapport
+              Créer un dossier
             </Link>
           </div>
         </div>
       ) : (
-        <RapportList
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          rapports={liste as any}
-          activeType={typeFilter}
-          activeStatut={statutFilter}
-          showArchived={showArchived}
-        />
+        <DossierFilters dossiers={dossiers} />
       )}
     </div>
   );
