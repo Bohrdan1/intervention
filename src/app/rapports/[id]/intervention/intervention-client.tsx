@@ -49,11 +49,24 @@ export function InterventionClient({
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Multi-équipements ──
-  const isMultiMode = rapport.interventions_equipements !== null;
+  const [isMultiMode, setIsMultiMode] = useState(rapport.interventions_equipements !== null);
   const [interventions, setInterventions] = useState<InterventionEquipement[]>(
     rapport.interventions_equipements ?? []
   );
   const [selectOpen, setSelectOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
+
+  async function activerModeMulti() {
+    setSwitching(true);
+    const result = await saveInterventionMulti(rapport.id, []);
+    if (!result.success) {
+      toast("Erreur lors de l'activation", "error");
+      setSwitching(false);
+      return;
+    }
+    setIsMultiMode(true);
+    setSwitching(false);
+  }
 
   function addEquipement(equip: Equipement) {
     setInterventions((prev) => [
@@ -363,6 +376,18 @@ export function InterventionClient({
       <p className="text-sm text-muted mb-6">
         {rapport.numero_cm} · {rapport.client?.nom} · {rapport.site?.nom}
       </p>
+
+      {/* Bouton bascule vers mode multi-portes */}
+      {installations.length > 1 && (
+        <button
+          type="button"
+          onClick={activerModeMulti}
+          disabled={switching}
+          className="w-full mb-4 rounded-xl border-2 border-dashed border-primary/40 py-3 text-sm font-medium text-primary hover:border-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
+        >
+          {switching ? "Activation..." : "+ Passer en mode multi-portes"}
+        </button>
+      )}
 
       {/* Sélecteur de porte */}
       {installations.length > 0 && (
