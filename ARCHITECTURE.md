@@ -21,29 +21,38 @@ Ne jamais utiliser `npm run dev` comme étape de validation.
 
 ---
 
+## Principes métier fondamentaux
+
+- **Toute demande = un dossier.** Appel, email, contrat, prospect — tout ouvre un dossier.
+- **Pas de module prospects séparé.** Un prospect est un client avec type='prospect'. Le workflow dossier gère tout.
+- **AAC ne stocke pas de pièces.** Toute ligne devis a un statut fournisseur (à consulter / en attente / confirmé).
+- **Le devis n'est pas une entité séparée.** Il vit dans rapports.lignes_devis (JSONB).
+
+---
+
 ## Schéma de données
 
 ### Hiérarchie
 
 ```
-clients
+clients (type: prospect | actif | inactif)
   └── sites
-        └── equipements         ← porte physique (ex-installations, migrée Phase 1)
-              └── controles     ← résultats contrôle EN 16005
+        └── equipements         <- porte physique (ex-installations, migrée Phase 1)
+              └── controles     <- résultats contrôle EN 16005
 
-dossiers                        ← entité centrale du workflow
+dossiers                        <- entité centrale du workflow
   ├── client_id, site_id, equipement_id
   ├── rdvs[]
-  ├── rapports[]                ← rapports.dossier_id (nullable — anciens rapports)
+  ├── rapports[]                <- rapports.dossier_id (nullable — anciens rapports)
   ├── factures[]
-  └── reglements[]              ← lié à facture_id + dossier_id
+  └── reglements[]              <- lié à facture_id + dossier_id
 ```
 
 ### Tables
 
 | Table | Rôle | Lignes prod |
 |-------|------|-------------|
-| `clients` | Fiche client B2B ou résidentiel | 1 |
+| `clients` | Fiche client/prospect (type: prospect/actif/inactif) | 1 |
 | `sites` | Lieu physique rattaché à un client | 15 |
 | `equipements` | Porte automatique (ex-installations, UUID conservés) | 48 |
 | `controles` | Résultats contrôle par équipement, JSONB | 33 |
@@ -62,6 +71,7 @@ Ne pas recréer la table installations.
 
 ### Types énumérés
 
+**clients.type :** `prospect` | `actif` | `inactif`
 **dossiers.type :** `urgent` | `contrat` | `visite`
 **dossiers.statut :** `ouvert` | `en_cours` | `en_attente` | `termine` | `annule`
 **rapports.type_rapport :** `maintenance` | `intervention` | `visite`
@@ -78,6 +88,7 @@ Ne pas recréer la table installations.
 **rapports.pieces_utilisees :** `[{ description, quantite, reference }]`
 **rapports.lignes_devis :** `[{ id, description, quantite, unite, prix_unitaire, fournisseur, statut_fournisseur, type }]`
 **rapports.visite_data :** `{}` clé/valeur libre
+**rapports.photos :** `[{ url: string, legende?: string }]` — rétrocompatible avec ancien format `string[]`
 **controles.points_controle :** `[{ nom, etat: 'ok'|'nok'|'na', observation }]`
 **controles.points_erp :** `[{ nom, conforme: boolean }]`
 
@@ -87,25 +98,22 @@ Ne pas recréer la table installations.
 
 ### 1. Intervention urgente
 ```
-demande → (RDV optionnel) → Rapport type=intervention → Facture → Règlement
+demande -> (RDV optionnel) -> Rapport type=intervention -> Facture -> Règlement
 dossier.type = 'urgent'
 ```
 
 ### 2. Maintenance contractuelle
 ```
-Contrat → RDV planifié → Rapport type=maintenance → Facture → Règlement
+Contrat -> RDV planifié -> Rapport type=maintenance -> Facture -> Règlement
 dossier.type = 'contrat'
 ```
 
-### 3. Visite / Devis
+### 3. Visite / Devis / Prospect
 ```
-demande → RDV → Rapport type=visite → Devis (lignes_devis sur rapport) → Facture → Règlement
+demande (prospect ou client) -> RDV -> Rapport type=visite -> Devis -> Facture -> Règlement
 dossier.type = 'visite'
-Le devis n'est pas une entité séparée — il vit dans rapports.lignes_devis (JSONB)
+Si prospect : client.type='prospect' -> passe à 'actif' à la première facture
 ```
-
-Un rapport peut exister sans dossier (`dossier_id` nullable) — cas des anciens rapports non migrés.
-AAC ne stocke pas de pièces — toute ligne devis a un statut fournisseur (à consulter / en attente / confirmé).
 
 ---
 
@@ -113,58 +121,53 @@ AAC ne stocke pas de pièces — toute ligne devis a un statut fournisseur (à c
 
 ```
 src/app/
-  page.tsx                          ← Dashboard dossiers (accueil)
+  page.tsx                          <- Dashboard dossiers (accueil)
   layout.tsx, globals.css, loading.tsx, error.tsx
 
   agenda/
-    page.tsx                        ← Liste + calendrier hebdomadaire RDV
+    page.tsx                        <- Liste + calendrier hebdomadaire RDV
 
   dossiers/
-    [id]/page.tsx                   ← Fiche dossier
-    new/page.tsx                    ← Création dossier
+    [id]/page.tsx                   <- Fiche dossier
+    new/page.tsx                    <- Création dossier
 
   rapports/
-    page.tsx                        ← Liste rapports (filtres : tous/brouillons/finalisés/archivés)
-    nouveau/
-      page.tsx                      ← Création rapport
-      client-selector.tsx
+    page.tsx                        <- Liste rapports
+    nouveau/page.tsx                <- Création rapport
     [id]/
-      page.tsx                      ← Mode lecture (RapportPageClient) + bouton Modifier
-      actions.ts                    ← Server actions du rapport
+      page.tsx                      <- Mode lecture par défaut + bouton Modifier
+      actions.ts
       archive-button.tsx
       delete-button.tsx
-      controle/                     ← Checklist EN 16005
-      devis/                        ← Module devis (lignes_devis)
-      finaliser/                    ← Finalisation rapport
-      intervention/                 ← Saisie intervention
-      ot/                           ← Ordre de travail — OBSOLÈTE, à supprimer
-      pdf/route.tsx                 ← Génération PDF rapport
-      visite/                       ← Saisie visite technique
+      controle/                     <- Checklist EN 16005
+      devis/                        <- Module devis (lignes_devis)
+      finaliser/
+      intervention/
+      ot/                           <- OBSOLÈTE, à supprimer
+      pdf/route.tsx                 <- Génération PDF rapport
+      visite/
 
   equipements/
-    [id]/page.tsx                   ← Fiche équipement
+    [id]/page.tsx                   <- Fiche équipement
 
   installations/
-    [id]/page.tsx                   ← OBSOLÈTE — rediriger vers /equipements/[id]
+    [id]/page.tsx                   <- OBSOLÈTE — rediriger vers /equipements/[id]
 
   clients/
-    page.tsx
-    [id]/                           ← Fiche client, édition, sites, installations
+    page.tsx                        <- Liste clients ET prospects (filtre par type)
+    [id]/                           <- Fiche client
 
   finances/
-    page.tsx                        ← Module finances (en cours)
+    page.tsx                        <- Module finances (Phase 3B)
 
   prospects/
-    page.tsx                        ← Module prospects
+    page.tsx                        <- OBSOLÈTE — supprimer, remplacé par clients?type=prospect
 
   export/
-    page.tsx                        ← Export client
-
-  api/
-    export/route.ts                 ← Route API export
-
+    page.tsx
+  api/export/route.ts
   login/page.tsx
-  offline/page.tsx                  ← Mode PWA offline
+  offline/page.tsx
 ```
 
 ---
@@ -185,23 +188,23 @@ src/components/
     NouveauDossierForm.tsx
 
   rapports/
-    RapportEdition.tsx              ← Formulaire édition
-    RapportLecture.tsx              ← Affichage lecture seule
-    RapportPageClient.tsx           ← Orchestrateur lecture/édition (state modeEdition)
+    RapportEdition.tsx
+    RapportLecture.tsx
+    RapportPageClient.tsx           <- Orchestrateur lecture/édition
     RattacherDossierButton.tsx / RattacherDossierModal.tsx
 
   rdvs/
-    AgendaClient.tsx                ← Toggle liste/calendrier
-    DossierRdvSection.tsx           ← Section RDV dans fiche dossier
-    RdvCalendrierSemaine.tsx        ← Calendrier CSS grid (pas de lib externe)
+    AgendaClient.tsx
+    DossierRdvSection.tsx
+    RdvCalendrierSemaine.tsx        <- CSS grid, pas de lib externe
     RdvCard.tsx
     RdvModal.tsx
-    rdv-types.ts                    ← Types TypeScript RDV
+    rdv-types.ts
 
   ui/
     nav-bar.tsx
     pagination.tsx
-    photo-upload.tsx
+    photo-upload.tsx                <- gère { url, legende? }
     pieces-input.tsx
     toast.tsx
 ```
@@ -212,12 +215,12 @@ src/components/
 
 ```
 src/app/actions/
-  dossiers.ts     ← createDossier, updateDossier, deleteDossier, updateDossierStatut
-  rapports.ts     ← rattacherRapportDossier, detacherRapportDossier
-  rdvs.ts         ← createRdv, updateRdv, updateRdvStatut, deleteRdv
+  dossiers.ts     <- createDossier, updateDossier, deleteDossier, updateDossierStatut
+  rapports.ts     <- rattacherRapportDossier, detacherRapportDossier
+  rdvs.ts         <- createRdv, updateRdv, updateRdvStatut, deleteRdv
 
 src/app/rapports/[id]/
-  actions.ts                ← finaliser, archiver, supprimer rapport
+  actions.ts
   controle/actions.ts
   devis/actions.ts
   finaliser/actions.ts
@@ -225,12 +228,10 @@ src/app/rapports/[id]/
   visite/actions.ts
 
 src/lib/actions/
-  catalogue.ts    ← catalogue pièces/matériel
-  photos.ts       ← upload photos Supabase Storage
-  signatures.ts   ← gestion signatures client
+  catalogue.ts
+  photos.ts       <- upload + légende
+  signatures.ts
 ```
-
-Toujours appeler `revalidatePath()` après chaque mutation.
 
 ---
 
@@ -238,17 +239,17 @@ Toujours appeler `revalidatePath()` après chaque mutation.
 
 ```
 src/lib/pdf/
-  rapport-pdf.tsx     ← Composant @react-pdf/renderer rapport
-  devis-pdf.tsx       ← Composant @react-pdf/renderer devis
-  logo.ts             ← Logo AAC encodé
+  rapport-pdf.tsx     <- photos avec légende sous chaque image
+  devis-pdf.tsx
+  logo.ts
 
-src/app/rapports/[id]/pdf/route.tsx       ← GET → stream PDF rapport
-src/app/rapports/[id]/devis/pdf/route.ts  ← GET → stream PDF devis
+src/app/rapports/[id]/pdf/route.tsx
+src/app/rapports/[id]/devis/pdf/route.ts
 ```
 
-**Bugs PDF iPad connus (non corrigés) :**
-- `Content-Disposition: attachment` manquant dans les deux route handlers → PDF s'ouvre dans Safari au lieu de se télécharger
-- Ne pas corriger en local si ça casse le comportement desktop — fix à valider sur Vercel
+Bugs PDF iPad connus (non corrigés) :
+- `Content-Disposition: attachment` manquant dans les deux route handlers
+- Ne pas corriger en local, valider sur Vercel uniquement
 
 ---
 
@@ -257,13 +258,13 @@ src/app/rapports/[id]/devis/pdf/route.ts  ← GET → stream PDF devis
 ```
 src/lib/
   supabase/
-    client.ts           ← createBrowserClient (Client Components)
-    server.ts           ← createServerClient (Server Components + Actions)
-    middleware.ts       ← auth middleware
-    database.types.ts   ← types générés Supabase (regénérer après chaque migration)
-  types/index.ts        ← types métier : Client, Site, Equipement, Dossier, Rapport, Controle, Rdv, Facture, Reglement
-  constants.ts          ← constantes partagées
-  utils.ts              ← helpers (formatDate, formatMontant CFP, etc.)
+    client.ts
+    server.ts
+    middleware.ts
+    database.types.ts   <- regénérer après chaque migration
+  types/index.ts        <- Client, Site, Equipement, Dossier, Rapport, Controle, Rdv, Facture, Reglement
+  constants.ts
+  utils.ts
 ```
 
 ---
@@ -271,25 +272,25 @@ src/lib/
 ## Conventions
 
 ### Server vs Client Components
-- **Server Components** : fetches Supabase, pages, layouts
-- **Client Components** : filtres, modals, formulaires, calendrier, interactions
-- `'use client'` le plus bas possible dans l'arbre
+- Server Components : fetches Supabase, pages, layouts
+- Client Components : filtres, modals, formulaires, calendrier, interactions
+- 'use client' le plus bas possible dans l'arbre
 
 ### Nommage
-- Pages : `page.tsx`
-- Client Components colocalisés : `[nom]-client.tsx`
-- Composants réutilisables : `src/components/[domaine]/NomComposant.tsx`
-- Server Actions colocalisées : `actions.ts` dans le dossier de la page
-- Server Actions globales : `src/app/actions/[entité].ts`
+- Pages : page.tsx
+- Client Components colocalisés : [nom]-client.tsx
+- Composants réutilisables : src/components/[domaine]/NomComposant.tsx
+- Server Actions colocalisées : actions.ts dans le dossier de la page
+- Server Actions globales : src/app/actions/[entité].ts
 
 ### TypeScript
-- Strict mode, zéro `any`
-- Types métier dans `src/lib/types/index.ts`
-- Types Supabase dans `src/lib/supabase/database.types.ts`
+- Strict mode, zéro any
+- Types métier dans src/lib/types/index.ts
+- Types Supabase dans src/lib/supabase/database.types.ts
 
 ### iPad
-- Touch targets min 44px sur tous les éléments interactifs
-- Pas de comportements hover-only
+- Touch targets min 44px
+- Pas de hover-only
 - Modals plein écran sur mobile
 
 ---
@@ -298,16 +299,20 @@ src/lib/
 
 | Phase | Statut | Contenu |
 |-------|--------|---------|
-| 1 | ✅ Terminé | Schéma dossiers, migration installations→equipements |
-| 2 | ✅ Terminé | Dashboard dossiers, fiche dossier, création dossier |
-| 3A | ✅ Terminé | Module RDV — liste, calendrier, création |
-| 3B | 🔜 À faire | Factures + Règlements |
-| 3C | 🔜 À faire | Sync Google Calendar (unidirectionnel Odessa → Google) |
-| 4 | 🔜 À faire | Fiche équipement complète, EN 16005 checklist, devis PDF |
+| 1 | OK | Schéma dossiers, migration installations->equipements |
+| 2 | OK | Dashboard dossiers, fiche dossier, création dossier |
+| 3A | OK | Module RDV — liste, calendrier, création |
+| 3B | A faire | Factures + Règlements |
+| 3C | A faire | Sync Google Calendar (unidirectionnel Odessa -> Google) |
+| 4 | A faire | Fiche équipement complète, EN 16005 checklist, devis PDF |
 
 ## Travaux ponctuels ouverts
 
-- `/installations/[id]` → rediriger vers `/equipements/[id]` (table supprimée)
-- `/rapports/[id]/ot/` → supprimer (remplacé par mode lecture sur `/rapports/[id]`)
-- Calendrier RDV : bug timezone UTC vs Nouméa (UTC+11) dans `RdvCalendrierSemaine.tsx`
-- PDF iPad : `Content-Disposition: attachment` manquant dans les deux route handlers
+- /installations/[id] -> rediriger vers /equipements/[id]
+- /rapports/[id]/ot/ -> supprimer
+- /prospects/ -> supprimer, intégrer dans /clients?type=prospect
+- clients : ajouter colonne type (prospect/actif/inactif) avec migration SQL
+- Photos rapports : migrer vers { url, legende? } avec rétrocompatibilité
+- PDF iPad : Content-Disposition attachment manquant dans les deux route handlers
+- viewport : maximum-scale=1 user-scalable=no -> maximum-scale=5 dans layout.tsx
+- public/robots.txt : à créer (Disallow: /)
