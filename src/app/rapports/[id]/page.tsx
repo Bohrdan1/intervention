@@ -6,6 +6,8 @@ import { DeleteButton } from "./delete-button";
 import { ArchiveButton } from "./archive-button";
 import Image from "next/image";
 import type { PhotoItem, VisiteData, PorteVisite, RapportComplet, PieceUtilisee } from "@/lib/types";
+import { RattacherDossierButton } from "@/components/rapports/RattacherDossierButton";
+import type { DossierChoix } from "@/components/rapports/RattacherDossierModal";
 
 function getTypePorteLabel(porte: PorteVisite): string {
   if (porte.type_porte === "coulissante") {
@@ -175,6 +177,49 @@ export default async function RapportDetailPage({
     redirect("/");
   }
 
+  // Dossier actuel du rapport (si rattaché)
+  type DossierRow = { id: string; reference: string };
+  let currentDossier: DossierRow | null = null;
+  if (rapport.dossier_id) {
+    const { data } = await supabase
+      .from("dossiers")
+      .select("id, reference")
+      .eq("id", rapport.dossier_id)
+      .single();
+    currentDossier = data ?? null;
+  }
+
+  // Tous les dossiers ouverts pour le modal de rattachement
+  type DossierModalRow = {
+    id: string;
+    reference: string;
+    type_dossier: string;
+    client: { nom: string } | { nom: string }[] | null;
+    site: { nom: string } | { nom: string }[] | null;
+  };
+  const { data: rawDossiers } = await supabase
+    .from("dossiers")
+    .select("id, reference, type_dossier, client:clients(nom), site:sites(nom)")
+    .in("statut", ["ouvert", "en_cours", "en_attente"])
+    .order("reference", { ascending: false });
+
+  const dossierChoix: DossierChoix[] = (rawDossiers ?? []).map((d) => {
+    const raw = d as unknown as DossierModalRow;
+    const clientNom = Array.isArray(raw.client)
+      ? (raw.client[0]?.nom ?? "—")
+      : (raw.client?.nom ?? "—");
+    const siteNom = Array.isArray(raw.site)
+      ? (raw.site[0]?.nom ?? null)
+      : (raw.site?.nom ?? null);
+    return {
+      id: raw.id,
+      reference: raw.reference,
+      clientNom,
+      siteNom,
+      typeDossier: raw.type_dossier,
+    };
+  });
+
   const isIntervention = rapport.type_rapport === "intervention";
   const isVisite = rapport.type_rapport === "visite";
   const photos: PhotoItem[] = rapport.photos || [];
@@ -229,6 +274,28 @@ export default async function RapportDetailPage({
         <p className="text-sm text-muted">
           {rapport.site?.nom} · {date}
         </p>
+        {/* Dossier rattaché */}
+        <div className="mt-2 flex items-center gap-2">
+          {currentDossier ? (
+            <Link
+              href={`/dossiers/${currentDossier.id}`}
+              className="inline-flex items-center gap-1 rounded-lg border border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+            >
+              📁 {currentDossier.reference}
+            </Link>
+          ) : (
+            <span className="text-xs text-muted">Non rattaché à un dossier</span>
+          )}
+        </div>
+      </div>
+
+      {/* Bouton rattacher */}
+      <div className="mb-4">
+        <RattacherDossierButton
+          rapportId={rapport.id}
+          currentDossierId={rapport.dossier_id ?? null}
+          dossiers={dossierChoix}
+        />
       </div>
 
       {/* Contenu selon le type */}

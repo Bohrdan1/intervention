@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { DossierRdvSection } from "@/components/rdvs/DossierRdvSection";
 import type { RdvSimple, DossierOption } from "@/components/rdvs/rdv-types";
 import { DeleteDossierButton } from "@/components/dossiers/DeleteDossierButton";
+import { AjouterRapportButton } from "@/components/dossiers/AjouterRapportButton";
+import type { RapportChoix } from "@/components/dossiers/AjouterRapportModal";
 
 // ── Config ─────────────────────────────────────────────────────────────────
 
@@ -137,6 +139,45 @@ export default async function DossierDetailPage({
 
   const dossier = rawDossier as unknown as DossierDetail;
 
+  // Rapports disponibles à rattacher (pas dans ce dossier, non archivés)
+  type RapportDispoRow = {
+    id: string;
+    numero_cm: string;
+    type_rapport: string | null;
+    dossier_id: string | null;
+    dossier: { reference: string } | { reference: string }[] | null;
+    client: { nom: string } | { nom: string }[] | null;
+    site: { nom: string } | { nom: string }[] | null;
+  };
+  const { data: rawRapportsDispo } = await supabase
+    .from("rapports")
+    .select("id, numero_cm, type_rapport, dossier_id, dossier:dossiers(reference), client:clients(nom), site:sites(nom)")
+    .is("archived_at", null)
+    .or(`dossier_id.is.null,dossier_id.neq.${id}`)
+    .order("numero_cm", { ascending: false });
+
+  const rapportsDispo: RapportChoix[] = (rawRapportsDispo ?? []).map((r) => {
+    const raw = r as unknown as RapportDispoRow;
+    const clientNom = Array.isArray(raw.client)
+      ? (raw.client[0]?.nom ?? "—")
+      : (raw.client?.nom ?? "—");
+    const siteNom = Array.isArray(raw.site)
+      ? (raw.site[0]?.nom ?? null)
+      : (raw.site?.nom ?? null);
+    const currentDossierRef = Array.isArray(raw.dossier)
+      ? (raw.dossier[0]?.reference ?? null)
+      : (raw.dossier?.reference ?? null);
+    return {
+      id: raw.id,
+      numero_cm: raw.numero_cm,
+      clientNom,
+      siteNom,
+      typeRapport: raw.type_rapport ?? "maintenance",
+      currentDossierId: raw.dossier_id,
+      currentDossierRef,
+    };
+  });
+
   // Normalise FK joins
   const client = (
     Array.isArray(dossier.client) ? dossier.client[0] : dossier.client
@@ -267,12 +308,18 @@ export default async function DossierDetailPage({
               ({rapportsActifs.length})
             </span>
           </h2>
-          <Link
-            href={`/rapports/nouveau?dossier_id=${dossier.id}`}
-            className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-light"
-          >
-            + Rapport
-          </Link>
+          <div className="flex items-center gap-2">
+            <AjouterRapportButton
+              dossierId={dossier.id}
+              rapports={rapportsDispo}
+            />
+            <Link
+              href={`/rapports/nouveau?dossier_id=${dossier.id}`}
+              className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-light"
+            >
+              + Rapport
+            </Link>
+          </div>
         </div>
 
         {rapportsActifs.length === 0 ? (
