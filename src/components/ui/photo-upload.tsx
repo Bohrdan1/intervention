@@ -2,20 +2,19 @@
 
 import { useState, useRef } from 'react';
 import { uploadPhoto, deletePhoto } from '@/lib/actions/photos';
-import { isFileTooLarge, formatFileSize } from '@/lib/utils';
 import { LIMITS } from '@/lib/constants';
 import type { PhotoItem } from '@/lib/types';
 
-interface PhotoUploadProps {
-  rapportId: string;
-  context: string;
-  photos: PhotoItem[];
-  onPhotosChange: (photos: PhotoItem[]) => void;
-  maxPhotos?: number;
-}
+// ── Constantes ────────────────────────────────────────────────────────────
 
-function generateId() {
-  // Fallback pour Safari/iPadOS qui ne supporte pas crypto.randomUUID
+const MAX_WIDTH = 1200;
+const QUALITE = 0.82;
+// Limite haute avant compression : bloque les fichiers aberrants (vidéos, etc.)
+const MAX_ORIGINAL_SIZE_MB = 50;
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+
+function generateId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
@@ -26,39 +25,70 @@ function generateId() {
   });
 }
 
-async function compressImage(file: File): Promise<Blob> {
-  return new Promise((resolve, reject) => {
+/**
+ * Compresse une image via Canvas (max 1200 px, 0.82 qualité JPEG).
+ * Gère le renommage HEIC → .jpg.
+ * Fallback transparent : retourne le fichier original si canvas échoue.
+ */
+async function compresserImage(file: File): Promise<File> {
+  return new Promise((resolve) => {
     const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
     img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
       const canvas = document.createElement('canvas');
-      const MAX_WIDTH = 1200;
-      const MAX_HEIGHT = 1200;
       let { width, height } = img;
-
-      if (width > MAX_WIDTH || height > MAX_HEIGHT) {
-        const ratio = Math.min(MAX_WIDTH / width, MAX_HEIGHT / height);
-        width = Math.round(width * ratio);
-        height = Math.round(height * ratio);
+      if (width > MAX_WIDTH) {
+        height = Math.round((height * MAX_WIDTH) / width);
+        width = MAX_WIDTH;
       }
-
       canvas.width = width;
       canvas.height = height;
+
       const ctx = canvas.getContext('2d');
-      if (!ctx) return reject(new Error('Canvas context error'));
+      if (!ctx) return resolve(file); // fallback
+
       ctx.drawImage(img, 0, 0, width, height);
+
       canvas.toBlob(
         (blob) => {
-          if (blob) resolve(blob);
-          else reject(new Error('Compression error'));
+          if (!blob) return resolve(file); // fallback
+          const compressed = new File(
+            [blob],
+            file.name.replace(/\.(heic|heif)$/i, '.jpg'),
+            { type: 'image/jpeg' }
+          );
+          resolve(compressed);
         },
         'image/jpeg',
-        0.8
+        QUALITE
       );
     };
-    img.onerror = () => reject(new Error('Image load error'));
-    img.src = URL.createObjectURL(file);
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(file); // fallback : upload l'original
+    };
+
+    img.src = objectUrl;
   });
 }
+
+// ── Types ─────────────────────────────────────────────────────────────────
+
+interface PhotoUploadProps {
+  rapportId: string;
+  context: string;
+  photos: PhotoItem[];
+  onPhotosChange: (photos: PhotoItem[]) => void;
+  maxPhotos?: number;
+}
+
+type UploadPhase = 'idle' | 'compressing' | 'uploading';
+
+// ── Component ─────────────────────────────────────────────────────────────
 
 export default function PhotoUpload({
   rapportId,
@@ -67,35 +97,73 @@ export default function PhotoUpload({
   onPhotosChange,
   maxPhotos = LIMITS.MAX_PHOTOS_PER_RAPPORT,
 }: PhotoUploadProps) {
-  const [uploading, setUploading] = useState(false);
+  const [phase, setPhase] = useState<UploadPhase>('idle');
+  const [currentFile, setCurrentFile] = useState(0);   // 1-indexé
+  const [totalFiles, setTotalFiles] = useState(0);
+  const [progress, setProgress] = useState(0);         // 0-100
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isBusy = phase !== 'idle';
+
+  // ── Upload handler ───────────────────────────────────────────────────────
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    setUploading(true);
+    const slots = maxPhotos - photos.length;
+    if (slots <= 0) return;
+    const fileArray = Array.from(files).slice(0, slots);
+    const total = fileArray.length;
+    const steps = total * 2; // compress + upload par fichier
+
+    setTotalFiles(total);
+    setPhase('compressing');
+    setCurrentFile(1);
+    setProgress(0);
+
     const newPhotos: PhotoItem[] = [];
 
-    for (const file of Array.from(files)) {
+    for (let i = 0; i < total; i++) {
+      const file = fileArray[i];
+
       try {
-        // Validation : taille du fichier
-        if (isFileTooLarge(file, LIMITS.MAX_FILE_SIZE_MB)) {
-          alert(`Fichier trop volumineux : ${file.name} (${formatFileSize(file.size)})\nMaximum autorisé : ${LIMITS.MAX_FILE_SIZE_MB}MB`);
+        // Refuse les fichiers aberrants (vidéos, très gros binaires)
+        if (file.size > MAX_ORIGINAL_SIZE_MB * 1024 * 1024) {
+          alert(
+            `Fichier trop volumineux : ${file.name}\n` +
+            `Maximum autorisé avant compression : ${MAX_ORIGINAL_SIZE_MB} Mo`
+          );
+          setProgress(Math.round(((i * 2 + 2) / steps) * 100));
           continue;
         }
 
-        const compressed = await compressImage(file);
+        // ① Compression
+        setPhase('compressing');
+        setCurrentFile(i + 1);
+        setProgress(Math.round(((i * 2) / steps) * 100));
+
+        const compressed = await compresserImage(file);
+
+        // ② Upload
+        setPhase('uploading');
+        setProgress(Math.round(((i * 2 + 1) / steps) * 100));
+
         const id = generateId();
         const path = `rapports/${rapportId}/${context}/${id}.jpg`;
 
         const formData = new FormData();
-        formData.append('file', new File([compressed], `${id}.jpg`, { type: 'image/jpeg' }));
+        formData.append(
+          'file',
+          new File([compressed], `${id}.jpg`, { type: 'image/jpeg' })
+        );
         formData.append('path', path);
 
         const result = await uploadPhoto(formData);
+
+        setProgress(Math.round(((i * 2 + 2) / steps) * 100));
 
         if (!result.success || !result.url) {
           console.error('Upload error:', result.error);
@@ -118,10 +186,16 @@ export default function PhotoUpload({
     if (newPhotos.length > 0) {
       onPhotosChange([...photos, ...newPhotos].slice(0, maxPhotos));
     }
-    setUploading(false);
+
+    setPhase('idle');
+    setProgress(0);
+    setCurrentFile(0);
+    setTotalFiles(0);
     if (inputRef.current) inputRef.current.value = '';
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
+
+  // ── Autres handlers ──────────────────────────────────────────────────────
 
   const handleDelete = async (photo: PhotoItem) => {
     const result = await deletePhoto(photo.path);
@@ -133,13 +207,25 @@ export default function PhotoUpload({
     onPhotosChange(photos.map((p) => (p.id === photoId ? { ...p, label } : p)));
   };
 
+  // ── Label de statut ──────────────────────────────────────────────────────
+
+  const statusLabel =
+    phase === 'compressing'
+      ? `Optimisation en cours… (${currentFile}/${totalFiles})`
+      : phase === 'uploading'
+      ? `Envoi en cours… (${currentFile}/${totalFiles})`
+      : '';
+
+  // ── Render ───────────────────────────────────────────────────────────────
+
   return (
     <div className="space-y-3">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h4 className="text-sm font-semibold text-foreground">
           Photos ({photos.length}/{maxPhotos})
         </h4>
-        {photos.length < maxPhotos && !uploading && (
+        {photos.length < maxPhotos && !isBusy && (
           <div className="flex gap-1.5">
             <label className="cursor-pointer rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200">
               📷 Photo
@@ -166,10 +252,23 @@ export default function PhotoUpload({
             </label>
           </div>
         )}
-        {uploading && (
-          <span className="text-sm text-muted">Envoi...</span>
-        )}
       </div>
+
+      {/* Barre de progression */}
+      {isBusy && (
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted">{statusLabel}</span>
+            <span className="text-xs font-medium text-primary">{progress} %</span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Thumbnails + légendes */}
       {photos.length > 0 && (
