@@ -165,7 +165,7 @@ export default async function RapportDetailPage({
       site:sites(*),
       controles(
         *,
-        installation:installations(*)
+        equipement:equipements(*)
       )
     `)
     .eq("id", id)
@@ -314,7 +314,7 @@ export default async function RapportDetailPage({
             const nbOk = controle.points_controle.filter((p) => p.etat === "ok").length;
             const total = controle.points_controle.length;
             const controlePhotos = photos.filter(
-              (p) => p.context === `controle:${controle.installation?.id}`
+              (p) => p.context === `controle:${controle.equipement?.id}`
             );
 
             return (
@@ -324,10 +324,10 @@ export default async function RapportDetailPage({
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="font-semibold">🚪 {controle.installation?.repere}</p>
+                    <p className="font-semibold">🚪 {controle.equipement?.repere}</p>
                     <p className="text-xs text-muted">
-                      {controle.installation?.type_porte}
-                      {controle.installation?.modele ? ` · ${controle.installation.modele}` : ""}
+                      {controle.equipement?.type_porte}
+                      {controle.equipement?.modele ? ` · ${controle.equipement.modele}` : ""}
                     </p>
                   </div>
                   <div className="text-right">

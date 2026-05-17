@@ -7,7 +7,7 @@ import type { Client } from "@/lib/types";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-interface Installation {
+interface EquipementItem {
   id: string;
   repere: string;
   type_porte: string;
@@ -27,7 +27,7 @@ interface SiteItem {
   horaires: string | null;
   code_acces: string | null;
   notes_site: string | null;
-  installations: Installation[];
+  equipements: EquipementItem[];
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -459,12 +459,12 @@ export function ClientDetailClient({
                   </div>
                 )}
 
-                {/* ── Installations ── */}
-                {site.installations.length === 0 ? (
+                {/* ── Équipements ── */}
+                {site.equipements.length === 0 ? (
                   <div className="px-4 py-3 text-xs text-muted italic">Aucun équipement enregistré</div>
                 ) : (
                   <div className="divide-y divide-border">
-                    {site.installations.map((inst) => {
+                    {site.equipements.map((inst) => {
                       const derniere = derniereVisiteParInstallation[inst.id];
                       return (
                         <div key={inst.id} className="flex items-center justify-between px-4 py-2.5">
@@ -483,11 +483,11 @@ export function ClientDetailClient({
                             </p>
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                            <Link href={`/installations/${inst.id}`}
+                            <Link href={`/equipements/${inst.id}`}
                               className="rounded-lg border border-border px-2 py-1 text-xs text-muted hover:bg-slate-50">
                               📋 Historique
                             </Link>
-                            <Link href={`/rapports/nouveau?client_id=${clientId}&site_id=${site.id}&installation_id=${inst.id}&type=intervention`}
+                            <Link href={`/rapports/nouveau?client_id=${clientId}&site_id=${site.id}&equipement_id=${inst.id}&type=intervention`}
                               className="rounded-lg border border-purple-200 bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 hover:bg-purple-100">
                               ⚡
                             </Link>

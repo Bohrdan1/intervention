@@ -19,7 +19,7 @@ interface SiteData {
   contact_telephone: string | null;
 }
 
-interface InstallationData {
+interface EquipementData {
   id: string;
   repere: string;
   type_porte: string;
@@ -38,8 +38,8 @@ interface Props {
   };
   client: ClientData | null;
   site: SiteData | null;
-  installation: InstallationData | null;
-  installations: InstallationData[];
+  installation: EquipementData | null;
+  installations: EquipementData[];
   rapportId: string;
 }
 

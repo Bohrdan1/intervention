@@ -127,7 +127,7 @@ export function InstallationEditItem({
         <div className="flex items-center gap-2">
           {/* Historique */}
           <Link
-            href={`/installations/${inst.id}`}
+            href={`/equipements/${inst.id}`}
             className="rounded bg-slate-50 border border-border px-2 py-0.5 text-xs text-muted hover:bg-slate-100 transition-colors"
             title="Historique de l'équipement"
           >
@@ -147,7 +147,7 @@ export function InstallationEditItem({
             <input type="hidden" name="client_id" value={clientId} />
             <input type="hidden" name="site_id" value={siteId} />
             <input type="hidden" name="type_rapport" value="intervention" />
-            <input type="hidden" name="installation_id" value={inst.id} />
+            <input type="hidden" name="equipement_id" value={inst.id} />
             <button
               type="submit"
               className="rounded bg-purple-50 border border-purple-200 px-2 py-0.5 text-xs font-medium text-purple-700 hover:bg-purple-100 transition-colors"

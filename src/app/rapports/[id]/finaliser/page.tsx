@@ -16,10 +16,10 @@ export default async function FinaliserPage({
       *,
       client:clients(*),
       site:sites(*),
-      installation:installations(*),
+      equipement:equipements(*),
       controles(
         *,
-        installation:installations(*)
+        equipement:equipements(*)
       )
     `)
     .eq("id", id)

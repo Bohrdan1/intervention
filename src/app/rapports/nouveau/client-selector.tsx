@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-interface Installation {
+interface Equipement {
   id: string;
   repere: string;
   type_porte: string;
@@ -13,7 +13,7 @@ interface Installation {
 interface Site {
   id: string;
   nom: string;
-  installations: Installation[];
+  equipements: Equipement[];
 }
 
 interface Client {
@@ -38,7 +38,7 @@ export function ClientSiteSelectorClient({ clients }: { clients: Client[] }) {
   const selectedClient = clients.find((c) => c.id === selectedClientId);
   const sites = selectedClient?.sites || [];
   const selectedSite = sites.find((s) => s.id === selectedSiteId);
-  const installations = selectedSite?.installations || [];
+  const installations = selectedSite?.equipements || [];
 
   return (
     <>
@@ -147,7 +147,7 @@ export function ClientSiteSelectorClient({ clients }: { clients: Client[] }) {
               <option value="">Sélectionner un site...</option>
               {sites.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.nom} ({s.installations.length} porte{s.installations.length > 1 ? "s" : ""})
+                  {s.nom} ({s.equipements.length} porte{s.equipements.length > 1 ? "s" : ""})
                 </option>
               ))}
             </select>

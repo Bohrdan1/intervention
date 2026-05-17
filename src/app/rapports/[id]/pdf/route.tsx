@@ -18,10 +18,10 @@ export async function GET(
       *,
       client:clients(*),
       site:sites(*),
-      installation:installations(*),
+      installation:equipements(*),
       controles(
         *,
-        installation:installations(*)
+        installation:equipements(*)
       )
     `)
     .eq('id', id)
@@ -31,7 +31,15 @@ export async function GET(
     return new Response('Non trouvé', { status: 404 });
   }
 
-  const rapportComplet = rapport as unknown as RapportComplet;
+  // Mapper equipement_id → installation_id pour compatibilité PDF (photo context)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rapportComplet = {
+    ...rapport,
+    controles: (rapport.controles || []).map((c: Record<string, unknown>) => ({
+      ...c,
+      installation_id: c.equipement_id ?? null,
+    })),
+  } as unknown as RapportComplet;
 
   const buffer = await renderToBuffer(
     <RapportPDF rapport={rapportComplet} />

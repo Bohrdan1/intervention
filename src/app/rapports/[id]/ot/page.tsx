@@ -17,25 +17,25 @@ export default async function OrdreTravailPage({
       *,
       client:clients(*),
       site:sites(*),
-      installation:installations(*)
+      equipement:equipements(*)
     `)
     .eq("id", id)
     .single();
 
   if (!rapport) notFound();
 
-  // Installations du site pour la liste
+  // Équipements du site pour la liste
   const { data: installations } = await supabase
-    .from("installations")
+    .from("equipements")
     .select("id, repere, type_porte, modele")
     .eq("site_id", rapport.site_id)
     .order("repere");
 
   const client = Array.isArray(rapport.client) ? rapport.client[0] : rapport.client;
   const site = Array.isArray(rapport.site) ? rapport.site[0] : rapport.site;
-  const installation = Array.isArray(rapport.installation)
-    ? rapport.installation[0]
-    : rapport.installation;
+  const installation = Array.isArray(rapport.equipement)
+    ? rapport.equipement[0]
+    : rapport.equipement;
 
   return (
     <OrdreTravauxClient

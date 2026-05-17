@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { saveIntervention } from "./actions";
-import type { PieceUtilisee, PhotoItem, RapportComplet, Installation } from "@/lib/types";
+import type { PieceUtilisee, PhotoItem, RapportComplet, Equipement } from "@/lib/types";
 import { useToast } from "@/components/ui/toast";
 import PhotoUpload from "@/components/ui/photo-upload";
 import { PiecesInput } from "@/components/ui/pieces-input";
@@ -23,14 +23,14 @@ export function InterventionClient({
   catalogue = [],
 }: {
   rapport: RapportComplet;
-  installations: Installation[];
+  installations: Equipement[];
   catalogue?: PieceCatalogue[];
 }) {
   const router = useRouter();
   const { toast } = useToast();
 
   const [selectedInstallation, setSelectedInstallation] = useState<string | null>(
-    rapport.installation_id || null
+    rapport.equipement_id || null
   );
   const [description, setDescription] = useState(
     rapport.description_probleme || rapport.demande_client || ""
@@ -48,7 +48,7 @@ export function InterventionClient({
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function handleSelectInstallation(inst: Installation) {
+  function handleSelectInstallation(inst: Equipement) {
     setSelectedInstallation(inst.id);
     // Vider le pré-remplissage porte s'il était présent (désormais affiché dans l'en-tête)
     if (description.startsWith("Porte :")) {

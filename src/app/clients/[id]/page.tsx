@@ -23,7 +23,7 @@ export default async function ClientDetailPage({
   // ── Sites du client avec installations ──
   const { data: sites } = await supabase
     .from("sites")
-    .select(`*, installations(*)`)
+    .select(`*, equipements(*)`)
     .eq("client_id", id)
     .order("nom");
 
@@ -43,23 +43,23 @@ export default async function ClientDetailPage({
     if (!derniereCMMap[r.site_id]) derniereCMMap[r.site_id] = r.date_intervention;
   }
 
-  // ── Dernière intervention par installation ──
-  const installationIds = (sites ?? []).flatMap(
-    (s) => (s.installations ?? []).map((i: { id: string }) => i.id)
+  // ── Dernière intervention par équipement ──
+  const equipementIds = (sites ?? []).flatMap(
+    (s) => (s.equipements ?? []).map((i: { id: string }) => i.id)
   );
 
   const { data: dernieresInterventions } = await supabase
     .from("rapports")
-    .select("installation_id, date_intervention, type_rapport")
-    .in("installation_id", installationIds.length > 0 ? installationIds : ["_"])
+    .select("equipement_id, date_intervention, type_rapport")
+    .in("equipement_id", equipementIds.length > 0 ? equipementIds : ["_"])
     .in("type_rapport", ["maintenance", "intervention"])
     .eq("statut", "finalise")
     .order("date_intervention", { ascending: false });
 
   const derniereVisiteMap: Record<string, { date: string; type: string }> = {};
   for (const r of dernieresInterventions ?? []) {
-    if (r.installation_id && !derniereVisiteMap[r.installation_id]) {
-      derniereVisiteMap[r.installation_id] = { date: r.date_intervention, type: r.type_rapport };
+    if (r.equipement_id && !derniereVisiteMap[r.equipement_id]) {
+      derniereVisiteMap[r.equipement_id] = { date: r.date_intervention, type: r.type_rapport };
     }
   }
 
@@ -70,7 +70,7 @@ export default async function ClientDetailPage({
     .eq("client_id", id);
 
   const nbSites = sites?.length ?? 0;
-  const nbInstallations = installationIds.length;
+  const nbInstallations = equipementIds.length;
 
   // Normaliser les sites pour le composant client
   const sitesData = (sites ?? []).map((s) => ({
@@ -86,7 +86,7 @@ export default async function ClientDetailPage({
     horaires: s.horaires ?? null,
     code_acces: s.code_acces ?? null,
     notes_site: s.notes_site ?? null,
-    installations: (s.installations ?? []).map((i: {
+    equipements: (s.equipements ?? []).map((i: {
       id: string; repere: string; type_porte: string; modele: string | null;
     }) => ({
       id: i.id,

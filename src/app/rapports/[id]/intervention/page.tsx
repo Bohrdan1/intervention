@@ -25,9 +25,9 @@ export default async function InterventionPage({
     redirect("/");
   }
 
-  // Charger les installations du site pour le sélecteur de porte
+  // Charger les équipements du site pour le sélecteur de porte
   const { data: installations } = await supabase
-    .from("installations")
+    .from("equipements")
     .select("*")
     .eq("site_id", rapport.site_id)
     .order("repere");

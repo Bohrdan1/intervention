@@ -41,8 +41,11 @@ export type Database = {
       controles: {
         Row: {
           created_at: string | null
+          equipement_id: string | null
+          heures_fonctionnement: number | null
           id: string
-          installation_id: string
+          nombre_cycles: number | null
+          note_supplementaire: string | null
           page_number: number
           points_controle: Json
           points_erp: Json
@@ -51,8 +54,11 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          equipement_id?: string | null
+          heures_fonctionnement?: number | null
           id?: string
-          installation_id: string
+          nombre_cycles?: number | null
+          note_supplementaire?: string | null
           page_number?: number
           points_controle?: Json
           points_erp?: Json
@@ -61,8 +67,11 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          equipement_id?: string | null
+          heures_fonctionnement?: number | null
           id?: string
-          installation_id?: string
+          nombre_cycles?: number | null
+          note_supplementaire?: string | null
           page_number?: number
           points_controle?: Json
           points_erp?: Json
@@ -71,10 +80,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "controles_installation_id_fkey"
-            columns: ["installation_id"]
+            foreignKeyName: "controles_equipement_id_fkey"
+            columns: ["equipement_id"]
             isOneToOne: false
-            referencedRelation: "installations"
+            referencedRelation: "equipements"
             referencedColumns: ["id"]
           },
           {
@@ -86,73 +95,65 @@ export type Database = {
           },
         ]
       }
-      equipements: {
+      dossiers: {
         Row: {
-          actif: boolean | null
-          created_at: string | null
-          etat: string | null
+          client_id: string
+          created_at: string
+          date_cloture: string | null
+          date_ouverture: string
+          description: string | null
           id: string
-          localisation: string
-          marque: string
-          modele: string | null
+          montant_total_ht: number | null
           notes: string | null
+          reference: string
           site_id: string | null
+          statut: string
+          titre: string | null
+          type_dossier: string
+          updated_at: string
         }
         Insert: {
-          actif?: boolean | null
-          created_at?: string | null
-          etat?: string | null
+          client_id: string
+          created_at?: string
+          date_cloture?: string | null
+          date_ouverture?: string
+          description?: string | null
           id?: string
-          localisation: string
-          marque: string
-          modele?: string | null
+          montant_total_ht?: number | null
           notes?: string | null
+          reference: string
           site_id?: string | null
+          statut?: string
+          titre?: string | null
+          type_dossier?: string
+          updated_at?: string
         }
         Update: {
-          actif?: boolean | null
-          created_at?: string | null
-          etat?: string | null
+          client_id?: string
+          created_at?: string
+          date_cloture?: string | null
+          date_ouverture?: string
+          description?: string | null
           id?: string
-          localisation?: string
-          marque?: string
-          modele?: string | null
+          montant_total_ht?: number | null
           notes?: string | null
+          reference?: string
           site_id?: string | null
-        }
-        Relationships: []
-      }
-      installations: {
-        Row: {
-          created_at: string | null
-          id: string
-          modele: string | null
-          repere: string
-          site_id: string
-          type_porte: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          modele?: string | null
-          repere: string
-          site_id: string
-          type_porte?: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          modele?: string | null
-          repere?: string
-          site_id?: string
-          type_porte?: string
-          updated_at?: string | null
+          statut?: string
+          titre?: string | null
+          type_dossier?: string
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "installations_site_id_fkey"
+            foreignKeyName: "dossiers_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dossiers_site_id_fkey"
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
@@ -160,106 +161,144 @@ export type Database = {
           },
         ]
       }
-      interventions: {
+      equipements: {
         Row: {
-          client_id: string | null
-          created_at: string | null
-          date_debut_intervention: string | null
-          date_fin_intervention: string | null
-          date_planifiee: string | null
-          description_probleme: string | null
-          diagnostic: string | null
-          duree_minutes: number | null
-          equipement_id: string | null
-          facture_envoyee: boolean | null
-          facture_id: string | null
+          annee_installation: number | null
+          avec_batterie: boolean
+          commentaire: string | null
+          created_at: string
+          date_mise_en_service: string | null
           id: string
-          montant_ttc: number | null
-          nom_signataire: string | null
-          notes_internes: string | null
-          numero: string | null
-          pieces_remplacees: Json | null
-          priorite: string | null
-          signature_client_url: string | null
-          site_id: string | null
-          statut: string
-          travaux_realises: string | null
-          type: string
-          updated_at: string | null
+          marque: string | null
+          modele: string | null
+          notes_techniques: string | null
+          numero_serie: string | null
+          repere: string
+          site_id: string
+          type_porte: string
+          updated_at: string
         }
         Insert: {
-          client_id?: string | null
-          created_at?: string | null
-          date_debut_intervention?: string | null
-          date_fin_intervention?: string | null
-          date_planifiee?: string | null
-          description_probleme?: string | null
-          diagnostic?: string | null
-          duree_minutes?: number | null
-          equipement_id?: string | null
-          facture_envoyee?: boolean | null
-          facture_id?: string | null
+          annee_installation?: number | null
+          avec_batterie?: boolean
+          commentaire?: string | null
+          created_at?: string
+          date_mise_en_service?: string | null
           id?: string
-          montant_ttc?: number | null
-          nom_signataire?: string | null
-          notes_internes?: string | null
-          numero?: string | null
-          pieces_remplacees?: Json | null
-          priorite?: string | null
-          signature_client_url?: string | null
-          site_id?: string | null
-          statut?: string
-          travaux_realises?: string | null
-          type: string
-          updated_at?: string | null
+          marque?: string | null
+          modele?: string | null
+          notes_techniques?: string | null
+          numero_serie?: string | null
+          repere: string
+          site_id: string
+          type_porte?: string
+          updated_at?: string
         }
         Update: {
-          client_id?: string | null
-          created_at?: string | null
-          date_debut_intervention?: string | null
-          date_fin_intervention?: string | null
-          date_planifiee?: string | null
-          description_probleme?: string | null
-          diagnostic?: string | null
-          duree_minutes?: number | null
-          equipement_id?: string | null
-          facture_envoyee?: boolean | null
-          facture_id?: string | null
+          annee_installation?: number | null
+          avec_batterie?: boolean
+          commentaire?: string | null
+          created_at?: string
+          date_mise_en_service?: string | null
           id?: string
-          montant_ttc?: number | null
-          nom_signataire?: string | null
-          notes_internes?: string | null
-          numero?: string | null
-          pieces_remplacees?: Json | null
-          priorite?: string | null
-          signature_client_url?: string | null
-          site_id?: string | null
-          statut?: string
-          travaux_realises?: string | null
-          type?: string
-          updated_at?: string | null
+          marque?: string | null
+          modele?: string | null
+          notes_techniques?: string | null
+          numero_serie?: string | null
+          repere?: string
+          site_id?: string
+          type_porte?: string
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "interventions_equipement_id_fkey"
-            columns: ["equipement_id"]
+            foreignKeyName: "equipements_site_id_fkey"
+            columns: ["site_id"]
             isOneToOne: false
-            referencedRelation: "equipements"
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      factures: {
+        Row: {
+          client_id: string
+          created_at: string
+          date_echeance: string | null
+          date_facture: string
+          dossier_id: string | null
+          id: string
+          lignes: Json
+          montant_ht: number
+          notes: string | null
+          numero: string
+          statut: string
+          taux_tva: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          date_echeance?: string | null
+          date_facture?: string
+          dossier_id?: string | null
+          id?: string
+          lignes?: Json
+          montant_ht?: number
+          notes?: string | null
+          numero: string
+          statut?: string
+          taux_tva?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          date_echeance?: string | null
+          date_facture?: string
+          dossier_id?: string | null
+          id?: string
+          lignes?: Json
+          montant_ht?: number
+          notes?: string | null
+          numero?: string
+          statut?: string
+          taux_tva?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factures_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "factures_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
             referencedColumns: ["id"]
           },
         ]
       }
       rapports: {
         Row: {
+          archived_at: string | null
           client_id: string
           constat_general: Json | null
           created_at: string | null
           date_intervention: string
+          date_signature: string | null
           demande_client: string | null
           description_probleme: string | null
           diagnostic: string | null
+          dossier_id: string | null
+          equipement_id: string | null
           id: string
-          installation_id: string | null
+          montant_ht: number | null
+          nom_signataire_client: string | null
           numero_cm: string
           observations_visite: string | null
           photos: Json | null
@@ -276,15 +315,20 @@ export type Database = {
           visite_data: Json | null
         }
         Insert: {
+          archived_at?: string | null
           client_id: string
           constat_general?: Json | null
           created_at?: string | null
           date_intervention?: string
+          date_signature?: string | null
           demande_client?: string | null
           description_probleme?: string | null
           diagnostic?: string | null
+          dossier_id?: string | null
+          equipement_id?: string | null
           id?: string
-          installation_id?: string | null
+          montant_ht?: number | null
+          nom_signataire_client?: string | null
           numero_cm: string
           observations_visite?: string | null
           photos?: Json | null
@@ -301,15 +345,20 @@ export type Database = {
           visite_data?: Json | null
         }
         Update: {
+          archived_at?: string | null
           client_id?: string
           constat_general?: Json | null
           created_at?: string | null
           date_intervention?: string
+          date_signature?: string | null
           demande_client?: string | null
           description_probleme?: string | null
           diagnostic?: string | null
+          dossier_id?: string | null
+          equipement_id?: string | null
           id?: string
-          installation_id?: string | null
+          montant_ht?: number | null
+          nom_signataire_client?: string | null
           numero_cm?: string
           observations_visite?: string | null
           photos?: Json | null
@@ -334,10 +383,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "rapports_installation_id_fkey"
-            columns: ["installation_id"]
+            foreignKeyName: "rapports_dossier_id_fkey"
+            columns: ["dossier_id"]
             isOneToOne: false
-            referencedRelation: "installations"
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rapports_equipement_id_fkey"
+            columns: ["equipement_id"]
+            isOneToOne: false
+            referencedRelation: "equipements"
             referencedColumns: ["id"]
           },
           {
@@ -345,6 +401,107 @@ export type Database = {
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rdvs: {
+        Row: {
+          client_id: string
+          created_at: string
+          date_rdv: string
+          dossier_id: string | null
+          duree_minutes: number | null
+          id: string
+          notes: string | null
+          site_id: string | null
+          statut: string
+          type_rdv: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          date_rdv: string
+          dossier_id?: string | null
+          duree_minutes?: number | null
+          id?: string
+          notes?: string | null
+          site_id?: string | null
+          statut?: string
+          type_rdv?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          date_rdv?: string
+          dossier_id?: string | null
+          duree_minutes?: number | null
+          id?: string
+          notes?: string | null
+          site_id?: string | null
+          statut?: string
+          type_rdv?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rdvs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rdvs_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reglements: {
+        Row: {
+          created_at: string
+          date_reglement: string
+          facture_id: string
+          id: string
+          mode_paiement: string
+          montant: number
+          notes: string | null
+          reference: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_reglement?: string
+          facture_id: string
+          id?: string
+          mode_paiement?: string
+          montant: number
+          notes?: string | null
+          reference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_reglement?: string
+          facture_id?: string
+          id?: string
+          mode_paiement?: string
+          montant?: number
+          notes?: string | null
+          reference?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reglements_facture_id_fkey"
+            columns: ["facture_id"]
+            isOneToOne: false
+            referencedRelation: "factures"
             referencedColumns: ["id"]
           },
         ]

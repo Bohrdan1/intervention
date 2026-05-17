@@ -14,7 +14,7 @@ export default async function NouveauRapportPage({
 
   const { data: clients } = await supabase
     .from("clients")
-    .select(`*, sites(*, installations(*))`)
+    .select(`*, sites(*, equipements(*))`)
     .order("nom");
 
   async function creerRapport(formData: FormData) {
@@ -25,10 +25,10 @@ export default async function NouveauRapportPage({
     const client_id = formData.get("client_id") as string;
     const site_id = formData.get("site_id") as string;
     const date_intervention = formData.get("date_intervention") as string;
-    const installationIds = formData.getAll("installations") as string[];
+    const equipementIds = formData.getAll("installations") as string[];
 
     if (!client_id || !site_id) return;
-    if (type_rapport === "maintenance" && installationIds.length === 0) return;
+    if (type_rapport === "maintenance" && equipementIds.length === 0) return;
 
     let numero: string;
     const dateStr = (date_intervention || new Date().toISOString().split("T")[0]).replace(/-/g, "");
@@ -100,10 +100,10 @@ export default async function NouveauRapportPage({
     }
 
     if (type_rapport === "maintenance") {
-      // Créer les contrôles (un par porte sélectionnée)
-      const controles = installationIds.map((installation_id, index) => ({
+      // Créer les contrôles (un par équipement sélectionné)
+      const controles = equipementIds.map((equipement_id, index) => ({
         rapport_id: rapport.id,
-        installation_id,
+        equipement_id,
         page_number: index + 1,
         points_controle: DEFAULT_POINTS_CONTROLE,
         points_erp: DEFAULT_POINTS_ERP,

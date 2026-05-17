@@ -27,7 +27,7 @@ interface ControleData {
   note_supplementaire?: string;
   nombre_cycles?: number | null;
   heures_fonctionnement?: number | null;
-  installation: {
+  equipement: {
     id: string;
     repere: string;
     type_porte: string;
@@ -72,7 +72,7 @@ export function ChecklistClient({
   const current = allControles[currentIndex];
   const total = allControles.length;
 
-  const currentContext = `controle:${current.installation.id}`;
+  const currentContext = `controle:${current.equipement.id}`;
   const currentPhotos = photos.filter((p) => p.context === currentContext);
 
   function handlePhotosChange(updatedContextPhotos: PhotoItem[]) {
@@ -198,10 +198,10 @@ export function ChecklistClient({
             </h2>
           </div>
           <div className="text-right">
-            <p className="text-sm font-semibold">🚪 {current.installation.repere}</p>
+            <p className="text-sm font-semibold">🚪 {current.equipement.repere}</p>
             <p className="text-xs text-muted">
-              {current.installation.type_porte}
-              {current.installation.modele ? ` · ${current.installation.modele}` : ""}
+              {current.equipement.type_porte}
+              {current.equipement.modele ? ` · ${current.equipement.modele}` : ""}
             </p>
           </div>
         </div>

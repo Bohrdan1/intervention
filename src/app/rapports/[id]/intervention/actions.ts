@@ -7,7 +7,7 @@ import { incrementerUsages } from "@/lib/actions/catalogue";
 
 export async function saveIntervention(
   rapportId: string,
-  installation_id: string | null,
+  equipement_id: string | null,
   description_probleme: string,
   diagnostic: string,
   travaux_effectues: string,
@@ -18,7 +18,7 @@ export async function saveIntervention(
   const supabase = await createClient();
 
   const updateData: Record<string, string | null | PieceUtilisee[] | PhotoItem[]> = {
-    installation_id,
+    equipement_id,
     description_probleme,
     diagnostic,
     travaux_effectues,

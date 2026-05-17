@@ -49,17 +49,25 @@ export interface Site {
   updated_at: string;
 }
 
-export interface Installation {
+export interface Equipement {
   id: string;
   site_id: string;
   repere: string;
   type_porte: string;
   modele: string | null;
+  marque: string | null;
+  numero_serie: string | null;
+  annee_installation: number | null;
+  date_mise_en_service: string | null;
   avec_batterie: boolean;
   commentaire: string | null;
+  notes_techniques: string | null;
   created_at: string;
   updated_at: string;
 }
+
+/** @deprecated Utiliser Equipement */
+export type Installation = Equipement;
 
 export type EtatControle = 'ok' | 'correction' | 'prevention' | 'na';
 
@@ -84,7 +92,9 @@ export interface ConstatItem {
 export interface Controle {
   id: string;
   rapport_id: string;
-  installation_id: string;
+  equipement_id: string;
+  /** @deprecated Renommé en equipement_id — conservé pour compatibilité PDF */
+  installation_id?: string | null;
   page_number: number;
   points_controle: PointControle[];
   points_erp: PointERP[];
@@ -234,7 +244,8 @@ export interface Rapport {
   // Photos
   photos: PhotoItem[];
   // Champs intervention
-  installation_id: string | null;
+  equipement_id: string | null;
+  dossier_id: string | null;
   demande_client: string | null;
   description_probleme: string | null;
   diagnostic: string | null;
@@ -258,12 +269,79 @@ export interface Rapport {
   updated_at: string;
 }
 
+// ── Dossier, RDV, Facture, Règlement ──
+
+export interface Dossier {
+  id: string;
+  reference: string;
+  client_id: string;
+  site_id: string | null;
+  type_dossier: 'maintenance' | 'installation' | 'remplacement' | 'intervention' | 'autre';
+  statut: 'ouvert' | 'en_cours' | 'clos';
+  titre: string | null;
+  description: string | null;
+  date_ouverture: string;
+  date_cloture: string | null;
+  montant_total_ht: number | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Rdv {
+  id: string;
+  dossier_id: string | null;
+  client_id: string;
+  site_id: string | null;
+  type_rdv: string;
+  date_rdv: string;
+  duree_minutes: number | null;
+  statut: 'planifie' | 'confirme' | 'realise' | 'annule';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Facture {
+  id: string;
+  numero: string;
+  dossier_id: string | null;
+  client_id: string;
+  date_facture: string;
+  date_echeance: string | null;
+  statut: 'brouillon' | 'envoyee' | 'partiellement_payee' | 'payee' | 'annulee';
+  montant_ht: number;
+  taux_tva: number;
+  lignes: LigneDevis[];
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Reglement {
+  id: string;
+  facture_id: string;
+  date_reglement: string;
+  montant: number;
+  mode_paiement: 'virement' | 'cheque' | 'especes' | 'autre';
+  reference: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Types enrichis (avec jointures)
 export interface RapportComplet extends Rapport {
   client: Client;
   site: Site;
-  installation?: Installation | null;
-  controles: (Controle & { installation: Installation })[];
+  equipement?: Equipement | null;
+  /** @deprecated alias pour le PDF — utiliser equipement */
+  installation?: Equipement | null;
+  controles: (Controle & {
+    equipement: Equipement;
+    /** @deprecated alias pour le PDF — utiliser equipement */
+    installation: Equipement;
+  })[];
 }
 
 // Coordonnées société (constantes)

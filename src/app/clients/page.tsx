@@ -22,7 +22,7 @@ export default async function ClientsPage({
       *,
       sites(
         *,
-        installations(*)
+        equipements(*)
       )
     `)
     .order("nom");
@@ -63,7 +63,7 @@ export default async function ClientsPage({
     const type_porte = formData.get("type_porte") as string;
     const modele = formData.get("modele") as string;
     if (!repere?.trim() || !site_id) return;
-    await supabase.from("installations").insert({
+    await supabase.from("equipements").insert({
       site_id,
       repere: repere.trim(),
       type_porte: type_porte?.trim() || "coulissante deux vantaux",
@@ -152,7 +152,7 @@ export default async function ClientsPage({
     "use server";
     const supabase = await createClient();
     const id = formData.get("id") as string;
-    await supabase.from("installations").delete().eq("id", id);
+    await supabase.from("equipements").delete().eq("id", id);
     revalidatePath("/clients");
   }
 
@@ -175,7 +175,7 @@ export default async function ClientsPage({
     if (commentaire !== null) {
       updates.commentaire = commentaire.trim() || null;
     }
-    await supabase.from("installations").update(updates).eq("id", id);
+    await supabase.from("equipements").update(updates).eq("id", id);
     revalidatePath("/clients");
   }
 
@@ -185,7 +185,7 @@ export default async function ClientsPage({
     const client_id = formData.get("client_id") as string;
     const site_id = formData.get("site_id") as string;
     const type_rapport = formData.get("type_rapport") as string;
-    const installation_id = formData.get("installation_id") as string | null;
+    const equipement_id = formData.get("equipement_id") as string | null;
     if (!client_id || !site_id) return;
 
     const dateStr = new Date().toISOString().split("T")[0];
@@ -235,7 +235,7 @@ export default async function ClientsPage({
         client_id,
         site_id,
         constat_general: type_rapport === "maintenance" ? DEFAULT_CONSTAT : [],
-        ...(installation_id ? { installation_id } : {}),
+        ...(equipement_id ? { equipement_id } : {}),
       })
       .select()
       .single();
@@ -243,16 +243,16 @@ export default async function ClientsPage({
     if (error || !rapport) return;
 
     if (type_rapport === "maintenance") {
-      // Récupérer toutes les portes du site
-      const { data: installations } = await supabase
-        .from("installations")
+      // Récupérer tous les équipements du site
+      const { data: equipements } = await supabase
+        .from("equipements")
         .select("id")
         .eq("site_id", site_id);
 
-      if (installations && installations.length > 0) {
-        const controles = installations.map((inst, index) => ({
+      if (equipements && equipements.length > 0) {
+        const controles = equipements.map((eq, index) => ({
           rapport_id: rapport.id,
-          installation_id: inst.id,
+          equipement_id: eq.id,
           page_number: index + 1,
           points_controle: DEFAULT_POINTS_CONTROLE,
           points_erp: DEFAULT_POINTS_ERP,
@@ -319,7 +319,7 @@ export default async function ClientsPage({
 
               {/* Sites */}
               <div className="p-4 space-y-3">
-                {client.sites?.map((site: { id: string; nom: string; adresse?: string | null; contact_nom?: string | null; contact_telephone?: string | null; contact_mail?: string | null; memo_prive?: string | null; installations?: { id: string; repere: string; type_porte: string; modele: string | null }[] }) => (
+                {client.sites?.map((site: { id: string; nom: string; adresse?: string | null; contact_nom?: string | null; contact_telephone?: string | null; contact_mail?: string | null; memo_prive?: string | null; equipements?: { id: string; repere: string; type_porte: string; modele: string | null }[] }) => (
                   <SiteEditItem
                     key={site.id}
                     site={site}
@@ -353,7 +353,7 @@ export default async function ClientsPage({
                     }
                   >
                     {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                    {site.installations?.map((inst: any) => (
+                    {site.equipements?.map((inst: any) => (
                       <InstallationEditItem
                         key={inst.id}
                         inst={inst}

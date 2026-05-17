@@ -19,7 +19,7 @@ export default async function ControlePage({
       site:sites(*),
       controles(
         *,
-        installation:installations(*)
+        equipement:equipements(*)
       )
     `)
     .eq("id", id)
