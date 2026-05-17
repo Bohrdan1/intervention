@@ -13,7 +13,6 @@ export function NavBar() {
     { href: "/agenda", label: "Agenda" },
     { href: "/rapports", label: "Rapports" },
     { href: "/clients", label: "Clients" },
-    { href: "/prospects", label: "Prospects" },
     { href: "/finances", label: "Finances" },
   ];
 

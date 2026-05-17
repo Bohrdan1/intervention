@@ -9,6 +9,8 @@ export interface PhotoItem {
   created_at: string;
 }
 
+export type ClientType = 'prospect' | 'actif' | 'inactif';
+
 export interface Client {
   id: string;
   nom: string;
@@ -26,6 +28,8 @@ export interface Client {
   site_web: string | null;
   notes_internes: string | null;
   type_client: 'professionnel' | 'particulier';
+  /** Statut du cycle de vie : prospect → actif → inactif */
+  type: ClientType;
   created_at: string;
   updated_at: string;
 }

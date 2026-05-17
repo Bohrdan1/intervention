@@ -7,7 +7,7 @@ import { createDossier } from "@/app/actions/dossiers";
 // ── Types ──────────────────────────────────────────────────────────────────
 
 type SiteOption = { id: string; nom: string };
-type ClientOption = { id: string; nom: string; sites: SiteOption[] };
+type ClientOption = { id: string; nom: string; type?: string; sites: SiteOption[] };
 
 type Props = {
   clients: ClientOption[];
@@ -193,20 +193,30 @@ export function NouveauDossierForm({ clients }: Props) {
           Client <span className="text-red-500">*</span>
         </label>
 
-        <select
-          id="client_select"
-          value={selectedClientId}
-          onChange={(e) => handleClientChange(e.target.value)}
-          className={selectCls}
-        >
-          <option value="">Sélectionner un client…</option>
-          {clients.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nom}
-            </option>
-          ))}
-          <option value={NOUVEAU_CLIENT}>＋ Nouveau client</option>
-        </select>
+        <div className="relative">
+          <select
+            id="client_select"
+            value={selectedClientId}
+            onChange={(e) => handleClientChange(e.target.value)}
+            className={selectCls}
+          >
+            <option value="">Sélectionner un client…</option>
+            {clients.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nom}{c.type === "prospect" ? " 〔Prospect〕" : ""}
+              </option>
+            ))}
+            <option value={NOUVEAU_CLIENT}>＋ Nouveau client</option>
+          </select>
+        </div>
+
+        {/* Badge prospect si le client sélectionné est un prospect */}
+        {selectedClient?.type === "prospect" && (
+          <p className="flex items-center gap-1.5 rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-medium text-orange-700">
+            <span>⚠️</span>
+            Ce client est un prospect — pensez à le passer en &ldquo;Actif&rdquo; une fois le dossier confirmé.
+          </p>
+        )}
 
         {/* Champ inline nouveau client */}
         {isNouveauClient && (

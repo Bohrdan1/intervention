@@ -17,6 +17,7 @@ export async function updateClientFromDetail(formData: FormData) {
       nom,
       denomination_legale: (formData.get("denomination_legale") as string)?.trim() || null,
       type_client: (formData.get("type_client") as string) || "professionnel",
+      type: (formData.get("type") as string) || "actif",
       ridet: (formData.get("ridet") as string)?.trim() || null,
       adresse_facturation: (formData.get("adresse_facturation") as string)?.trim() || null,
       telephone: (formData.get("telephone") as string)?.trim() || null,

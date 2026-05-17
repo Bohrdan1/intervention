@@ -130,11 +130,19 @@ export function ClientDetailClient({
                 className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none" />
               <input name="denomination_legale" defaultValue={client.denomination_legale ?? ""} placeholder="Dénomination légale"
                 className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none" />
-              <select name="type_client" defaultValue={client.type_client ?? "professionnel"}
-                className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none bg-white">
-                <option value="professionnel">Professionnel</option>
-                <option value="particulier">Particulier</option>
-              </select>
+              <div className="grid grid-cols-2 gap-2">
+                <select name="type_client" defaultValue={client.type_client ?? "professionnel"}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none bg-white">
+                  <option value="professionnel">Professionnel</option>
+                  <option value="particulier">Particulier</option>
+                </select>
+                <select name="type" defaultValue={client.type ?? "actif"}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none bg-white">
+                  <option value="actif">Actif</option>
+                  <option value="prospect">Prospect</option>
+                  <option value="inactif">Inactif</option>
+                </select>
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <input name="ridet" defaultValue={client.ridet ?? ""} placeholder="RIDET"
                   className="rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none" />
@@ -208,6 +216,13 @@ export function ClientDetailClient({
                   client.type_client === "particulier" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
                 }`}>
                   {client.type_client === "particulier" ? "Particulier" : "Professionnel"}
+                </span>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                  client.type === "prospect" ? "bg-orange-100 text-orange-700"
+                  : client.type === "inactif" ? "bg-gray-100 text-gray-500"
+                  : "bg-green-100 text-green-700"
+                }`}>
+                  {client.type === "prospect" ? "Prospect" : client.type === "inactif" ? "Inactif" : "Actif"}
                 </span>
                 {client.ridet && <span className="text-xs text-muted">RIDET {client.ridet}</span>}
               </div>

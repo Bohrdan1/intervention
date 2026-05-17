@@ -5,7 +5,7 @@ import { NouveauDossierForm } from "@/components/dossiers/NouveauDossierForm";
 // ── Types ──────────────────────────────────────────────────────────────────
 
 type SiteRow = { id: string; nom: string };
-type ClientRow = { id: string; nom: string; sites: SiteRow[] };
+type ClientRow = { id: string; nom: string; type?: string; sites: SiteRow[] };
 
 // ── Page ───────────────────────────────────────────────────────────────────
 
@@ -14,7 +14,7 @@ export default async function NouveauDossierPage() {
 
   const { data: rawClients } = await supabase
     .from("clients")
-    .select("id, nom, sites(id, nom)")
+    .select("id, nom, type, sites(id, nom)")
     .order("nom");
 
   // Normalise la jointure sites (reverse FK → toujours un tableau)
@@ -22,11 +22,13 @@ export default async function NouveauDossierPage() {
     const raw = c as unknown as {
       id: string;
       nom: string;
+      type?: string;
       sites: SiteRow[] | null;
     };
     return {
       id: raw.id,
       nom: raw.nom,
+      type: raw.type,
       sites: Array.isArray(raw.sites) ? raw.sites : [],
     };
   });

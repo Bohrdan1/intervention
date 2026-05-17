@@ -2,18 +2,25 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ClientSearch } from "./client-search";
+import { ClientTypeFilter } from "./client-type-filter";
 import { TypePorteSelect } from "./type-porte-select";
 import { InstallationEditItem } from "./installation-edit-item";
 import { SiteEditItem } from "./site-edit-item";
 import { ClientEditHeader } from "./client-edit-header";
 import { DEFAULT_POINTS_CONTROLE, DEFAULT_POINTS_ERP, DEFAULT_CONSTAT, type Installation } from "@/lib/types";
 
+const TYPE_BADGE: Record<string, { label: string; cls: string }> = {
+  prospect: { label: "Prospect", cls: "bg-orange-100 text-orange-700" },
+  actif:    { label: "Actif",    cls: "bg-green-100 text-green-700" },
+  inactif:  { label: "Inactif",  cls: "bg-gray-100 text-gray-500" },
+};
+
 export default async function ClientsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; type?: string }>;
 }) {
-  const { q } = await searchParams;
+  const { q, type: typeFilter } = await searchParams;
   const supabase = await createClient();
 
   let query = supabase
@@ -29,6 +36,10 @@ export default async function ClientsPage({
 
   if (q?.trim()) {
     query = query.ilike("nom", `%${q.trim()}%`);
+  }
+
+  if (typeFilter && typeFilter !== "tous") {
+    query = query.eq("type", typeFilter);
   }
 
   const { data: clients } = await query;
@@ -274,8 +285,9 @@ export default async function ClientsPage({
         <p className="text-sm text-muted">Gérez vos clients, sites et installations</p>
       </div>
 
-      {/* Recherche */}
+      {/* Recherche + filtre type */}
       <ClientSearch initialQuery={q || ""} />
+      <ClientTypeFilter activeType={typeFilter ?? ""} />
 
       {/* Formulaire ajout client */}
       <form action={ajouterClient} className="mb-8 rounded-xl border border-border bg-white p-4 shadow-sm">
@@ -308,8 +320,16 @@ export default async function ClientsPage({
         </p>
       ) : (
         <div className="space-y-4">
-          {clients.map((client) => (
+          {clients.map((client) => {
+            const badge = TYPE_BADGE[client.type as string] ?? TYPE_BADGE.actif;
+            return (
             <div key={client.id} className="rounded-xl border border-border bg-white shadow-sm">
+              {/* Badge type */}
+              <div className="flex justify-end px-4 pt-2">
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.cls}`}>
+                  {badge.label}
+                </span>
+              </div>
               {/* Client header */}
               <ClientEditHeader
                 client={client}
@@ -385,7 +405,8 @@ export default async function ClientsPage({
                 </form>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       )}
     </div>
