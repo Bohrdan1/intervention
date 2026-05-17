@@ -68,9 +68,14 @@ function normaliseRdv(raw: RawRdv): RdvWithDossier {
 export default async function AgendaPage() {
   const supabase = await createClient();
 
-  const maintenant = new Date().toISOString();
+  // Début de la journée en heure Nouméa (UTC+11, pas de DST)
+  const NC_OFFSET_MS = 11 * 60 * 60 * 1000;
+  const nowNC = new Date(Date.now() + NC_OFFSET_MS);
+  const debutJourNC = new Date(
+    Date.UTC(nowNC.getUTCFullYear(), nowNC.getUTCMonth(), nowNC.getUTCDate()) - NC_OFFSET_MS
+  ).toISOString();
 
-  // RDV à venir (non annulés)
+  // RDV d'aujourd'hui et à venir (non annulés)
   const { data: rawRdvs } = await supabase
     .from("rdvs")
     .select(`
@@ -88,7 +93,7 @@ export default async function AgendaPage() {
         site:sites(nom)
       )
     `)
-    .gte("date_rdv", maintenant)
+    .gte("date_rdv", debutJourNC)
     .neq("statut", "annule")
     .order("date_rdv");
 
