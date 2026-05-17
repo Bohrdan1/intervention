@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Pagination } from "@/components/ui/pagination";
 import { TYPE_RAPPORT_CONFIG, type TypeRapport } from "@/lib/types";
 
@@ -36,6 +37,7 @@ export function RapportList({
   activeStatut,
   showArchived = false,
 }: RapportListProps) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -67,12 +69,12 @@ export function RapportList({
     const sp = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => { if (v) sp.set(k, v); });
     const qs = sp.toString();
-    return qs ? `/?${qs}` : "/";
+    return qs ? `/rapports?${qs}` : "/rapports";
   }
 
   // Boutons de filtre rapide dans la liste (changement de statut, archives)
   const quickFilters: { label: string; href: string; active: boolean }[] = [
-    { label: "Tous", href: activeType ? `/?type=${activeType}` : "/", active: !activeStatut && !showArchived },
+    { label: "Tous", href: activeType ? `/rapports?type=${activeType}` : "/rapports", active: !activeStatut && !showArchived },
     { label: "Brouillons", href: buildUrl({ type: activeType, statut: "brouillon" }), active: activeStatut === "brouillon" },
     { label: "Finalisés", href: buildUrl({ type: activeType, statut: "finalise" }), active: activeStatut === "finalise" },
     { label: "📦 Archivés", href: buildUrl({ type: activeType, archive: "1" }), active: showArchived },
@@ -128,7 +130,7 @@ export function RapportList({
         <div className="rounded-xl border-2 border-dashed border-border bg-white p-8 text-center">
           <p className="text-sm text-muted">Aucun rapport trouvé.</p>
           {(activeType || activeStatut || showArchived) && (
-            <Link href="/" className="mt-3 inline-block text-xs text-primary hover:underline">
+            <Link href="/rapports" className="mt-3 inline-block text-xs text-primary hover:underline">
               Effacer les filtres
             </Link>
           )}
@@ -148,16 +150,11 @@ export function RapportList({
               return (
                 <div
                   key={rapport.id}
-                  className={`relative rounded-xl border bg-white shadow-sm hover:shadow-md hover:border-primary-light transition-all ${
+                  className={`rounded-xl border bg-white shadow-sm hover:shadow-md hover:border-primary-light transition-all cursor-pointer ${
                     rapport.archived_at ? "opacity-60" : "border-border"
                   }`}
+                  onClick={() => router.push(`/rapports/${rapport.id}`)}
                 >
-                  {/* Lien principal couvrant toute la carte */}
-                  <Link
-                    href={`/rapports/${rapport.id}`}
-                    className="absolute inset-0 rounded-xl"
-                    aria-label={rapport.client?.nom || "Rapport"}
-                  />
                   {/* Contenu */}
                   <div className="flex items-center justify-between p-4">
                     <div className="min-w-0 flex-1">
@@ -183,7 +180,8 @@ export function RapportList({
                       {rapport.client ? (
                         <Link
                           href={`/clients/${rapport.client.id}`}
-                          className="relative z-10 font-semibold truncate hover:underline hover:text-primary"
+                          className="font-semibold truncate hover:underline hover:text-primary"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           {rapport.client.nom}
                         </Link>
@@ -197,13 +195,14 @@ export function RapportList({
                           : ""}
                       </p>
                     </div>
-                    <div className="ml-3 flex items-center gap-2 relative z-10">
+                    <div className="ml-3 flex items-center gap-2">
                       {rapport.type_rapport === "visite" && rapport.statut === "brouillon" && (
                         <Link
                           href={`/rapports/${rapport.id}/devis`}
                           className={`rounded-lg ${
                             typeConfig?.couleurBouton ?? "bg-teal-600 hover:bg-teal-700"
                           } px-3 py-1.5 text-xs font-semibold text-white transition-colors`}
+                          onClick={(e) => e.stopPropagation()}
                         >
                           Valider la visite
                         </Link>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -68,6 +69,7 @@ function formatDate(dateStr: string): string {
 // ── Component ──────────────────────────────────────────────────────────────
 
 export function DossierCard({ dossier }: { dossier: DossierRow }) {
+  const router = useRouter();
   const typeCfg =
     TYPE_CONFIG[dossier.type_dossier as KnownType] ??
     ({ label: dossier.type_dossier, badge: "bg-gray-100 text-gray-600" } as const);
@@ -79,13 +81,10 @@ export function DossierCard({ dossier }: { dossier: DossierRow }) {
   const nbRapports = dossier.rapports.length;
 
   return (
-    <div className="relative rounded-xl border border-border bg-white p-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all active:scale-[0.99]">
-      {/* Lien principal couvrant toute la carte */}
-      <Link
-        href={`/dossiers/${dossier.id}`}
-        className="absolute inset-0 rounded-xl"
-        aria-label={`Dossier ${dossier.reference}`}
-      />
+    <div
+      className="rounded-xl border border-border bg-white p-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all active:scale-[0.99] cursor-pointer"
+      onClick={() => router.push(`/dossiers/${dossier.id}`)}
+    >
 
       {/* Badges + référence */}
       <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
@@ -112,7 +111,8 @@ export function DossierCard({ dossier }: { dossier: DossierRow }) {
         {dossier.client ? (
           <Link
             href={`/clients/${dossier.client.id}`}
-            className="relative z-10 font-medium text-primary hover:underline"
+            className="font-medium text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
           >
             {dossier.client.nom}
           </Link>
