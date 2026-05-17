@@ -129,6 +129,10 @@ export default function PhotoUpload({
     onPhotosChange(photos.filter((p) => p.id !== photo.id));
   };
 
+  const handleLabelChange = (photoId: string, label: string) => {
+    onPhotosChange(photos.map((p) => (p.id === photoId ? { ...p, label } : p)));
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -167,26 +171,39 @@ export default function PhotoUpload({
         )}
       </div>
 
-      {/* Thumbnails */}
+      {/* Thumbnails + légendes */}
       {photos.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="grid grid-cols-3 gap-3">
           {photos.map((photo) => (
-            <div key={photo.id} className="group relative flex-shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={photo.url}
-                alt={photo.label || 'Photo'}
-                className="h-20 w-20 cursor-pointer rounded-lg object-cover"
-                onClick={() => setPreviewUrl(photo.url)}
-                loading="lazy"
+            <div key={photo.id} className="group flex flex-col">
+              {/* Vignette */}
+              <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={photo.url}
+                  alt={photo.label || 'Photo'}
+                  className="h-24 w-full cursor-pointer rounded-lg object-cover"
+                  onClick={() => setPreviewUrl(photo.url)}
+                  loading="lazy"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleDelete(photo)}
+                  className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs text-white opacity-70 transition-opacity hover:opacity-100"
+                >
+                  ✕
+                </button>
+              </div>
+              {/* Champ légende */}
+              <input
+                type="text"
+                maxLength={150}
+                placeholder="Légende..."
+                value={photo.label}
+                onChange={(e) => handleLabelChange(photo.id, e.target.value)}
+                className="mt-1.5 w-full rounded-md border border-border bg-white px-2 py-2 placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary"
+                style={{ fontSize: '16px', lineHeight: '1.2' }}
               />
-              <button
-                type="button"
-                onClick={() => handleDelete(photo)}
-                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
-              >
-                ✕
-              </button>
             </div>
           ))}
         </div>

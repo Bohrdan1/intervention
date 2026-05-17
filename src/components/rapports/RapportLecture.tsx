@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArchiveButton } from "@/app/rapports/[id]/archive-button";
@@ -61,6 +62,53 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted">{title}</h2>
       {children}
     </div>
+  );
+}
+
+function PhotoGrid({ photos }: { photos: PhotoItem[] }) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  if (photos.length === 0) return null;
+  return (
+    <>
+      <div className="grid grid-cols-3 gap-2">
+        {photos.map((photo) => (
+          <div key={photo.id}>
+            <Image
+              src={photo.url}
+              alt={photo.label || "Photo"}
+              width={160}
+              height={96}
+              className="h-24 w-full cursor-pointer rounded-lg object-cover"
+              onClick={() => setPreviewUrl(photo.url)}
+              unoptimized
+            />
+            {photo.label && (
+              <p className="mt-1 text-center text-xs text-muted leading-tight">{photo.label}</p>
+            )}
+          </div>
+        ))}
+      </div>
+      {previewUrl && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setPreviewUrl(null)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={previewUrl}
+            alt="Aperçu"
+            className="max-h-[90vh] max-w-full rounded-lg object-contain"
+          />
+          <button
+            type="button"
+            className="absolute right-4 top-4 rounded-full bg-white/20 p-2 text-white text-xl"
+            onClick={() => setPreviewUrl(null)}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -172,18 +220,8 @@ function ControleCard({ controle, photos }: { controle: ControleRow; photos: Pho
 
       {/* Photos */}
       {controlePhotos.length > 0 && (
-        <div className="mt-3 grid grid-cols-4 gap-1.5">
-          {controlePhotos.map((photo) => (
-            <Image
-              key={photo.id}
-              src={photo.url}
-              alt={photo.label || "Photo"}
-              width={160}
-              height={64}
-              className="h-16 w-full rounded-lg object-cover"
-              unoptimized
-            />
-          ))}
+        <div className="mt-3">
+          <PhotoGrid photos={controlePhotos} />
         </div>
       )}
     </div>
@@ -442,6 +480,19 @@ export function RapportLecture({ rapport, currentDossier, dossierChoix, onModifi
           ))}
         </div>
       )}
+
+      {/* Photos générales (intervention / visite) */}
+      {(() => {
+        const generalPhotos = photos.filter((p) => !p.context.startsWith("controle:"));
+        if (generalPhotos.length === 0) return null;
+        return (
+          <div className="mb-6">
+            <Section title={`Photos (${generalPhotos.length})`}>
+              <PhotoGrid photos={generalPhotos} />
+            </Section>
+          </div>
+        );
+      })()}
 
       {/* Signature */}
       {rapport.signature_client && (
