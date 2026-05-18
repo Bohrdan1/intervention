@@ -35,15 +35,32 @@ interface ControleData {
   };
 }
 
-const BBG_OPTIONS = [
-  { value: "déverrouillage et ouverture", label: "Déverr. + Ouverture", color: "border-green-300 text-green-700", activeColor: "bg-green-100 border-green-500 text-green-800 font-semibold" },
-  { value: "ouverture", label: "Ouverture", color: "border-blue-300 text-blue-700", activeColor: "bg-blue-100 border-blue-500 text-blue-800 font-semibold" },
-  { value: "non fonctionnel", label: "Non fonctionnel", color: "border-red-300 text-red-600", activeColor: "bg-red-100 border-red-500 text-red-800 font-semibold" },
+// ── Options spéciales ─────────────────────────────────────────────────────
+
+// Verrouillage — niveau 1 (stocké dans observation)
+const VERROUILLAGE_OPTIONS = [
+  { value: "sans verrouillage", label: "Sans verrouillage", color: "border-gray-300 text-gray-500", activeColor: "bg-gray-100 border-gray-500 text-gray-700 font-semibold" },
+  { value: "bistable",          label: "Bistable",          color: "border-blue-300 text-blue-700", activeColor: "bg-blue-100 border-blue-500 text-blue-800 font-semibold" },
+  { value: "monostable",        label: "Monostable",        color: "border-violet-300 text-violet-700", activeColor: "bg-violet-100 border-violet-500 text-violet-800 font-semibold" },
 ];
 
-const SSI_OPTIONS = [
-  { value: "raccordé", label: "Raccordé", color: "border-green-300 text-green-700", activeColor: "bg-green-100 border-green-500 text-green-800 font-semibold" },
-  { value: "non raccordé", label: "Non raccordé", color: "border-red-300 text-red-600", activeColor: "bg-red-100 border-red-500 text-red-800 font-semibold" },
+// Manœuvre de secours — sous-point inline (stocké dans etat)
+const MANOUVRE_OPTIONS: { value: EtatControle; label: string; color: string; activeColor: string }[] = [
+  { value: "ok",         label: "Présente — fonctionnelle", color: "border-green-300 text-green-700", activeColor: "bg-green-100 border-green-500 text-green-800 font-semibold" },
+  { value: "correction", label: "Absente / défaillante",    color: "border-red-300 text-red-600",   activeColor: "bg-red-100 border-red-500 text-red-800 font-semibold" },
+];
+
+// Boîtier d'ouverture d'urgence (stocké dans commentaire)
+const BOE_OPTIONS = [
+  { value: "déverrouillage", label: "Déverrouillage", color: "border-green-300 text-green-700", activeColor: "bg-green-100 border-green-500 text-green-800 font-semibold" },
+  { value: "ouverture",      label: "Ouverture",      color: "border-blue-300 text-blue-700",   activeColor: "bg-blue-100 border-blue-500 text-blue-800 font-semibold" },
+  { value: "absent",         label: "Absent",         color: "border-red-300 text-red-600",     activeColor: "bg-red-100 border-red-500 text-red-800 font-semibold" },
+];
+
+// SSI / DAS affiché dans la section ERP (stocké dans etat du PointControle correspondant)
+const SSI_ERP_OPTIONS: { value: EtatControle; label: string; color: string; activeColor: string }[] = [
+  { value: "ok", label: "Raccordé",     color: "border-green-300 text-green-700", activeColor: "bg-green-100 border-green-500 text-green-800 font-semibold" },
+  { value: "na", label: "Non raccordé", color: "border-gray-300 text-gray-500",   activeColor: "bg-gray-100 border-gray-500 text-gray-700 font-semibold" },
 ];
 
 export function ChecklistClient({
@@ -180,10 +197,10 @@ export function ChecklistClient({
   }
 
   const etatOptions: { value: EtatControle; label: string; color: string; activeColor: string }[] = [
-    { value: "ok", label: "✔ OK", color: "border-green-300 text-green-700", activeColor: "bg-green-100 border-green-500 text-green-800 font-semibold" },
-    { value: "correction", label: "Correction", color: "border-red-300 text-red-600", activeColor: "bg-red-100 border-red-500 text-red-800 font-semibold" },
-    { value: "prevention", label: "Prévention", color: "border-orange-300 text-orange-600", activeColor: "bg-orange-100 border-orange-500 text-orange-800 font-semibold" },
-    { value: "na", label: "— N/A", color: "border-gray-300 text-gray-500", activeColor: "bg-gray-100 border-gray-500 text-gray-700 font-semibold" },
+    { value: "ok",         label: "✔ OK",       color: "border-green-300 text-green-700",   activeColor: "bg-green-100 border-green-500 text-green-800 font-semibold" },
+    { value: "correction", label: "Correction",  color: "border-red-300 text-red-600",      activeColor: "bg-red-100 border-red-500 text-red-800 font-semibold" },
+    { value: "prevention", label: "Prévention",  color: "border-orange-300 text-orange-600", activeColor: "bg-orange-100 border-orange-500 text-orange-800 font-semibold" },
+    { value: "na",         label: "— N/A",       color: "border-gray-300 text-gray-500",    activeColor: "bg-gray-100 border-gray-500 text-gray-700 font-semibold" },
   ];
 
   return (
@@ -240,22 +257,28 @@ export function ChecklistClient({
           Points de contrôle
         </h3>
         {current.points_controle.map((point, i) => {
-          const isBBG = point.nom.startsWith("boitier vert");
-          const isSSI = point.nom.startsWith("SSI");
-          const isSpecial = isBBG || isSSI;
-          const specialOptions = isBBG ? BBG_OPTIONS : isSSI ? SSI_OPTIONS : [];
-          return (
-            <div key={i} className="rounded-xl border border-border bg-white p-3 shadow-sm">
-              <p className="text-sm font-medium mb-2">{point.nom}</p>
+          // ③ Ne pas afficher "boitier vert (BBG)"
+          if (point.nom === "boitier vert (BBG)") return null;
+          // ⑤ Ne pas afficher "SSI / DAS" ici (affiché dans la section ERP)
+          if (point.nom === "SSI / DAS") return null;
 
-              {isSpecial ? (
-                /* Rendu spécial BBG / SSI : boutons radio observation */
+          // ② Rendu spécial "verrouillage"
+          if (point.nom === "verrouillage") {
+            return (
+              <div key={i} className="rounded-xl border border-border bg-white p-3 shadow-sm">
+                <p className="text-sm font-medium mb-2">{point.nom}</p>
+                {/* Niveau 1 : type de verrouillage (stocké dans observation) */}
                 <div className="flex gap-1.5">
-                  {specialOptions.map((opt) => (
+                  {VERROUILLAGE_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
                       type="button"
-                      onClick={() => updatePointControle(i, "observation", opt.value)}
+                      onClick={() => {
+                        updatePointControle(i, "observation", opt.value);
+                        if (opt.value === "sans verrouillage") {
+                          updatePointControle(i, "etat", "na");
+                        }
+                      }}
                       className={`flex-1 rounded-lg border py-2 text-xs transition-all ${
                         point.observation === opt.value ? opt.activeColor : opt.color
                       }`}
@@ -264,33 +287,57 @@ export function ChecklistClient({
                     </button>
                   ))}
                 </div>
-              ) : (
-                <>
-                  <div className="flex gap-1.5 mb-2">
-                    {etatOptions.map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => updatePointControle(i, "etat", opt.value)}
-                        className={`flex-1 rounded-lg border py-2 text-xs transition-all ${
-                          point.etat === opt.value ? opt.activeColor : opt.color
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
+                {/* Sous-point inline : manœuvre de secours (stocké dans etat) */}
+                {(point.observation === "bistable" || point.observation === "monostable") && (
+                  <div className="mt-3 border-t border-border pt-3">
+                    <p className="text-xs font-medium text-muted mb-1.5">Manœuvre de secours</p>
+                    <div className="flex gap-1.5">
+                      {MANOUVRE_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => updatePointControle(i, "etat", opt.value)}
+                          className={`flex-1 rounded-lg border py-2 text-xs transition-all ${
+                            point.etat === opt.value ? opt.activeColor : opt.color
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  {(point.etat !== "ok" && point.etat !== "na") || point.observation ? (
-                    <input
-                      type="text"
-                      placeholder="Observation..."
-                      value={point.observation}
-                      onChange={(e) => updatePointControle(i, "observation", e.target.value)}
-                      className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
-                    />
-                  ) : null}
-                </>
-              )}
+                )}
+              </div>
+            );
+          }
+
+          // Rendu standard
+          return (
+            <div key={i} className="rounded-xl border border-border bg-white p-3 shadow-sm">
+              <p className="text-sm font-medium mb-2">{point.nom}</p>
+              <div className="flex gap-1.5 mb-2">
+                {etatOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => updatePointControle(i, "etat", opt.value)}
+                    className={`flex-1 rounded-lg border py-2 text-xs transition-all ${
+                      point.etat === opt.value ? opt.activeColor : opt.color
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {(point.etat !== "ok" && point.etat !== "na") || point.observation ? (
+                <input
+                  type="text"
+                  placeholder="Observation..."
+                  value={point.observation}
+                  onChange={(e) => updatePointControle(i, "observation", e.target.value)}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                />
+              ) : null}
             </div>
           );
         })}
@@ -301,49 +348,104 @@ export function ChecklistClient({
         <h3 className="text-sm font-bold text-muted uppercase tracking-wide">
           Conformité ERP — CO48, EN16005
         </h3>
-        {current.points_erp.map((point, i) => (
-          <div
-            key={i}
-            className="rounded-xl border border-border bg-white p-3 shadow-sm"
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium flex-1">{point.nom}</p>
-              <div className="flex gap-2 ml-3">
-                <button
-                  type="button"
-                  onClick={() => updatePointERP(i, { conforme: true })}
-                  className={`rounded-lg border px-4 py-2 text-xs transition-all ${
-                    point.conforme
-                      ? "bg-green-100 border-green-500 text-green-800 font-semibold"
-                      : "border-green-300 text-green-600"
-                  }`}
-                >
-                  ✔ Conforme
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updatePointERP(i, { conforme: false })}
-                  className={`rounded-lg border px-4 py-2 text-xs transition-all ${
-                    !point.conforme
-                      ? "bg-red-100 border-red-500 text-red-800 font-semibold"
-                      : "border-red-300 text-red-600"
-                  }`}
-                >
-                  ✘ Non conforme
-                </button>
+        {current.points_erp.map((point, i) => {
+          // ① Ne pas afficher "manœuvre de secours verrouillage"
+          if (point.nom === "manœuvre de secours verrouillage") return null;
+
+          // ④ Rendu spécial "boitier d'ouverture d'urgence"
+          if (point.nom === "boitier d'ouverture d'urgence") {
+            return (
+              <div key={i} className="rounded-xl border border-border bg-white p-3 shadow-sm">
+                <p className="text-sm font-medium mb-2">{point.nom}</p>
+                <div className="flex gap-1.5">
+                  {BOE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => updatePointERP(i, { commentaire: opt.value })}
+                      className={`flex-1 rounded-lg border py-2 text-xs transition-all ${
+                        point.commentaire === opt.value ? opt.activeColor : opt.color
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          }
+
+          // Rendu ERP standard
+          return (
+            <div
+              key={i}
+              className="rounded-xl border border-border bg-white p-3 shadow-sm"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium flex-1">{point.nom}</p>
+                <div className="flex gap-2 ml-3">
+                  <button
+                    type="button"
+                    onClick={() => updatePointERP(i, { conforme: true })}
+                    className={`rounded-lg border px-4 py-2 text-xs transition-all ${
+                      point.conforme
+                        ? "bg-green-100 border-green-500 text-green-800 font-semibold"
+                        : "border-green-300 text-green-600"
+                    }`}
+                  >
+                    ✔ Conforme
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updatePointERP(i, { conforme: false })}
+                    className={`rounded-lg border px-4 py-2 text-xs transition-all ${
+                      !point.conforme
+                        ? "bg-red-100 border-red-500 text-red-800 font-semibold"
+                        : "border-red-300 text-red-600"
+                    }`}
+                  >
+                    ✘ Non conforme
+                  </button>
+                </div>
+              </div>
+              {!point.conforme && (
+                <input
+                  type="text"
+                  placeholder="Commentaire non-conformité..."
+                  value={point.commentaire ?? ""}
+                  onChange={(e) => updatePointERP(i, { commentaire: e.target.value })}
+                  className="mt-2 w-full rounded-lg border border-red-200 px-3 py-2 text-sm focus:border-red-400 focus:outline-none"
+                />
+              )}
+            </div>
+          );
+        })}
+
+        {/* ⑥ Point virtuel SSI / DAS — affiché ici si présent dans points_controle */}
+        {(() => {
+          const ssiIndex = current.points_controle.findIndex((p) => p.nom === "SSI / DAS");
+          if (ssiIndex === -1) return null;
+          const ssiPoint = current.points_controle[ssiIndex];
+          return (
+            <div className="rounded-xl border border-border bg-white p-3 shadow-sm">
+              <p className="text-sm font-medium mb-2">SSI / DAS</p>
+              <div className="flex gap-1.5">
+                {SSI_ERP_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => updatePointControle(ssiIndex, "etat", opt.value)}
+                    className={`flex-1 rounded-lg border py-2 text-xs transition-all ${
+                      ssiPoint.etat === opt.value ? opt.activeColor : opt.color
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
             </div>
-            {!point.conforme && (
-              <input
-                type="text"
-                placeholder="Commentaire non-conformité..."
-                value={point.commentaire ?? ""}
-                onChange={(e) => updatePointERP(i, { commentaire: e.target.value })}
-                className="mt-2 w-full rounded-lg border border-red-200 px-3 py-2 text-sm focus:border-red-400 focus:outline-none"
-              />
-            )}
-          </div>
-        ))}
+          );
+        })()}
       </div>
 
       {/* Compteurs porte */}
