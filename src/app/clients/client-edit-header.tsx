@@ -120,7 +120,12 @@ export function ClientEditHeader({ client, updateAction, deleteAction }: Props) 
       <div className="flex items-start justify-between">
         <div>
           <h3 className="font-bold">
-            {client.nom}
+            <Link
+              href={`/clients/${client.id}`}
+              className="hover:underline hover:text-primary"
+            >
+              {client.nom}
+            </Link>
             {client.prenom && <span className="font-normal text-sm ml-1.5">— {client.prenom}</span>}
           </h3>
           {client.sous_titre && (
@@ -136,13 +141,6 @@ export function ClientEditHeader({ client, updateAction, deleteAction }: Props) 
           )}
         </div>
         <div className="flex items-center gap-3">
-          <Link
-            href={`/clients/${client.id}`}
-            className="text-xs text-muted hover:text-foreground"
-            title="Fiche client"
-          >
-            📋
-          </Link>
           <button
             type="button"
             onClick={() => setEditing(true)}
