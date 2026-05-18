@@ -564,7 +564,9 @@ export function RapportLecture({ rapport, currentDossier, dossierChoix, onModifi
 
       {/* Photos générales (intervention / visite) */}
       {(() => {
-        const generalPhotos = photos.filter((p) => !p.context.startsWith("controle:"));
+        const generalPhotos = photos.filter(
+          (p) => !p.context.startsWith("controle:") && !p.context.startsWith("intervention:")
+        );
         if (generalPhotos.length === 0) return null;
         return (
           <div className="mb-6">
