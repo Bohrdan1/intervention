@@ -207,32 +207,23 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
     setSigModal(null);
   }
 
-  // ── Génération PDF ──
-  async function generatePdfBlob(): Promise<Blob> {
-    const rapportComplet: RapportComplet = {
-      ...rapport,
-      constat_general: constat,
-      signature_data: signatureData,
-      signature_client: signatureClient,
-    };
-
-    const { pdf } = await import("@react-pdf/renderer");
-    const { RapportPDF } = await import("@/lib/pdf/rapport-pdf");
-    return pdf(<RapportPDF rapport={rapportComplet} />).toBlob();
-  }
-
+  // ── Aperçu PDF ──
   async function handlePreview() {
-    setGenerating(true);
+    setSaving(true);
     try {
-      // Sauvegarde en brouillon uniquement — la finalisation se fait via "Valider"
-      await saveConstatDraft(rapport.id, constat, signatureData, signatureClient, nomSignataireClient);
-      const blob = await generatePdfBlob();
-      const url = URL.createObjectURL(blob);
-      setPreviewUrl(url);
+      await saveConstatDraft(
+        rapport.id,
+        constat,
+        signatureData,
+        signatureClient,
+        nomSignataireClient
+      );
+      setPreviewUrl(`/rapports/${rapport.id}/pdf`);
     } catch (error) {
-      console.error("Erreur PDF:", error);
-      toast("Erreur lors de la génération du PDF", "error");
+      console.error("Erreur preview:", error);
+      toast("Erreur lors de la sauvegarde", "error");
     } finally {
+      setSaving(false);
       setGenerating(false);
     }
   }
@@ -264,7 +255,6 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
   }
 
   function closePreview() {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
   }
 

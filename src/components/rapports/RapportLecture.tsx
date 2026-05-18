@@ -376,6 +376,7 @@ export function RapportLecture({ rapport, currentDossier, dossierChoix, onModifi
   const isIntervention = rapport.type_rapport === "intervention";
   const isVisite = rapport.type_rapport === "visite";
   const photos: PhotoItem[] = rapport.photos || [];
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
 
   const controles = [...(rapport.controles ?? [])].sort(
     (a, b) => a.page_number - b.page_number
@@ -390,6 +391,34 @@ export function RapportLecture({ rapport, currentDossier, dossierChoix, onModifi
 
   return (
     <div>
+      {/* Overlay aperçu PDF */}
+      {pdfPreviewOpen && (
+        <div className="fixed inset-0 z-[100] flex flex-col bg-black/80">
+          <div className="relative z-10 flex items-center justify-between px-4 py-3 bg-white border-b border-border">
+            <h2 className="text-sm font-bold">Aperçu du rapport</h2>
+            <div className="flex gap-2">
+              <a
+                href={`/rapports/${rapport.id}/pdf?download=1`}
+                className="rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white hover:bg-primary-light touch-manipulation"
+              >
+                📥 Télécharger
+              </a>
+              <button
+                onClick={() => setPdfPreviewOpen(false)}
+                className="rounded-lg border border-border px-4 py-3 text-sm font-semibold hover:bg-slate-50 touch-manipulation"
+              >
+                ✕ Fermer
+              </button>
+            </div>
+          </div>
+          <iframe
+            src={`/rapports/${rapport.id}/pdf`}
+            className="flex-1 w-full"
+            title="Aperçu PDF"
+          />
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <div className="mb-2 flex items-center gap-1.5 text-xs text-muted">
         <Link href="/rapports">Rapports</Link>
@@ -574,6 +603,14 @@ export function RapportLecture({ rapport, currentDossier, dossierChoix, onModifi
             className="w-full min-h-[44px] rounded-xl border border-border bg-white py-2.5 text-sm font-medium hover:bg-slate-50"
           >
             ✏️ Modifier
+          </button>
+        )}
+        {rapport.statut === "finalise" && (
+          <button
+            onClick={() => setPdfPreviewOpen(true)}
+            className="w-full min-h-[44px] rounded-xl border border-primary text-primary py-2.5 text-sm font-semibold hover:bg-primary/5"
+          >
+            👁 Aperçu PDF
           </button>
         )}
         {rapport.statut === "finalise" && (
