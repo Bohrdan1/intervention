@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { saveConstatDraft, validerRapport } from "./actions";
 import type { ConstatItem, RapportComplet } from "@/lib/types";
@@ -10,8 +10,8 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
   const router = useRouter();
   const { toast } = useToast();
   const [constat, setConstat] = useState<ConstatItem[]>(rapport.constat_general || []);
-  const [signatureData, setSignatureData] = useState<string | null>(rapport.signature_data);
-  const [signatureClient, setSignatureClient] = useState<string | null>(rapport.signature_client);
+  const [signatureData, setSignatureData] = useState<string | null>(rapport.signature_data ?? null);
+  const [signatureClient, setSignatureClient] = useState<string | null>(rapport.signature_client ?? null);
   const [nomSignataireClient, setNomSignataireClient] = useState<string>(rapport.nom_signataire_client ?? "");
   const [dateSignature, setDateSignature] = useState<string | null>(rapport.date_signature ?? null);
   const [generating, setGenerating] = useState(false);
@@ -29,6 +29,13 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
   const [sigModal, setSigModal] = useState<"tech" | "client" | null>(null);
   const canvasModalRef = useRef<HTMLCanvasElement>(null);
   const isDrawingModal = useRef(false);
+
+  // Synchronisation signatures si le rapport est rechargé après brouillon
+  useEffect(() => {
+    if (rapport.signature_data && !signatureData) setSignatureData(rapport.signature_data);
+    if (rapport.signature_client && !signatureClient) setSignatureClient(rapport.signature_client);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rapport.signature_data, rapport.signature_client]);
 
   // ── Constat handlers ──
   function updateConstat(index: number, field: keyof ConstatItem, value: string | boolean) {
@@ -192,7 +199,7 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
   function validateModalSignature() {
     const canvas = canvasModalRef.current;
     if (!canvas) return;
-    const dataUrl = canvas.toDataURL("image/png");
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.6);
 
     if (sigModal === "tech") {
       setSignatureData(dataUrl);
@@ -240,6 +247,7 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
         dateSignature
       );
       router.push(`/rapports/${rapport.id}`);
+      router.refresh();
     } catch (error) {
       console.error("Erreur validation:", error);
       toast("Erreur lors de la validation du rapport", "error");
@@ -358,8 +366,8 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
           <div className="flex-1 flex items-center justify-center px-4">
             <canvas
               ref={canvasModalRef}
-              width={600}
-              height={280}
+              width={400}
+              height={160}
               className="w-full max-h-[50vh] rounded-xl border-2 border-dashed border-primary bg-slate-50 touch-none cursor-crosshair"
               onMouseDown={startDrawingModal}
               onMouseMove={drawModal}
