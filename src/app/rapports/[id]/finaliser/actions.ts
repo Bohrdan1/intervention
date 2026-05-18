@@ -45,7 +45,7 @@ export async function validerRapport(
 ): Promise<void> {
   const supabase = await createClient();
 
-  await supabase
+  const { error } = await supabase
     .from("rapports")
     .update({
       constat_general,
@@ -56,6 +56,11 @@ export async function validerRapport(
       statut: "finalise",
     })
     .eq("id", rapportId);
+
+  if (error) {
+    console.error("Erreur validerRapport:", error);
+    throw new Error(`Finalisation impossible : ${error.message}`);
+  }
 
   revalidatePath("/");
   revalidatePath(`/rapports/${rapportId}`);
@@ -70,7 +75,7 @@ export async function saveConstatDraft(
 ) {
   const supabase = await createClient();
 
-  await supabase
+  const { error } = await supabase
     .from("rapports")
     .update({
       constat_general,
@@ -79,4 +84,9 @@ export async function saveConstatDraft(
       nom_signataire_client: nom_signataire_client ?? null,
     })
     .eq("id", rapportId);
+
+  if (error) {
+    console.error("Erreur saveConstatDraft:", error);
+    throw new Error(`Sauvegarde brouillon impossible : ${error.message}`);
+  }
 }
