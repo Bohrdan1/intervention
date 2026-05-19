@@ -16,7 +16,7 @@ type TypeFilter =
   | "intervention"
   | "autre";
 
-type StatutFilter = "all" | "ouvert" | "en_cours" | "en_attente";
+type StatutFilter = "all" | "ouvert" | "en_cours" | "en_attente" | "facture";
 
 const TYPE_LABELS: Record<TypeFilter, string> = {
   all:           "Tous",
@@ -35,6 +35,7 @@ const STATUT_LABELS: Record<StatutFilter, string> = {
   ouvert:     "Ouvert",
   en_cours:   "En cours",
   en_attente: "En attente",
+  facture:    "Facturé",
 };
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -110,7 +111,7 @@ export function DossierFilters({ dossiers }: { dossiers: DossierRow[] }) {
 
       {/* ── Filtres statut + toggle terminés ──────────────────────────── */}
       <div className="mb-4 flex items-center gap-2 flex-wrap">
-        {(["all", "ouvert", "en_cours", "en_attente"] as StatutFilter[]).map(
+        {(["all", "ouvert", "en_cours", "en_attente", "facture"] as StatutFilter[]).map(
           (s) => (
             <button
               key={s}

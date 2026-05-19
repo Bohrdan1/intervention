@@ -131,6 +131,7 @@ export default async function DossiersDashboard() {
   const nbUrgents = actifs.filter((d) => d.type_dossier === "urgent").length;
   const nbContrats = actifs.filter((d) => d.type_dossier === "contrat").length;
   const nbEnCours = actifs.filter((d) => d.statut === "en_cours").length;
+  const nbFactures = actifs.filter((d) => d.statut === "facture").length;
 
   return (
     <div>
@@ -243,6 +244,12 @@ export default async function DossiersDashboard() {
             <p className="text-2xl font-bold text-orange-700">{nbEnCours}</p>
             <p className="text-xs text-muted">En cours</p>
           </div>
+          {nbFactures > 0 && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <p className="text-2xl font-bold text-blue-700">{nbFactures}</p>
+              <p className="text-sm text-blue-600">Facturé{nbFactures > 1 ? "s" : ""}</p>
+            </div>
+          )}
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
             <p className="text-2xl font-bold text-red-700">{nbUrgents}</p>
             <p className="text-xs text-muted">Urgents</p>
