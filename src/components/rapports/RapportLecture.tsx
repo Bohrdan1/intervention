@@ -607,22 +607,18 @@ export function RapportLecture({ rapport, currentDossier, dossierChoix, onModifi
             ✏️ Modifier
           </button>
         )}
-        {rapport.statut === "finalise" && (
-          <button
-            onClick={() => setPdfPreviewOpen(true)}
-            className="w-full min-h-[44px] rounded-xl border border-primary text-primary py-2.5 text-sm font-semibold hover:bg-primary/5"
-          >
-            👁 Aperçu PDF
-          </button>
-        )}
-        {rapport.statut === "finalise" && (
-          <a
-            href={`/rapports/${rapport.id}/pdf?download=1`}
-            className="block w-full min-h-[44px] rounded-xl bg-primary py-2.5 text-center text-sm font-semibold text-white hover:bg-primary-light"
-          >
-            📥 Télécharger PDF
-          </a>
-        )}
+        <button
+          onClick={() => setPdfPreviewOpen(true)}
+          className="w-full min-h-[44px] rounded-xl border border-primary text-primary py-2.5 text-sm font-semibold hover:bg-primary/5"
+        >
+          👁 Aperçu PDF
+        </button>
+        <a
+          href={`/rapports/${rapport.id}/pdf?download=1`}
+          className="block w-full min-h-[44px] rounded-xl bg-primary py-2.5 text-center text-sm font-semibold text-white hover:bg-primary-light"
+        >
+          📥 Télécharger PDF
+        </a>
         <div className="mb-2">
           <RattacherDossierButton
             rapportId={rapport.id}
