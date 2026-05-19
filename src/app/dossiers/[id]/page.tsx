@@ -432,6 +432,7 @@ export default async function DossierDetailPage({
       <div className="mb-4">
         <FacturationSection
           dossierId={dossier.id}
+          statut={dossier.statut}
           facturation={{
             facture_statut: (dossier.facture_statut || "non_facture") as FacturationStatut,
             facture_numero: dossier.facture_numero,

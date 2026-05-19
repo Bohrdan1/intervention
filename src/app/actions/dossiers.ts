@@ -116,7 +116,6 @@ export async function createDossier(
 // ── Mise à jour facturation ───────────────────────────────────────────────
 
 export type FacturationData = {
-  facture_statut: string;
   facture_numero: string | null;
   facture_date: string | null;
   facture_montant_ttc: number | null;
@@ -129,20 +128,27 @@ export type FacturationData = {
 
 async function autoStatut(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  dossierId: string,
-  currentStatut: string
+  dossierId: string
 ): Promise<void> {
-  if (currentStatut === "en_attente" || currentStatut === "annule") return;
   const { data } = await supabase
     .from("dossiers")
     .select("statut, facture_numero, reglement_date, offert")
     .eq("id", dossierId)
     .single();
   if (!data) return;
+  // Les statuts manuels "en_attente" et "annule" ne sont jamais écrasés
+  if (data.statut === "en_attente" || data.statut === "annule") return;
   let newStatut: string = data.statut;
-  if (data.reglement_date) newStatut = "termine";
+  if (data.offert) newStatut = "termine";
+  else if (data.reglement_date) newStatut = "termine";
   else if (data.facture_numero) newStatut = "facture";
-  else if (data.offert) newStatut = "termine";
+  else {
+    const { count } = await supabase
+      .from("rdvs")
+      .select("id", { count: "exact", head: true })
+      .eq("dossier_id", dossierId);
+    newStatut = (count ?? 0) > 0 ? "en_cours" : "ouvert";
+  }
   if (newStatut !== data.statut)
     await supabase
       .from("dossiers")
@@ -156,7 +162,7 @@ export async function updateFacturation(
 ): Promise<void> {
   const supabase = await createClient();
   await supabase.from("dossiers").update(data).eq("id", dossierId);
-  await autoStatut(supabase, dossierId, data.facture_statut ?? "");
+  await autoStatut(supabase, dossierId);
   revalidatePath(`/dossiers/${dossierId}`);
   revalidatePath("/finances");
   revalidatePath("/");
