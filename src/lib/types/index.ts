@@ -12,6 +12,7 @@ export interface PhotoItem {
 export type ClientType = 'prospect' | 'actif' | 'inactif';
 export type FacturationStatut = 'non_facture' | 'facture' | 'paye' | 'en_retard';
 export type ReglementMode = 'virement' | 'cheque' | 'especes' | 'carte';
+export type DossierStatut = 'ouvert' | 'en_cours' | 'en_attente' | 'facturé' | 'terminé' | 'annulé';
 
 export interface Client {
   id: string;
@@ -293,13 +294,14 @@ export interface Dossier {
   client_id: string;
   site_id: string | null;
   type_dossier: 'maintenance' | 'installation' | 'remplacement' | 'intervention' | 'autre';
-  statut: 'ouvert' | 'en_cours' | 'clos';
+  statut: DossierStatut;
   titre: string | null;
   description: string | null;
   date_ouverture: string;
   date_cloture: string | null;
   montant_total_ht: number | null;
   notes: string | null;
+  note_attente: string | null;
   // Suivi facturation (Facture+ reste l'outil de facturation)
   facture_statut: FacturationStatut;
   facture_numero: string | null;

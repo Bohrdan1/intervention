@@ -8,6 +8,7 @@ import type { RdvSimple, DossierOption } from "@/components/rdvs/rdv-types";
 import { DeleteDossierButton } from "@/components/dossiers/DeleteDossierButton";
 import { AjouterRapportButton } from "@/components/dossiers/AjouterRapportButton";
 import type { RapportChoix } from "@/components/dossiers/AjouterRapportModal";
+import { DossierStatutActions } from "./statut-actions";
 
 // ── Config ─────────────────────────────────────────────────────────────────
 
@@ -26,6 +27,10 @@ const STATUT_CONFIG: Record<string, { label: string; badge: string }> = {
   ouvert:     { label: "Ouvert",     badge: "bg-yellow-100 text-yellow-800" },
   en_cours:   { label: "En cours",   badge: "bg-orange-100 text-orange-800" },
   en_attente: { label: "En attente", badge: "bg-gray-100 text-gray-600" },
+  "facturé":  { label: "Facturé",    badge: "bg-blue-100 text-blue-700" },
+  "terminé":  { label: "Terminé",    badge: "bg-green-100 text-green-700" },
+  "annulé":   { label: "Annulé",     badge: "bg-red-50 text-red-500" },
+  // Rétrocompat (anciens statuts sans accent)
   termine:    { label: "Terminé",    badge: "bg-green-100 text-green-700" },
   annule:     { label: "Annulé",     badge: "bg-red-50 text-red-500" },
 };
@@ -78,6 +83,7 @@ type DossierDetail = {
   date_cloture: string | null;
   description: string | null;
   notes: string | null;
+  note_attente: string | null;
   montant_total_ht: number | null;
   facture_statut: string;
   facture_numero: string | null;
@@ -128,6 +134,7 @@ export default async function DossierDetailPage({
       date_cloture,
       description,
       notes,
+      note_attente,
       montant_total_ht,
       facture_statut,
       facture_numero,
@@ -235,11 +242,18 @@ export default async function DossierDetailPage({
             )}
           </p>
         </div>
-        <span
-          className={`shrink-0 rounded-full px-3 py-1 text-sm font-semibold ${statutCfg.badge}`}
-        >
-          {statutCfg.label}
-        </span>
+        <div className="flex flex-col items-end gap-1">
+          <span
+            className={`shrink-0 rounded-full px-3 py-1 text-sm font-semibold ${statutCfg.badge}`}
+          >
+            {statutCfg.label}
+          </span>
+          <DossierStatutActions
+            dossierId={dossier.id}
+            statut={dossier.statut}
+            noteAttente={dossier.note_attente}
+          />
+        </div>
       </div>
 
       {/* ── Infos principales ─────────────────────────────────────────── */}

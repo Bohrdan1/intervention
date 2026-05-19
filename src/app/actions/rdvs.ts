@@ -56,6 +56,13 @@ export async function createRdv(formData: FormData): Promise<void> {
     notes: notes || null,
   });
 
+  // RDV créé → passer le dossier en_cours s'il est encore ouvert
+  await supabase
+    .from("dossiers")
+    .update({ statut: "en_cours" })
+    .eq("id", dossier_id)
+    .eq("statut", "ouvert");
+
   invalidate(dossier_id);
 }
 

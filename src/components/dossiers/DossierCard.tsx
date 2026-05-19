@@ -36,6 +36,9 @@ type KnownStatut =
   | "ouvert"
   | "en_cours"
   | "en_attente"
+  | "facturé"
+  | "terminé"
+  | "annulé"
   | "termine"
   | "annule";
 
@@ -54,6 +57,10 @@ const STATUT_CONFIG: Record<KnownStatut, { label: string; badge: string }> = {
   ouvert:     { label: "Ouvert",     badge: "bg-yellow-100 text-yellow-800" },
   en_cours:   { label: "En cours",   badge: "bg-orange-100 text-orange-800" },
   en_attente: { label: "En attente", badge: "bg-gray-100 text-gray-600" },
+  "facturé":  { label: "Facturé",    badge: "bg-blue-100 text-blue-700" },
+  "terminé":  { label: "Terminé",    badge: "bg-green-100 text-green-700" },
+  "annulé":   { label: "Annulé",     badge: "bg-red-50 text-red-500" },
+  // Rétrocompat
   termine:    { label: "Terminé",    badge: "bg-green-100 text-green-700" },
   annule:     { label: "Annulé",     badge: "bg-red-50 text-red-500" },
 };
@@ -129,7 +136,7 @@ export function DossierCard({ dossier }: { dossier: DossierRow }) {
         </p>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {/* Badges facturation */}
-          {dossier.statut === "termine" && dossier.facture_statut === "non_facture" && (
+          {(dossier.statut === "termine" || dossier.statut === "terminé") && dossier.facture_statut === "non_facture" && (
             <span className="rounded-full px-2 py-0.5 text-xs font-semibold bg-orange-100 text-orange-700">
               Non facturé
             </span>

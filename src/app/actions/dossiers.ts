@@ -124,14 +124,74 @@ export type FacturationData = {
   reglement_mode: string | null;
 };
 
+// ── Helper : calcule et applique le statut automatique ────────────────────
+
+async function autoStatut(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  dossierId: string,
+  currentStatut: string
+): Promise<void> {
+  if (currentStatut === "en_attente" || currentStatut === "annulé") return;
+  const { data } = await supabase
+    .from("dossiers")
+    .select("statut, facture_numero, reglement_date")
+    .eq("id", dossierId)
+    .single();
+  if (!data) return;
+  let newStatut: string = data.statut;
+  if (data.reglement_date) newStatut = "terminé";
+  else if (data.facture_numero) newStatut = "facturé";
+  if (newStatut !== data.statut)
+    await supabase
+      .from("dossiers")
+      .update({ statut: newStatut })
+      .eq("id", dossierId);
+}
+
 export async function updateFacturation(
   dossierId: string,
   data: FacturationData
 ): Promise<void> {
   const supabase = await createClient();
   await supabase.from("dossiers").update(data).eq("id", dossierId);
+  await autoStatut(supabase, dossierId, data.facture_statut ?? "");
   revalidatePath(`/dossiers/${dossierId}`);
   revalidatePath("/finances");
+  revalidatePath("/");
+}
+
+// ── Actions manuelles de statut ───────────────────────────────────────────
+
+export async function setDossierEnAttente(
+  dossierId: string,
+  note: string | null
+): Promise<void> {
+  const supabase = await createClient();
+  await supabase
+    .from("dossiers")
+    .update({ statut: "en_attente", note_attente: note })
+    .eq("id", dossierId);
+  revalidatePath(`/dossiers/${dossierId}`);
+  revalidatePath("/");
+}
+
+export async function setDossierAnnule(dossierId: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase
+    .from("dossiers")
+    .update({ statut: "annulé" })
+    .eq("id", dossierId);
+  revalidatePath(`/dossiers/${dossierId}`);
+  revalidatePath("/");
+}
+
+export async function setDossierReouvert(dossierId: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase
+    .from("dossiers")
+    .update({ statut: "ouvert", note_attente: null })
+    .eq("id", dossierId);
+  revalidatePath(`/dossiers/${dossierId}`);
   revalidatePath("/");
 }
 
