@@ -240,16 +240,18 @@ export default async function DossiersDashboard() {
             <p className="text-2xl font-bold text-foreground">{actifs.length}</p>
             <p className="text-xs text-muted">Actifs</p>
           </div>
+          {nbFactures > 0 && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 cursor-pointer">
+              <p className="text-2xl font-bold text-blue-700">{nbFactures}</p>
+              <p className="text-sm text-blue-600">
+                Facturé{nbFactures > 1 ? "s" : ""} — en attente de règlement
+              </p>
+            </div>
+          )}
           <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 shadow-sm">
             <p className="text-2xl font-bold text-orange-700">{nbEnCours}</p>
             <p className="text-xs text-muted">En cours</p>
           </div>
-          {nbFactures > 0 && (
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
-              <p className="text-2xl font-bold text-blue-700">{nbFactures}</p>
-              <p className="text-sm text-blue-600">Facturé{nbFactures > 1 ? "s" : ""}</p>
-            </div>
-          )}
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
             <p className="text-2xl font-bold text-red-700">{nbUrgents}</p>
             <p className="text-xs text-muted">Urgents</p>

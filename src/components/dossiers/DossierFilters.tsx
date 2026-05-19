@@ -118,7 +118,9 @@ export function DossierFilters({ dossiers }: { dossiers: DossierRow[] }) {
               onClick={() => setStatutFilter(s)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
                 statutFilter === s
-                  ? "bg-primary text-white"
+                  ? s === "facture"
+                    ? "bg-blue-600 text-white"
+                    : "bg-primary text-white"
                   : "border border-border bg-white text-muted hover:bg-slate-50"
               }`}
             >
