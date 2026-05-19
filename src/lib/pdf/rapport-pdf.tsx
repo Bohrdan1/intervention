@@ -204,34 +204,29 @@ const s = StyleSheet.create({
   },
   // Photos
   photosSection: {
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: 8,
+    marginBottom: 4,
   },
   photosTitle: {
     fontSize: 10,
     fontFamily: 'Helvetica-Bold',
-    marginBottom: 6,
+    marginBottom: 5,
     textDecoration: 'underline',
   },
-  photosGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
   photoContainer: {
-    width: '48%',
-    marginBottom: 6,
+    width: '48.5%',
+    marginBottom: 4,
   },
   photoImage: {
     width: '100%',
-    height: 160,
-    objectFit: 'contain',
+    height: 118,
+    objectFit: 'cover',
     borderWidth: 0.5,
     borderColor: '#ccc',
   },
   photoLabel: {
-    fontSize: 7,
-    color: '#666',
+    fontSize: 8,
+    color: '#444',
     marginTop: 2,
     textAlign: 'center',
   },
@@ -264,17 +259,31 @@ function RenderEtat({ etat }: { etat: string }) {
 // ============================================
 function PhotosSection({ photos, title }: { photos: PhotoItem[]; title?: string }) {
   if (!photos || photos.length === 0) return null;
+
+  const pairs: PhotoItem[][] = [];
+  for (let i = 0; i < photos.length; i += 2) {
+    pairs.push(photos.slice(i, i + 2));
+  }
+
   return (
-    <View style={s.photosSection} wrap={false}>
+    <View style={s.photosSection}>
       <Text style={s.photosTitle}>{title || 'Photos'}</Text>
-      <View style={s.photosGrid}>
-        {photos.map((photo, i) => (
-          <View key={i} style={s.photoContainer}>
-            <Image style={s.photoImage} src={photo.url} />
-            {photo.label ? <Text style={s.photoLabel}>{photo.label}</Text> : null}
-          </View>
-        ))}
-      </View>
+      {pairs.map((pair, pairIndex) => (
+        <View
+          key={pairIndex}
+          wrap={false}
+          style={{ flexDirection: 'row', gap: 8, marginBottom: 6 }}
+        >
+          {pair.map((photo, i) => (
+            <View key={i} style={s.photoContainer}>
+              <Image style={s.photoImage} src={photo.url} />
+              {photo.label
+                ? <Text style={s.photoLabel}>{photo.label}</Text>
+                : null}
+            </View>
+          ))}
+        </View>
+      ))}
     </View>
   );
 }
