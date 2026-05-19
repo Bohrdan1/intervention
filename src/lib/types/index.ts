@@ -12,7 +12,7 @@ export interface PhotoItem {
 export type ClientType = 'prospect' | 'actif' | 'inactif';
 export type FacturationStatut = 'non_facture' | 'facture' | 'paye' | 'en_retard';
 export type ReglementMode = 'virement' | 'cheque' | 'especes' | 'carte';
-export type DossierStatut = 'ouvert' | 'en_cours' | 'en_attente' | 'facturé' | 'terminé' | 'annulé';
+export type DossierStatut = 'ouvert' | 'en_cours' | 'en_attente' | 'facture' | 'termine' | 'annule';
 
 export interface Client {
   id: string;

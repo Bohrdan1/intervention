@@ -27,10 +27,7 @@ const STATUT_CONFIG: Record<string, { label: string; badge: string }> = {
   ouvert:     { label: "Ouvert",     badge: "bg-yellow-100 text-yellow-800" },
   en_cours:   { label: "En cours",   badge: "bg-orange-100 text-orange-800" },
   en_attente: { label: "En attente", badge: "bg-gray-100 text-gray-600" },
-  "facturé":  { label: "Facturé",    badge: "bg-blue-100 text-blue-700" },
-  "terminé":  { label: "Terminé",    badge: "bg-green-100 text-green-700" },
-  "annulé":   { label: "Annulé",     badge: "bg-red-50 text-red-500" },
-  // Rétrocompat (anciens statuts sans accent)
+  facture:    { label: "Facturé",    badge: "bg-blue-100 text-blue-700" },
   termine:    { label: "Terminé",    badge: "bg-green-100 text-green-700" },
   annule:     { label: "Annulé",     badge: "bg-red-50 text-red-500" },
 };

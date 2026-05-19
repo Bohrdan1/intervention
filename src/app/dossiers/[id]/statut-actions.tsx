@@ -20,7 +20,7 @@ export function DossierStatutActions({ dossierId, statut, noteAttente }: Props) 
   const [confirmAnnuler, setConfirmAnnuler] = useState(false);
 
   // Dossier annulé → rien à afficher
-  if (statut === "annulé") return null;
+  if (statut === "annule") return null;
 
   function handleEnAttente() {
     startTransition(async () => {
@@ -65,7 +65,7 @@ export function DossierStatutActions({ dossierId, statut, noteAttente }: Props) 
       )}
 
       {/* Pour tout statut sauf en_attente et terminé : proposer mise en attente */}
-      {statut !== "en_attente" && statut !== "terminé" && (
+      {statut !== "en_attente" && statut !== "termine" && (
         <>
           {showAttente ? (
             <div className="rounded border border-amber-300 bg-amber-50 px-3 py-2 space-y-2">
@@ -110,7 +110,7 @@ export function DossierStatutActions({ dossierId, statut, noteAttente }: Props) 
       )}
 
       {/* Annuler le dossier (sauf si déjà terminé) */}
-      {statut !== "terminé" && (
+      {statut !== "termine" && (
         <>
           {confirmAnnuler ? (
             <div className="flex items-center gap-2 rounded border border-red-300 bg-red-50 px-3 py-2">

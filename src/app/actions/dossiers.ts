@@ -131,7 +131,7 @@ async function autoStatut(
   dossierId: string,
   currentStatut: string
 ): Promise<void> {
-  if (currentStatut === "en_attente" || currentStatut === "annulé") return;
+  if (currentStatut === "en_attente" || currentStatut === "annule") return;
   const { data } = await supabase
     .from("dossiers")
     .select("statut, facture_numero, reglement_date")
@@ -139,8 +139,8 @@ async function autoStatut(
     .single();
   if (!data) return;
   let newStatut: string = data.statut;
-  if (data.reglement_date) newStatut = "terminé";
-  else if (data.facture_numero) newStatut = "facturé";
+  if (data.reglement_date) newStatut = "termine";
+  else if (data.facture_numero) newStatut = "facture";
   if (newStatut !== data.statut)
     await supabase
       .from("dossiers")
@@ -179,7 +179,7 @@ export async function setDossierAnnule(dossierId: string): Promise<void> {
   const supabase = await createClient();
   await supabase
     .from("dossiers")
-    .update({ statut: "annulé" })
+    .update({ statut: "annule" })
     .eq("id", dossierId);
   revalidatePath(`/dossiers/${dossierId}`);
   revalidatePath("/");
