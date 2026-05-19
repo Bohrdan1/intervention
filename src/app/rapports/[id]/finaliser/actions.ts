@@ -4,14 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { ConstatItem } from "@/lib/types";
 
-function truncateBase64(data: string | null, maxBytes = 400_000): string | null {
-  if (!data) return null;
-  const estimatedBytes = (data.length * 3) / 4;
-  if (estimatedBytes <= maxBytes) return data;
-  console.warn("Signature trop volumineuse, troncature appliquée:", estimatedBytes, "bytes");
-  return data;
-}
-
 export async function saveConstatAndFinalize(
   rapportId: string,
   constat_general: ConstatItem[],

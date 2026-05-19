@@ -189,7 +189,7 @@ export async function setDossierReouvert(dossierId: string): Promise<void> {
   const supabase = await createClient();
   await supabase
     .from("dossiers")
-    .update({ statut: "ouvert", note_attente: null })
+    .update({ statut: "en_cours", note_attente: null })
     .eq("id", dossierId);
   revalidatePath(`/dossiers/${dossierId}`);
   revalidatePath("/");
