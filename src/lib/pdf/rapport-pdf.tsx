@@ -220,7 +220,8 @@ const s = StyleSheet.create({
   photoImage: {
     width: '100%',
     height: 118,
-    objectFit: 'cover',
+    objectFit: 'contain',
+    backgroundColor: '#f5f5f5',
     borderWidth: 0.5,
     borderColor: '#ccc',
   },
