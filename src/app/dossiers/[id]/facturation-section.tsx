@@ -14,6 +14,7 @@ export type FacturationInit = {
   facture_montant_ttc: number | null;
   reglement_date: string | null;
   reglement_mode: ReglementMode | null;
+  offert: boolean;
 };
 
 type Props = {
@@ -71,6 +72,7 @@ export function FacturationSection({ dossierId, facturation }: Props) {
       })(),
       reglement_date: (fd.get("reglement_date") as string) || null,
       reglement_mode: (fd.get("reglement_mode") as string) || null,
+      offert: fd.get("offert") === "on",
     };
 
     startTransition(async () => {
@@ -185,6 +187,19 @@ export function FacturationSection({ dossierId, facturation }: Props) {
               </div>
             </div>
           )}
+
+          <div className="flex items-center gap-3 py-2">
+            <input
+              type="checkbox"
+              id="offert"
+              name="offert"
+              defaultChecked={facturation.offert}
+              className="w-5 h-5 rounded accent-primary cursor-pointer"
+            />
+            <label htmlFor="offert" className="text-sm font-medium cursor-pointer select-none">
+              Prestation offerte <span className="text-xs text-muted">(sans facturation)</span>
+            </label>
+          </div>
 
           <div className="flex gap-2 pt-1">
             <button

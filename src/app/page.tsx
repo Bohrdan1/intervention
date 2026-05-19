@@ -37,6 +37,7 @@ export default async function DossiersDashboard() {
       date_cloture,
       montant_total_ht,
       facture_statut,
+      offert,
       client:clients(id, nom),
       site:sites(nom),
       rapports(id)
@@ -54,6 +55,7 @@ export default async function DossiersDashboard() {
       date_cloture: string | null;
       montant_total_ht: number | null;
       facture_statut: string | null;
+      offert: boolean | null;
       client: { id: string; nom: string } | { id: string; nom: string }[] | null;
       site: { nom: string } | { nom: string }[] | null;
       rapports: { id: string }[];
@@ -68,6 +70,7 @@ export default async function DossiersDashboard() {
       date_cloture: raw.date_cloture,
       montant_total_ht: raw.montant_total_ht,
       facture_statut: raw.facture_statut ?? "non_facture",
+      offert: raw.offert ?? false,
       client: Array.isArray(raw.client) ? (raw.client[0] ?? null) : raw.client,
       site: Array.isArray(raw.site) ? (raw.site[0] ?? null) : raw.site,
       rapports: Array.isArray(raw.rapports) ? raw.rapports : [],

@@ -88,6 +88,7 @@ type DossierDetail = {
   facture_montant_ttc: number | null;
   reglement_date: string | null;
   reglement_mode: string | null;
+  offert: boolean;
   client: ClientJoin | ClientJoin[];
   site: SiteJoin | SiteJoin[];
   rapports: RapportJoin[];
@@ -139,6 +140,7 @@ export default async function DossierDetailPage({
       facture_montant_ttc,
       reglement_date,
       reglement_mode,
+      offert,
       client:clients(id, nom, telephone, mail),
       site:sites(id, nom, adresse),
       rapports(
@@ -437,6 +439,7 @@ export default async function DossierDetailPage({
             facture_montant_ttc: dossier.facture_montant_ttc,
             reglement_date: dossier.reglement_date,
             reglement_mode: (dossier.reglement_mode as ReglementMode | null),
+            offert: dossier.offert ?? false,
           }}
         />
       </div>

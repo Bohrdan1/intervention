@@ -302,6 +302,7 @@ export interface Dossier {
   montant_total_ht: number | null;
   notes: string | null;
   note_attente: string | null;
+  offert: boolean;
   // Suivi facturation (Facture+ reste l'outil de facturation)
   facture_statut: FacturationStatut;
   facture_numero: string | null;

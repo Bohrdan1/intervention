@@ -122,6 +122,7 @@ export type FacturationData = {
   facture_montant_ttc: number | null;
   reglement_date: string | null;
   reglement_mode: string | null;
+  offert: boolean;
 };
 
 // ── Helper : calcule et applique le statut automatique ────────────────────
@@ -134,13 +135,14 @@ async function autoStatut(
   if (currentStatut === "en_attente" || currentStatut === "annule") return;
   const { data } = await supabase
     .from("dossiers")
-    .select("statut, facture_numero, reglement_date")
+    .select("statut, facture_numero, reglement_date, offert")
     .eq("id", dossierId)
     .single();
   if (!data) return;
   let newStatut: string = data.statut;
   if (data.reglement_date) newStatut = "termine";
   else if (data.facture_numero) newStatut = "facture";
+  else if (data.offert) newStatut = "termine";
   if (newStatut !== data.statut)
     await supabase
       .from("dossiers")
