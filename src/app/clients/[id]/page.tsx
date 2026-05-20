@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ClientDetailClient } from "./client-detail-client";
+import type { DossierOption } from "@/components/rdvs/rdv-types";
 
 export default async function ClientDetailPage({
   params,
@@ -79,6 +80,29 @@ export default async function ClientDetailPage({
     .order("date_rdv")
     .limit(10);
 
+  // ── Dossiers actifs du client (pour RdvModal) ──
+  const { data: rawDossiers } = await supabase
+    .from("dossiers")
+    .select("id, reference, site:sites(nom)")
+    .eq("client_id", id)
+    .not("statut", "in", '("termine","annule")')
+    .order("date_ouverture", { ascending: false });
+
+  const dossierOptions: DossierOption[] = (rawDossiers ?? []).map((d) => {
+    const raw = d as unknown as {
+      id: string;
+      reference: string;
+      site: { nom: string } | { nom: string }[] | null;
+    };
+    const site = Array.isArray(raw.site) ? raw.site[0] : raw.site;
+    return {
+      id: raw.id,
+      reference: raw.reference,
+      clientNom: client.nom,
+      siteNom: site?.nom ?? null,
+    };
+  });
+
   // ── Stats globales ──
   const { count: nbRapports } = await supabase
     .from("rapports")
@@ -128,6 +152,7 @@ export default async function ClientDetailPage({
         sites={sitesData}
         derniereCMParSite={derniereCMMap}
         derniereVisiteParInstallation={derniereVisiteMap}
+        dossierOptions={dossierOptions}
       />
 
       {/* Stats */}

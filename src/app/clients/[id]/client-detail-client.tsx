@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { updateClientFromDetail, updateSiteFromDetail } from "./actions";
 import type { Client } from "@/lib/types";
+import { RdvModal } from "@/components/rdvs/RdvModal";
+import type { DossierOption } from "@/components/rdvs/rdv-types";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -74,16 +76,21 @@ export function ClientDetailClient({
   sites,
   derniereCMParSite,
   derniereVisiteParInstallation,
+  dossierOptions,
 }: {
   client: Client;
   clientId: string;
   sites: SiteItem[];
   derniereCMParSite: Record<string, string>;
   derniereVisiteParInstallation: Record<string, { date: string; type: string }>;
+  dossierOptions: DossierOption[];
 }) {
   // ── Client edit state ──
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // ── RDV modal state ──
+  const [rdvModalOpen, setRdvModalOpen] = useState(false);
 
   // ── Site accordion state ──
   const [editingSiteId, setEditingSiteId] = useState<string | null>(null);
@@ -267,10 +274,19 @@ export function ClientDetailClient({
             </div>
           </div>
 
-          <button type="button" onClick={() => setEditing(true)}
-            className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-slate-50">
-            ✏️ Modifier
-          </button>
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
+            <button type="button" onClick={() => setEditing(true)}
+              className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-slate-50 min-h-[44px]">
+              ✏️ Modifier
+            </button>
+            <button
+              type="button"
+              onClick={() => setRdvModalOpen(true)}
+              className="rounded-lg border border-primary bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10 min-h-[44px]"
+            >
+              📅 + RDV
+            </button>
+          </div>
         </div>
 
         {client.notes_internes && (
@@ -280,6 +296,12 @@ export function ClientDetailClient({
           </div>
         )}
       </div>
+
+      <RdvModal
+        open={rdvModalOpen}
+        onClose={() => setRdvModalOpen(false)}
+        dossiers={dossierOptions}
+      />
 
       {/* ── Sites & équipements ── */}
       <h2 className="mb-3 text-sm font-bold text-muted uppercase tracking-wide">
