@@ -193,12 +193,7 @@ export function DossierCard({ dossier }: { dossier: DossierRow }) {
               <span className="rounded-full bg-blue-100 text-blue-700 px-1.5 py-0.5 text-[10px] font-medium">Confirmé</span>
             )}
           </p>
-        ) : (
-          <p className="text-xs text-muted/50 mt-1 flex items-center gap-1">
-            <span>📅</span>
-            <span>Aucun RDV</span>
-          </p>
-        )}
+        ) : null}
       </div>
     </div>
   );
