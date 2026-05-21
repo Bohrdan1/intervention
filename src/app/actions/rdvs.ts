@@ -2,6 +2,12 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import {
+  createGoogleEvent,
+  updateGoogleEvent,
+  deleteGoogleEvent,
+  type RdvForCalendar,
+} from "@/lib/google-calendar";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -75,8 +81,22 @@ export async function updateRdv(
   const date_rdv = ncLocalToUtc(formData.get("date_rdv") as string);
   const duree_raw = parseInt(formData.get("duree_minutes") as string, 10);
   const type_rdv = (formData.get("type_rdv") as string) || "intervention";
-  const statut = (formData.get("statut") as string) || "planifie";
+  const newStatut = (formData.get("statut") as string) || "planifie";
   const notes = (formData.get("notes") as string) || null;
+
+  // Récupérer l'ancien RDV (statut + google_event_id + données pour l'événement)
+  const { data: oldRdv } = await supabase
+    .from("rdvs")
+    .select(`
+      id, statut, google_event_id, date_rdv, duree_minutes, type_rdv, notes,
+      dossier:dossiers(
+        reference,
+        client:clients(nom),
+        site:sites(nom, adresse)
+      )
+    `)
+    .eq("id", id)
+    .single();
 
   const { data: rdv } = await supabase
     .from("rdvs")
@@ -84,12 +104,62 @@ export async function updateRdv(
       date_rdv,
       duree_minutes: isNaN(duree_raw) ? null : duree_raw,
       type_rdv,
-      statut,
+      statut: newStatut,
       notes: notes || null,
     })
     .eq("id", id)
     .select("dossier_id")
     .single();
+
+  // ── Sync Google Calendar ──────────────────────────────────────────────
+  if (oldRdv) {
+    const rdvData: RdvForCalendar = {
+      id: oldRdv.id,
+      date_rdv,
+      duree_minutes: isNaN(duree_raw) ? oldRdv.duree_minutes : duree_raw,
+      type_rdv,
+      notes: notes || null,
+      dossier: (() => {
+        const raw = Array.isArray(oldRdv.dossier)
+          ? oldRdv.dossier[0]
+          : oldRdv.dossier;
+        if (!raw) return null;
+        const d = raw as unknown as {
+          reference: string;
+          client: { nom: string } | { nom: string }[] | null;
+          site: { nom: string; adresse: string | null } | { nom: string; adresse: string | null }[] | null;
+        };
+        return {
+          reference: d.reference,
+          client: Array.isArray(d.client) ? (d.client[0] ?? null) : d.client,
+          site: Array.isArray(d.site) ? (d.site[0] ?? null) : d.site,
+        };
+      })(),
+    };
+
+    const googleEventId = oldRdv.google_event_id as string | null;
+
+    if (newStatut === "confirme") {
+      if (googleEventId) {
+        await updateGoogleEvent(googleEventId, rdvData);
+      } else {
+        const newEventId = await createGoogleEvent(rdvData);
+        if (newEventId) {
+          await supabase
+            .from("rdvs")
+            .update({ google_event_id: newEventId })
+            .eq("id", id);
+        }
+      }
+    } else if (googleEventId) {
+      // planifie ou annule → supprimer l'événement
+      await deleteGoogleEvent(googleEventId);
+      await supabase
+        .from("rdvs")
+        .update({ google_event_id: null })
+        .eq("id", id);
+    }
+  }
 
   invalidate(rdv?.dossier_id);
 }
@@ -113,12 +183,20 @@ export async function updateRdvStatut(
 export async function deleteRdv(id: string): Promise<void> {
   const supabase = await createClient();
 
-  const { data: rdv } = await supabase
+  // Récupérer google_event_id avant suppression
+  const { data: existing } = await supabase
     .from("rdvs")
-    .delete()
+    .select("dossier_id, google_event_id")
     .eq("id", id)
-    .select("dossier_id")
     .single();
 
-  invalidate(rdv?.dossier_id);
+  await supabase.from("rdvs").delete().eq("id", id);
+
+  // Supprimer l'événement Google Calendar si présent
+  const googleEventId = existing?.google_event_id as string | null | undefined;
+  if (googleEventId) {
+    await deleteGoogleEvent(googleEventId);
+  }
+
+  invalidate(existing?.dossier_id);
 }
