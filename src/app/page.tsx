@@ -24,6 +24,30 @@ type RdvAujourdhui = {
 export default async function DossiersDashboard() {
   const supabase = await createClient();
 
+  // ── Prochain RDV par dossier ────────────────────────────────────────────
+  const { data: rawRdvs } = await supabase
+    .from("rdvs")
+    .select("id, dossier_id, date_rdv, type_rdv, statut")
+    .not("statut", "in", '("realise","annule")')
+    .order("date_rdv", { ascending: true });
+
+  const prochainRdvParDossier: Record<string, {
+    date_rdv: string;
+    type_rdv: string;
+    statut: string;
+  }> = {};
+
+  for (const rdv of rawRdvs ?? []) {
+    const r = rdv as { id: string; dossier_id: string | null; date_rdv: string; type_rdv: string; statut: string };
+    if (r.dossier_id && !prochainRdvParDossier[r.dossier_id]) {
+      prochainRdvParDossier[r.dossier_id] = {
+        date_rdv: r.date_rdv,
+        type_rdv: r.type_rdv,
+        statut: r.statut,
+      };
+    }
+  }
+
   // ── Dossiers ────────────────────────────────────────────────────────────
   const { data: rawDossiers } = await supabase
     .from("dossiers")
@@ -130,30 +154,6 @@ export default async function DossiersDashboard() {
       client,
     };
   });
-
-  // ── Prochain RDV par dossier ────────────────────────────────────────────
-  const { data: rawRdvs } = await supabase
-    .from("rdvs")
-    .select("id, dossier_id, date_rdv, type_rdv, statut")
-    .not("statut", "in", '("realise","annule")')
-    .order("date_rdv", { ascending: true });
-
-  const prochainRdvParDossier: Record<string, {
-    date_rdv: string;
-    type_rdv: string;
-    statut: string;
-  }> = {};
-
-  for (const rdv of rawRdvs ?? []) {
-    const r = rdv as { id: string; dossier_id: string | null; date_rdv: string; type_rdv: string; statut: string };
-    if (r.dossier_id && !prochainRdvParDossier[r.dossier_id]) {
-      prochainRdvParDossier[r.dossier_id] = {
-        date_rdv: r.date_rdv,
-        type_rdv: r.type_rdv,
-        statut: r.statut,
-      };
-    }
-  }
 
   // ── Stats dossiers ───────────────────────────────────────────────────────
   const actifs = dossiers.filter(
