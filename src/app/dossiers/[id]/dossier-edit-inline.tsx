@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { updateDossier } from "@/app/actions/dossiers";
+import { updateDossier, toggleDossierUrgent } from "@/app/actions/dossiers";
 
 // ── Config ─────────────────────────────────────────────────────────────────
 
@@ -15,7 +15,43 @@ const TYPES_DOSSIER = [
   { value: "autre",        label: "Autre" },
 ];
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// ── UrgentToggle ───────────────────────────────────────────────────────────
+
+export function UrgentToggle({
+  dossierId,
+  isUrgent,
+}: {
+  dossierId: string;
+  isUrgent: boolean;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  function handleToggle() {
+    startTransition(async () => {
+      await toggleDossierUrgent(dossierId, !isUrgent);
+      router.refresh();
+    });
+  }
+
+  return (
+    <button
+      onClick={handleToggle}
+      disabled={isPending}
+      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all border ${
+        isUrgent
+          ? "border-red-300 bg-red-100 text-red-700 hover:bg-red-200"
+          : "border-border bg-white text-muted hover:bg-slate-50"
+      }`}
+    >
+      <span>⚡</span>
+      <span>{isUrgent ? "Urgent" : "Marquer urgent"}</span>
+      {isPending && <span className="text-xs">…</span>}
+    </button>
+  );
+}
+
+// ── DossierEditInline ──────────────────────────────────────────────────────
 
 type Props = {
   dossierId: string;

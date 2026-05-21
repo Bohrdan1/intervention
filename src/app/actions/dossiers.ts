@@ -221,6 +221,21 @@ export async function updateDossier(dossierId: string, fd: FormData): Promise<vo
   revalidatePath("/");
 }
 
+// ── Toggle urgent ─────────────────────────────────────────────────────────
+
+export async function toggleDossierUrgent(
+  dossierId: string,
+  isUrgent: boolean
+): Promise<void> {
+  const supabase = await createClient();
+  await supabase
+    .from("dossiers")
+    .update({ is_urgent: isUrgent })
+    .eq("id", dossierId);
+  revalidatePath(`/dossiers/${dossierId}`);
+  revalidatePath("/");
+}
+
 // ── Suppression d'un dossier ───────────────────────────────────────────────
 
 export async function deleteDossier(id: string): Promise<void> {

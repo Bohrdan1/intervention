@@ -9,7 +9,7 @@ import { DeleteDossierButton } from "@/components/dossiers/DeleteDossierButton";
 import { AjouterRapportButton } from "@/components/dossiers/AjouterRapportButton";
 import type { RapportChoix } from "@/components/dossiers/AjouterRapportModal";
 import { DossierStatutActions } from "./statut-actions";
-import { DossierEditInline } from "./dossier-edit-inline";
+import { DossierEditInline, UrgentToggle } from "./dossier-edit-inline";
 
 // ── Config ─────────────────────────────────────────────────────────────────
 
@@ -90,6 +90,7 @@ type DossierDetail = {
   reglement_date: string | null;
   reglement_mode: string | null;
   offert: boolean;
+  is_urgent: boolean;
   client: ClientJoin | ClientJoin[];
   site: SiteJoin | SiteJoin[];
   rapports: RapportJoin[];
@@ -142,6 +143,7 @@ export default async function DossierDetailPage({
       reglement_date,
       reglement_mode,
       offert,
+      is_urgent,
       client:clients(id, nom, telephone, mail),
       site:sites(id, nom, adresse),
       rapports(
@@ -217,7 +219,7 @@ export default async function DossierDetailPage({
     ({ label: dossier.statut, badge: "bg-gray-100 text-gray-600" } as const);
 
   return (
-    <div>
+    <div className={dossier.is_urgent ? "bg-red-50 min-h-screen -mx-4 px-4 pt-2" : ""}>
       {/* ── Fil d'Ariane ──────────────────────────────────────────────── */}
       <div className="mb-1 flex items-center gap-1.5 text-xs text-muted">
         <Link href="/" className="hover:underline">
@@ -324,7 +326,8 @@ export default async function DossierDetailPage({
               </div>
             )}
           </dl>
-          <div className="mt-3 border-t border-border/50 pt-3">
+          <div className="mt-3 border-t border-border/50 pt-3 flex items-center justify-between gap-2 flex-wrap">
+            <UrgentToggle dossierId={dossier.id} isUrgent={dossier.is_urgent} />
             <DossierEditInline
               dossierId={dossier.id}
               titre={dossier.titre}
