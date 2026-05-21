@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { updateRdvStatut } from "@/app/actions/rdvs";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -18,6 +19,7 @@ export type DossierRow = {
   offert: boolean;
   is_urgent: boolean;
   prochainRdv: {
+    id: string;
     date_rdv: string;
     type_rdv: string;
     statut: string;
@@ -186,13 +188,36 @@ export function DossierCard({ dossier }: { dossier: DossierRow }) {
           </div>
         </div>
         {dossier.prochainRdv ? (
-          <p className="text-xs text-muted mt-1 flex items-center gap-1">
-            <span>📅</span>
-            <span>{formatRdvShort(dossier.prochainRdv.date_rdv)}</span>
-            {dossier.prochainRdv.statut === "confirme" && (
-              <span className="rounded-full bg-blue-100 text-blue-700 px-1.5 py-0.5 text-[10px] font-medium">Confirmé</span>
-            )}
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            {dossier.prochainRdv.statut === "planifie" ? (
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  await updateRdvStatut(dossier.prochainRdv!.id, "confirme");
+                  router.refresh();
+                }}
+                title="Confirmer le RDV"
+                className="w-6 h-6 rounded-full border-2 border-green-400 bg-green-50 flex items-center justify-center hover:bg-green-100 transition-all shrink-0"
+              >
+                <span className="text-green-600 text-xs font-bold">✓</span>
+              </button>
+            ) : dossier.prochainRdv.statut === "confirme" ? (
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  await updateRdvStatut(dossier.prochainRdv!.id, "realise");
+                  router.refresh();
+                }}
+                title="Marquer comme réalisé"
+                className="w-6 h-6 rounded-full border-2 border-blue-400 bg-blue-50 flex items-center justify-center hover:bg-blue-100 transition-all shrink-0"
+              >
+                <span className="text-base leading-none">📅</span>
+              </button>
+            ) : null}
+            <span className="text-xs text-muted">
+              {formatRdvShort(dossier.prochainRdv.date_rdv)}
+            </span>
+          </div>
         ) : null}
       </div>
     </div>

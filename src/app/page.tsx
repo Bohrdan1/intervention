@@ -32,6 +32,7 @@ export default async function DossiersDashboard() {
     .order("date_rdv", { ascending: true });
 
   const prochainRdvParDossier: Record<string, {
+    id: string;
     date_rdv: string;
     type_rdv: string;
     statut: string;
@@ -41,6 +42,7 @@ export default async function DossiersDashboard() {
     const r = rdv as { id: string; dossier_id: string | null; date_rdv: string; type_rdv: string; statut: string };
     if (r.dossier_id && !prochainRdvParDossier[r.dossier_id]) {
       prochainRdvParDossier[r.dossier_id] = {
+        id: r.id,
         date_rdv: r.date_rdv,
         type_rdv: r.type_rdv,
         statut: r.statut,
