@@ -9,7 +9,12 @@ type ClientRow = { id: string; nom: string; type?: string; sites: SiteRow[] };
 
 // ── Page ───────────────────────────────────────────────────────────────────
 
-export default async function NouveauDossierPage() {
+export default async function NouveauDossierPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ client_id?: string }>;
+}) {
+  const { client_id } = await searchParams;
   const supabase = await createClient();
 
   const { data: rawClients } = await supabase
@@ -48,7 +53,7 @@ export default async function NouveauDossierPage() {
       </div>
 
       {/* ── Formulaire ────────────────────────────────────────────────── */}
-      <NouveauDossierForm clients={clients} />
+      <NouveauDossierForm clients={clients} preselectedClientId={client_id} />
     </div>
   );
 }

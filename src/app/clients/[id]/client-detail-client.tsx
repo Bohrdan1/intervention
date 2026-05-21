@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { updateClientFromDetail, updateSiteFromDetail } from "./actions";
 import type { Client } from "@/lib/types";
 import { RdvModal } from "@/components/rdvs/RdvModal";
@@ -85,6 +86,8 @@ export function ClientDetailClient({
   derniereVisiteParInstallation: Record<string, { date: string; type: string }>;
   dossierOptions: DossierOption[];
 }) {
+  const router = useRouter();
+
   // ── Client edit state ──
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -281,7 +284,13 @@ export function ClientDetailClient({
             </button>
             <button
               type="button"
-              onClick={() => setRdvModalOpen(true)}
+              onClick={() => {
+                if (dossierOptions.length === 0) {
+                  router.push(`/dossiers/new?client_id=${clientId}`);
+                } else {
+                  setRdvModalOpen(true);
+                }
+              }}
               className="rounded-lg border border-primary bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10 min-h-[44px]"
             >
               📅 + RDV

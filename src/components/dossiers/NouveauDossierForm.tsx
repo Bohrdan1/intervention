@@ -11,6 +11,7 @@ type ClientOption = { id: string; nom: string; type?: string; sites: SiteOption[
 
 type Props = {
   clients: ClientOption[];
+  preselectedClientId?: string;
 };
 
 // ── Constantes sentinelles ─────────────────────────────────────────────────
@@ -41,14 +42,14 @@ const selectCls =
 
 // ── Component ──────────────────────────────────────────────────────────────
 
-export function NouveauDossierForm({ clients }: Props) {
+export function NouveauDossierForm({ clients, preselectedClientId }: Props) {
   // ── État du formulaire ──────────────────────────────────────────────────
   const [typeDossier, setTypeDossier] = useState("contrat");
   const [titre, setTitre] = useState("");
   const [description, setDescription] = useState("");
 
-  // Client
-  const [selectedClientId, setSelectedClientId] = useState("");
+  // Client — pré-sélectionné si venu d'une fiche client
+  const [selectedClientId, setSelectedClientId] = useState(preselectedClientId ?? "");
   const [newClientNom, setNewClientNom] = useState("");
 
   // Site
@@ -194,20 +195,35 @@ export function NouveauDossierForm({ clients }: Props) {
         </label>
 
         <div className="relative">
-          <select
-            id="client_select"
-            value={selectedClientId}
-            onChange={(e) => handleClientChange(e.target.value)}
-            className={selectCls}
-          >
-            <option value="">Sélectionner un client…</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nom}{c.type === "prospect" ? " 〔Prospect〕" : ""}
-              </option>
-            ))}
-            <option value={NOUVEAU_CLIENT}>＋ Nouveau client</option>
-          </select>
+          {preselectedClientId ? (
+            // Client verrouillé — venu via ?client_id=
+            <>
+              <input type="hidden" name="client_id" value={preselectedClientId} />
+              <div className={`${selectCls} flex items-center gap-2 cursor-not-allowed`}>
+                <span className="flex-1 truncate">
+                  {clients.find((c) => c.id === preselectedClientId)?.nom ?? preselectedClientId}
+                </span>
+                <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                  verrouillé
+                </span>
+              </div>
+            </>
+          ) : (
+            <select
+              id="client_select"
+              value={selectedClientId}
+              onChange={(e) => handleClientChange(e.target.value)}
+              className={selectCls}
+            >
+              <option value="">Sélectionner un client…</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nom}{c.type === "prospect" ? " 〔Prospect〕" : ""}
+                </option>
+              ))}
+              <option value={NOUVEAU_CLIENT}>＋ Nouveau client</option>
+            </select>
+          )}
         </div>
 
         {/* Badge prospect si le client sélectionné est un prospect */}
