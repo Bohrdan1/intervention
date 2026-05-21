@@ -52,7 +52,48 @@ function RdvRow({
 
   return (
     <div className="flex items-start gap-3 rounded-xl border border-border bg-white p-3">
-      {/* Infos */}
+
+      {/* Icône statut — à gauche, cliquable */}
+      <div className="shrink-0 mt-0.5">
+        {rdv.statut === "planifie" && (
+          <button
+            onClick={() => handleStatut("confirme")}
+            disabled={isPending}
+            title="Confirmer le RDV"
+            className="w-9 h-9 rounded-full border-2 border-green-400 bg-green-50 flex items-center justify-center hover:bg-green-100 disabled:opacity-50 transition-all"
+          >
+            <span className="text-green-600 text-base font-bold">✓</span>
+          </button>
+        )}
+        {rdv.statut === "confirme" && (
+          <button
+            onClick={() => handleStatut("realise")}
+            disabled={isPending}
+            title="Marquer comme réalisé"
+            className="w-9 h-9 rounded-full border-2 border-blue-400 bg-blue-50 flex items-center justify-center hover:bg-blue-100 disabled:opacity-50 transition-all"
+          >
+            <span className="text-base">📅</span>
+          </button>
+        )}
+        {(rdv.statut === "realise" || rdv.statut === "annule") && (
+          <div
+            title={rdv.statut === "realise" ? "Réalisé" : "Annulé"}
+            className={`w-9 h-9 rounded-full border-2 flex items-center justify-center ${
+              rdv.statut === "realise"
+                ? "border-gray-300 bg-gray-50"
+                : "border-red-200 bg-red-50"
+            }`}
+          >
+            <span className={`text-sm font-bold ${
+              rdv.statut === "realise" ? "text-gray-400" : "text-red-300"
+            }`}>
+              {rdv.statut === "realise" ? "✓✓" : "✕"}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Contenu */}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-foreground">
           {formatRdvDate(rdv.date_rdv)}
@@ -71,34 +112,16 @@ function RdvRow({
         )}
       </div>
 
-      {/* Actions */}
+      {/* Bouton édition — droite uniquement */}
       {!isTermine && (
         <div className="flex gap-1.5 shrink-0">
-          <button onClick={() => onEdit(rdv)} disabled={isPending}
-            className="min-h-[44px] min-w-[44px] rounded-lg border border-border px-2 text-xs hover:bg-slate-50 disabled:opacity-50">
+          <button
+            onClick={() => onEdit(rdv)}
+            disabled={isPending}
+            className="min-h-[44px] min-w-[44px] rounded-lg border border-border px-2 text-xs hover:bg-slate-50 disabled:opacity-50"
+          >
             ✏️
           </button>
-
-          {rdv.statut === "planifie" && (
-            <button
-              onClick={() => handleStatut("confirme")}
-              disabled={isPending}
-              title="Confirmer le RDV"
-              className="min-h-[44px] min-w-[44px] rounded-lg border border-blue-200 bg-blue-50 px-2 text-xs text-blue-700 hover:bg-blue-100 disabled:opacity-50"
-            >
-              {isPending ? "…" : "📅"}
-            </button>
-          )}
-
-          <button
-            onClick={() => handleStatut("realise")}
-            disabled={isPending}
-            title="Marquer comme réalisé"
-            className="min-h-[44px] min-w-[44px] rounded-lg border border-green-200 bg-green-50 px-2 text-xs text-green-700 hover:bg-green-100 disabled:opacity-50"
-          >
-            {isPending ? "…" : "✓"}
-          </button>
-
           <button
             onClick={() => handleStatut("annule")}
             disabled={isPending}
@@ -109,6 +132,7 @@ function RdvRow({
           </button>
         </div>
       )}
+
     </div>
   );
 }
