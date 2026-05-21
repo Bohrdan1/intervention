@@ -204,17 +204,12 @@ export function DossierCard({ dossier }: { dossier: DossierRow }) {
                 <span className="text-green-600 text-xs font-bold">✓</span>
               </button>
             ) : dossier.prochainRdv.statut === "confirme" ? (
-              <button
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  await updateRdvStatut(dossier.prochainRdv!.id, "realise");
-                  router.refresh();
-                }}
-                title="Marquer comme réalisé"
-                className="w-6 h-6 rounded-full border-2 border-blue-400 bg-blue-50 flex items-center justify-center hover:bg-blue-100 transition-all shrink-0"
+              <div
+                className="w-6 h-6 rounded-full border-2 border-blue-400 bg-blue-50 flex items-center justify-center shrink-0"
+                title="RDV confirmé"
               >
-                <span className="text-base leading-none">📅</span>
-              </button>
+                <span className="text-blue-600 text-xs font-bold">✓</span>
+              </div>
             ) : null}
             <span className="text-xs text-muted">
               {formatRdvShort(dossier.prochainRdv.date_rdv)}
