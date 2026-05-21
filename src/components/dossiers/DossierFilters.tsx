@@ -7,7 +7,6 @@ import { DossierCard, type DossierRow } from "./DossierCard";
 
 type TypeFilter =
   | "all"
-  | "urgent"
   | "contrat"
   | "visite"
   | "maintenance"
@@ -16,11 +15,10 @@ type TypeFilter =
   | "intervention"
   | "autre";
 
-type StatutFilter = "all" | "ouvert" | "en_cours" | "en_attente" | "facture";
+type StatutFilter = "all" | "ouvert" | "en_cours" | "en_attente";
 
 const TYPE_LABELS: Record<TypeFilter, string> = {
   all:           "Tous",
-  urgent:        "Urgents",
   contrat:       "Contrats",
   visite:        "Visites",
   maintenance:   "Maintenance",
@@ -35,7 +33,6 @@ const STATUT_LABELS: Record<StatutFilter, string> = {
   ouvert:     "Ouvert",
   en_cours:   "En cours",
   en_attente: "En attente",
-  facture:    "Facturé",
 };
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -47,7 +44,7 @@ export function DossierFilters({ dossiers }: { dossiers: DossierRow[] }) {
 
   // Types present in this dataset (skip "all" guard), preserve order
   const typeOrder: TypeFilter[] = [
-    "urgent", "contrat", "visite", "maintenance",
+    "contrat", "visite", "maintenance",
     "installation", "remplacement", "intervention", "autre",
   ];
   const presentTypes = typeOrder.filter((t) =>
@@ -68,6 +65,11 @@ export function DossierFilters({ dossiers }: { dossiers: DossierRow[] }) {
   if (statutFilter !== "all") {
     filtered = filtered.filter((d) => d.statut === statutFilter);
   }
+
+  // Colonne droite — facturés en attente de règlement (toujours affichés)
+  const facturesColonne = dossiers.filter((d) => d.statut === "facture");
+  // Colonne gauche — résultat filtré sans les facturés
+  const filteredGauche = filtered.filter((d) => d.statut !== "facture");
 
   // Stats for display
   const nbActifs = dossiers.filter(
@@ -111,16 +113,14 @@ export function DossierFilters({ dossiers }: { dossiers: DossierRow[] }) {
 
       {/* ── Filtres statut + toggle terminés ──────────────────────────── */}
       <div className="mb-4 flex items-center gap-2 flex-wrap">
-        {(["all", "ouvert", "en_cours", "en_attente", "facture"] as StatutFilter[]).map(
+        {(["all", "ouvert", "en_cours", "en_attente"] as StatutFilter[]).map(
           (s) => (
             <button
               key={s}
               onClick={() => setStatutFilter(s)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
                 statutFilter === s
-                  ? s === "facture"
-                    ? "bg-blue-600 text-white"
-                    : "bg-primary text-white"
+                  ? "bg-primary text-white"
                   : "border border-border bg-white text-muted hover:bg-slate-50"
               }`}
             >
@@ -148,8 +148,8 @@ export function DossierFilters({ dossiers }: { dossiers: DossierRow[] }) {
       {/* ── Compteur ──────────────────────────────────────────────────── */}
       {(typeFilter !== "all" || statutFilter !== "all" || showTermine) && (
         <p className="text-xs text-muted mb-3">
-          {filtered.length} dossier{filtered.length !== 1 ? "s" : ""}
-          {!showTermine && ` actif${filtered.length !== 1 ? "s" : ""}`}
+          {filteredGauche.length} dossier{filteredGauche.length !== 1 ? "s" : ""}
+          {!showTermine && ` actif${filteredGauche.length !== 1 ? "s" : ""}`}
           {typeFilter !== "all" && ` · ${TYPE_LABELS[typeFilter]}`}
           {statutFilter !== "all" && ` · ${STATUT_LABELS[statutFilter]}`}
         </p>
@@ -160,18 +160,38 @@ export function DossierFilters({ dossiers }: { dossiers: DossierRow[] }) {
         </p>
       )}
 
-      {/* ── Liste ─────────────────────────────────────────────────────── */}
-      {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-8 text-center">
-          <p className="text-sm text-muted">Aucun dossier pour ce filtre.</p>
+      {/* ── Deux colonnes ─────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start">
+
+        {/* Colonne gauche — dossiers actifs filtrés hors facturés */}
+        <div className="flex-1 min-w-0 space-y-3">
+          {filteredGauche.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border p-8 text-center">
+              <p className="text-sm text-muted">Aucun dossier pour ce filtre.</p>
+            </div>
+          ) : (
+            filteredGauche.map((d) => <DossierCard key={d.id} dossier={d} />)
+          )}
         </div>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {filtered.map((d) => (
-            <DossierCard key={d.id} dossier={d} />
-          ))}
-        </div>
-      )}
+
+        {/* Colonne droite — facturés en attente de règlement */}
+        {facturesColonne.length > 0 && (
+          <div className="w-full sm:w-72 shrink-0 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wide text-blue-700">
+                💰 En attente de règlement
+              </span>
+              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                {facturesColonne.length}
+              </span>
+            </div>
+            {facturesColonne.map((d) => (
+              <DossierCard key={d.id} dossier={d} />
+            ))}
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }
