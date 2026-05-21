@@ -16,6 +16,7 @@ export type DossierRow = {
   montant_total_ht: number | null;
   facture_statut?: string;
   offert: boolean;
+  is_urgent: boolean;
   client: { id: string; nom: string } | null;
   site: { nom: string } | null;
   rapports: { id: string }[];
@@ -92,6 +93,11 @@ export function DossierCard({ dossier }: { dossier: DossierRow }) {
       {/* Badges + référence */}
       <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
         <div className="flex items-center gap-2 flex-wrap">
+          {dossier.is_urgent && (
+            <span className="rounded-full px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-800">
+              ⚡ Urgent
+            </span>
+          )}
           <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${typeCfg.badge}`}>
             {typeCfg.label}
           </span>

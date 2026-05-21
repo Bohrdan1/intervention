@@ -20,13 +20,12 @@ const NOUVEAU_CLIENT = "__nouveau_client__";
 const NOUVEAU_SITE = "__nouveau_site__";
 
 const TYPES_DOSSIER = [
-  { value: "contrat",       label: "Contrat de maintenance" },
-  { value: "urgent",        label: "Urgent" },
-  { value: "intervention",  label: "Intervention" },
-  { value: "installation",  label: "Installation" },
-  { value: "remplacement",  label: "Remplacement" },
-  { value: "visite",        label: "Visite technique" },
-  { value: "autre",         label: "Autre" },
+  { value: "contrat",      label: "Contrat de maintenance" },
+  { value: "intervention", label: "Intervention" },
+  { value: "installation", label: "Installation" },
+  { value: "remplacement", label: "Remplacement" },
+  { value: "visite",       label: "Visite technique" },
+  { value: "autre",        label: "Autre" },
 ] as const;
 
 // ── Classes CSS communes ───────────────────────────────────────────────────
@@ -44,7 +43,8 @@ const selectCls =
 
 export function NouveauDossierForm({ clients, preselectedClientId }: Props) {
   // ── État du formulaire ──────────────────────────────────────────────────
-  const [typeDossier, setTypeDossier] = useState("contrat");
+  const [typeDossier, setTypeDossier] = useState("intervention");
+  const [isUrgent, setIsUrgent] = useState(false);
   const [titre, setTitre] = useState("");
   const [description, setDescription] = useState("");
 
@@ -123,6 +123,7 @@ export function NouveauDossierForm({ clients, preselectedClientId }: Props) {
     // Construire FormData
     const fd = new FormData();
     fd.set("type_dossier", typeDossier);
+    fd.set("is_urgent", isUrgent ? "true" : "false");
     fd.set("titre", titre.trim());
     fd.set("description", description.trim());
 
@@ -170,6 +171,28 @@ export function NouveauDossierForm({ clients, preselectedClientId }: Props) {
             </option>
           ))}
         </select>
+      </div>
+
+      {/* ── Urgent ───────────────────────────────────────────────────── */}
+      <div
+        onClick={() => setIsUrgent((v) => !v)}
+        className={`flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer transition-all ${
+          isUrgent
+            ? "border-red-300 bg-red-50"
+            : "border-border hover:bg-slate-50"
+        }`}
+      >
+        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-all ${
+          isUrgent ? "border-red-500 bg-red-500" : "border-border"
+        }`}>
+          {isUrgent && <span className="text-white text-xs font-bold">✓</span>}
+        </div>
+        <div>
+          <p className={`text-sm font-semibold ${isUrgent ? "text-red-700" : "text-foreground"}`}>
+            ⚡ Urgent
+          </p>
+          <p className="text-xs text-muted">Intervention prioritaire à traiter en urgence</p>
+        </div>
       </div>
 
       {/* ── Titre ────────────────────────────────────────────────────── */}

@@ -86,6 +86,7 @@ export async function createDossier(
   // ── 3. Créer le dossier ────────────────────────────────────────────────
   const reference = await nextReference(supabase);
   const type_dossier = (formData.get("type_dossier") as string) || "autre";
+  const is_urgent = formData.get("is_urgent") === "true";
   const titre = ((formData.get("titre") as string) || "").trim() || null;
   const description =
     ((formData.get("description") as string) || "").trim() || null;
@@ -95,6 +96,7 @@ export async function createDossier(
     .insert({
       reference,
       type_dossier,
+      is_urgent,
       client_id,
       site_id,
       titre,
