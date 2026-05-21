@@ -121,7 +121,12 @@ export function DossierCard({ dossier }: { dossier: DossierRow }) {
             {statutCfg.label}
           </span>
         </div>
-        <span className="text-xs text-muted shrink-0">{dossier.reference}</span>
+        <div className="flex flex-col items-end shrink-0">
+          <span className="text-xs text-muted">{dossier.reference}</span>
+          <span className="text-xs text-muted/60">
+            {formatDate(dossier.date_ouverture)}
+          </span>
+        </div>
       </div>
 
       {/* Titre */}
@@ -150,9 +155,6 @@ export function DossierCard({ dossier }: { dossier: DossierRow }) {
       {/* Footer */}
       <div className="mt-2 pt-2 border-t border-border/50">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted">
-            Ouvert le {formatDate(dossier.date_ouverture)}
-          </p>
           <div className="flex items-center gap-2 flex-wrap justify-end">
           {/* Badges facturation */}
           {dossier.offert && (
