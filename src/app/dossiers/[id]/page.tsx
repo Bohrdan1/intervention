@@ -9,6 +9,7 @@ import { DeleteDossierButton } from "@/components/dossiers/DeleteDossierButton";
 import { AjouterRapportButton } from "@/components/dossiers/AjouterRapportButton";
 import type { RapportChoix } from "@/components/dossiers/AjouterRapportModal";
 import { DossierStatutActions } from "./statut-actions";
+import { DossierEditInline } from "./dossier-edit-inline";
 
 // ── Config ─────────────────────────────────────────────────────────────────
 
@@ -323,6 +324,14 @@ export default async function DossierDetailPage({
               </div>
             )}
           </dl>
+          <div className="mt-3 border-t border-border/50 pt-3">
+            <DossierEditInline
+              dossierId={dossier.id}
+              titre={dossier.titre}
+              typeDossier={dossier.type_dossier}
+              description={dossier.description}
+            />
+          </div>
         </div>
       </div>
 

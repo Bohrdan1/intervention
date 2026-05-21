@@ -205,6 +205,22 @@ export async function setDossierReouvert(dossierId: string): Promise<void> {
   revalidatePath("/");
 }
 
+// ── Mise à jour titre / type / description ────────────────────────────────
+
+export async function updateDossier(dossierId: string, fd: FormData): Promise<void> {
+  const supabase = await createClient();
+  await supabase
+    .from("dossiers")
+    .update({
+      type_dossier: fd.get("type_dossier") as string,
+      titre: (fd.get("titre") as string) || null,
+      description: (fd.get("description") as string) || null,
+    })
+    .eq("id", dossierId);
+  revalidatePath(`/dossiers/${dossierId}`);
+  revalidatePath("/");
+}
+
 // ── Suppression d'un dossier ───────────────────────────────────────────────
 
 export async function deleteDossier(id: string): Promise<void> {
