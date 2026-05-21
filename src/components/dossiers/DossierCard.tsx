@@ -17,6 +17,11 @@ export type DossierRow = {
   facture_statut?: string;
   offert: boolean;
   is_urgent: boolean;
+  prochainRdv: {
+    date_rdv: string;
+    type_rdv: string;
+    statut: string;
+  } | null;
   client: { id: string; nom: string } | null;
   site: { nom: string } | null;
   rapports: { id: string }[];
@@ -68,6 +73,15 @@ function formatDate(dateStr: string): string {
   const parts = dateStr.split("T")[0].split("-");
   if (parts.length < 3) return dateStr;
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+function formatRdvShort(dateIso: string): string {
+  const NC_OFFSET_MS = 11 * 60 * 60 * 1000;
+  const d = new Date(new Date(dateIso).getTime() + NC_OFFSET_MS);
+  const jours = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+  const mois = ["jan", "fév", "mar", "avr", "mai", "jun", "jul", "aoû", "sep", "oct", "nov", "déc"];
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${jours[d.getUTCDay()]} ${d.getUTCDate()} ${mois[d.getUTCMonth()]} · ${pad(d.getUTCHours())}h${pad(d.getUTCMinutes())}`;
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -132,11 +146,12 @@ export function DossierCard({ dossier }: { dossier: DossierRow }) {
       </p>
 
       {/* Footer */}
-      <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50">
-        <p className="text-xs text-muted">
-          Ouvert le {formatDate(dossier.date_ouverture)}
-        </p>
-        <div className="flex items-center gap-2 flex-wrap justify-end">
+      <div className="mt-2 pt-2 border-t border-border/50">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted">
+            Ouvert le {formatDate(dossier.date_ouverture)}
+          </p>
+          <div className="flex items-center gap-2 flex-wrap justify-end">
           {/* Badges facturation */}
           {dossier.offert && (
             <span className="rounded-full px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700">
@@ -168,7 +183,22 @@ export function DossierCard({ dossier }: { dossier: DossierRow }) {
               {dossier.montant_total_ht.toLocaleString("fr-FR")} CFP
             </span>
           )}
+          </div>
         </div>
+        {dossier.prochainRdv ? (
+          <p className="text-xs text-muted mt-1 flex items-center gap-1">
+            <span>📅</span>
+            <span>{formatRdvShort(dossier.prochainRdv.date_rdv)}</span>
+            {dossier.prochainRdv.statut === "confirme" && (
+              <span className="rounded-full bg-blue-100 text-blue-700 px-1.5 py-0.5 text-[10px] font-medium">Confirmé</span>
+            )}
+          </p>
+        ) : (
+          <p className="text-xs text-muted/50 mt-1 flex items-center gap-1">
+            <span>📅</span>
+            <span>Aucun RDV</span>
+          </p>
+        )}
       </div>
     </div>
   );

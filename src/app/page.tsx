@@ -74,6 +74,7 @@ export default async function DossiersDashboard() {
       facture_statut: raw.facture_statut ?? "non_facture",
       offert: raw.offert ?? false,
       is_urgent: raw.is_urgent ?? false,
+      prochainRdv: prochainRdvParDossier[raw.id] ?? null,
       client: Array.isArray(raw.client) ? (raw.client[0] ?? null) : raw.client,
       site: Array.isArray(raw.site) ? (raw.site[0] ?? null) : raw.site,
       rapports: Array.isArray(raw.rapports) ? raw.rapports : [],
@@ -129,6 +130,30 @@ export default async function DossiersDashboard() {
       client,
     };
   });
+
+  // ── Prochain RDV par dossier ────────────────────────────────────────────
+  const { data: rawRdvs } = await supabase
+    .from("rdvs")
+    .select("id, dossier_id, date_rdv, type_rdv, statut")
+    .not("statut", "in", '("realise","annule")')
+    .order("date_rdv", { ascending: true });
+
+  const prochainRdvParDossier: Record<string, {
+    date_rdv: string;
+    type_rdv: string;
+    statut: string;
+  }> = {};
+
+  for (const rdv of rawRdvs ?? []) {
+    const r = rdv as { id: string; dossier_id: string | null; date_rdv: string; type_rdv: string; statut: string };
+    if (r.dossier_id && !prochainRdvParDossier[r.dossier_id]) {
+      prochainRdvParDossier[r.dossier_id] = {
+        date_rdv: r.date_rdv,
+        type_rdv: r.type_rdv,
+        statut: r.statut,
+      };
+    }
+  }
 
   // ── Stats dossiers ───────────────────────────────────────────────────────
   const actifs = dossiers.filter(
