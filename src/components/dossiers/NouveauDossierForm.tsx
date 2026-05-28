@@ -25,6 +25,7 @@ const TYPES_DOSSIER = [
   { value: "installation", label: "Installation" },
   { value: "remplacement", label: "Remplacement" },
   { value: "visite",       label: "Visite technique" },
+  { value: "maintenance",  label: "Maintenance" },
   { value: "autre",        label: "Autre" },
 ] as const;
 
