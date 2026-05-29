@@ -428,7 +428,7 @@ export const DEFAULT_POINTS_ERP: PointERP[] = [
 
 export const DEFAULT_CONSTAT: ConstatItem[] = [
   { label: 'Structure', texte: 'En bon état, aucune déformation majeure, pas de corrosion. Habillages et fixations correctes.', conforme: true },
-  { label: 'Rails', texte: "Nettoyés, pas d'usure excessive ni rayure profonde.", conforme: true },
+  { label: 'Guidage au sol', texte: "Nettoyés, pas d'usure excessive ni rayure profonde.", conforme: true },
   { label: 'Motorisation', texte: 'Fonctionnement fluide, pas de vibrations ou bruit anormal. Courroies et câbles en bon état.', conforme: true },
   { label: 'Détection / Sécurité', texte: "Capteurs réactifs, systèmes d'inversion et ralentissement conformes.", conforme: true },
   { label: 'Verrouillage', texte: 'Fonctionnement normal des serrures et loquets, aucune difficulté.', conforme: true },
