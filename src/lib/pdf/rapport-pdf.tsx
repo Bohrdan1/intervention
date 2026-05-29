@@ -532,9 +532,18 @@ function PageConstat({
           </Text>
         );
       })()}
-      <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 8 }}>
-        Toute observation particuliere a ete mentionnee dans les fiches individuelles ci-dessus.
-      </Text>
+      {(() => {
+        const toutConforme =
+          rapport.constat_general.every((item) => item.conforme) &&
+          rapport.controles.every((c) => c.points_erp.every((p) => p.conforme));
+        return (
+          <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 8 }}>
+            {toutConforme
+              ? "Toute observation particuliere a ete mentionnee dans les fiches individuelles ci-dessus."
+              : "Un devis de remise en conformite sera etabli sur demande."}
+          </Text>
+        );
+      })()}
       <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 8 }}>
         Je confirme que les informations ci-dessus sont exactes et etablies en toute bonne foi:
       </Text>
