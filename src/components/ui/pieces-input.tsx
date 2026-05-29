@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 
 export interface PieceUtilisee {
   nom: string;
@@ -26,24 +26,24 @@ interface Props {
 
 export function PiecesInput({ pieces, catalogue, onChange }: Props) {
   const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<PieceCatalogue[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
 
-  // Filtrer le catalogue selon la saisie
-  useEffect(() => {
+  // Suggestions dérivées de la saisie (pas d'état à synchroniser)
+  const suggestions = useMemo(() => {
     if (!query.trim()) {
       // Sans query : afficher les plus fréquentes
-      setSuggestions(catalogue.slice(0, 6));
-    } else {
-      const q = query.toLowerCase();
-      const matches = catalogue.filter((p) =>
-        p.nom.toLowerCase().includes(q) ||
-        (p.reference ?? "").toLowerCase().includes(q)
-      ).slice(0, 8);
-      setSuggestions(matches);
+      return catalogue.slice(0, 6);
     }
+    const q = query.toLowerCase();
+    return catalogue
+      .filter(
+        (p) =>
+          p.nom.toLowerCase().includes(q) ||
+          (p.reference ?? "").toLowerCase().includes(q)
+      )
+      .slice(0, 8);
   }, [query, catalogue]);
 
   // Fermer le dropdown si clic en dehors

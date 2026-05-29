@@ -27,20 +27,13 @@ export async function getCatalogues(): Promise<PieceCatalogue[]> {
 export async function incrementerUsages(noms: string[]): Promise<void> {
   if (noms.length === 0) return;
   const supabase = await createClient();
-  // Incrémenter les pièces existantes
-  for (const nom of noms) {
-    await supabase.rpc("increment_piece_usage", { p_nom: nom }).then(async () => {
-      // Si la pièce n'existe pas encore dans le catalogue, l'ajouter automatiquement
-      const { data } = await supabase
-        .from("catalogue_pieces")
-        .select("id")
-        .eq("nom", nom)
-        .maybeSingle();
-      if (!data) {
-        await supabase.from("catalogue_pieces").insert({ nom, nb_utilisations: 1 });
-      }
-    });
-  }
+  // La fonction SQL incrémente la pièce ou la crée si elle n'existe pas (atomique)
+  await Promise.all(
+    noms.map(async (nom) => {
+      const { error } = await supabase.rpc("increment_piece_usage", { p_nom: nom });
+      if (error) console.error("Erreur incrementerUsages:", error);
+    })
+  );
 }
 
 /** Ajoute ou met à jour une pièce dans le catalogue */

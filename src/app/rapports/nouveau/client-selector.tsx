@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 interface Equipement {
   id: string;
@@ -132,9 +133,9 @@ export function ClientSiteSelectorClient({ clients }: { clients: Client[] }) {
           {sites.length === 0 ? (
             <p className="text-sm text-muted">
               Aucun site pour ce client.{" "}
-              <a href="/clients" className="text-primary underline">
+              <Link href="/clients" className="text-primary underline">
                 Ajouter un site
-              </a>
+              </Link>
             </p>
           ) : (
             <select
@@ -164,9 +165,9 @@ export function ClientSiteSelectorClient({ clients }: { clients: Client[] }) {
           {installations.length === 0 ? (
             <p className="text-sm text-muted">
               Aucune porte enregistrée.{" "}
-              <a href="/clients" className="text-primary underline">
+              <Link href="/clients" className="text-primary underline">
                 Ajouter des portes
-              </a>
+              </Link>
             </p>
           ) : (
             <div className="space-y-2">

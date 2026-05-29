@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import Link from "next/link";
 import { DEFAULT_POINTS_CONTROLE, DEFAULT_POINTS_ERP, DEFAULT_CONSTAT } from "@/lib/types";
 import { ClientSiteSelectorClient } from "./client-selector";
 
@@ -149,12 +150,12 @@ export default async function NouveauRapportPage({
           <p className="text-sm text-muted mb-4">
             Vous devez d&apos;abord créer un client et ses installations.
           </p>
-          <a
+          <Link
             href="/clients"
             className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-light"
           >
             Créer un client
-          </a>
+          </Link>
         </div>
       ) : (
         <form action={creerRapport} className="space-y-6">

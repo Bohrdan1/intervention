@@ -46,10 +46,12 @@ export function RattacherDossierModal({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  // Reset selection quand le modal s'ouvre
-  useEffect(() => {
+  // Reset selection quand le modal s'ouvre (ajustement d'état pendant le rendu)
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) setSelectedId(currentDossierId ?? "");
-  }, [open, currentDossierId]);
+  }
 
   // Escape pour fermer
   useEffect(() => {

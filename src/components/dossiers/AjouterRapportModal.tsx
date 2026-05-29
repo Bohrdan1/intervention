@@ -41,10 +41,12 @@ export function AjouterRapportModal({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  // Reset quand le modal s'ouvre
-  useEffect(() => {
+  // Reset quand le modal s'ouvre (ajustement d'état pendant le rendu)
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) setSelectedId("");
-  }, [open]);
+  }
 
   // Escape pour fermer
   useEffect(() => {

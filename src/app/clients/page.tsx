@@ -7,7 +7,7 @@ import { TypePorteSelect } from "./type-porte-select";
 import { InstallationEditItem } from "./installation-edit-item";
 import { SiteEditItem } from "./site-edit-item";
 import { ClientEditHeader } from "./client-edit-header";
-import { DEFAULT_POINTS_CONTROLE, DEFAULT_POINTS_ERP, DEFAULT_CONSTAT, type Installation } from "@/lib/types";
+import { DEFAULT_POINTS_CONTROLE, DEFAULT_POINTS_ERP, DEFAULT_CONSTAT } from "@/lib/types";
 
 const TYPE_BADGE: Record<string, { label: string; cls: string }> = {
   prospect: { label: "Prospect", cls: "bg-orange-100 text-orange-700" },

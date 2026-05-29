@@ -84,35 +84,47 @@ export async function createDossier(
   }
 
   // ── 3. Créer le dossier ────────────────────────────────────────────────
-  const reference = await nextReference(supabase);
   const type_dossier = (formData.get("type_dossier") as string) || "autre";
   const is_urgent = formData.get("is_urgent") === "true";
   const titre = ((formData.get("titre") as string) || "").trim() || null;
   const description =
     ((formData.get("description") as string) || "").trim() || null;
 
-  const { data: dossier, error: errDossier } = await supabase
-    .from("dossiers")
-    .insert({
-      reference,
-      type_dossier,
-      is_urgent,
-      client_id,
-      site_id,
-      titre,
-      description,
-      statut: "ouvert",
-      date_ouverture: new Date().toISOString().split("T")[0],
-    })
-    .select("id")
-    .single();
+  // La référence est calculée côté app : en cas de collision (contrainte unique,
+  // code 23505) on recalcule et on réessaie.
+  let dossierId: string | null = null;
+  for (let attempt = 0; attempt < 5 && !dossierId; attempt++) {
+    const reference = await nextReference(supabase);
+    const { data: dossier, error: errDossier } = await supabase
+      .from("dossiers")
+      .insert({
+        reference,
+        type_dossier,
+        is_urgent,
+        client_id,
+        site_id,
+        titre,
+        description,
+        statut: "ouvert",
+        date_ouverture: new Date().toISOString().split("T")[0],
+      })
+      .select("id")
+      .single();
 
-  if (errDossier || !dossier) {
+    if (dossier) {
+      dossierId = dossier.id;
+    } else if (errDossier?.code !== "23505") {
+      // Erreur autre qu'une collision de référence : on abandonne
+      return { ok: false, error: "Impossible de créer le dossier." };
+    }
+  }
+
+  if (!dossierId) {
     return { ok: false, error: "Impossible de créer le dossier." };
   }
 
   revalidatePath("/");
-  return { ok: true, dossierId: dossier.id };
+  return { ok: true, dossierId };
 }
 
 // ── Mise à jour facturation ───────────────────────────────────────────────
