@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { LigneDevis, StatutDevis, TypeLigne, StatutFournisseur } from '@/lib/types';
 import {
@@ -51,7 +50,6 @@ const TYPE_COLORS: Record<TypeLigne, string> = {
 };
 
 export function DevisClient({ rapport }: { rapport: Rapport }) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const [lignes, setLignes] = useState<LigneDevis[]>(
@@ -132,8 +130,6 @@ export function DevisClient({ rapport }: { rapport: Rapport }) {
       setTimeout(() => setSaved(false), 2000);
     });
   }
-
-  const ligne = editingId ? lignes.find((l) => l.id === editingId) : null;
 
   return (
     <div className="pb-24">

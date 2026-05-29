@@ -20,11 +20,6 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [validating, setValidating] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const canvasClientRef = useRef<HTMLCanvasElement>(null);
-  const isDrawing = useRef(false);
-  const activeCanvas = useRef<"tech" | "client">("tech");
-  
   // Modal signature plein écran
   const [sigModal, setSigModal] = useState<"tech" | "client" | null>(null);
   const canvasModalRef = useRef<HTMLCanvasElement>(null);
@@ -63,65 +58,6 @@ export function FinaliserClient({ rapport }: { rapport: RapportComplet }) {
     // Remplir le fond en blanc pour éviter le fond noir en export
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
-
-  function startDrawingTech(e: React.TouchEvent | React.MouseEvent) {
-    activeCanvas.current = "tech";
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    isDrawing.current = true;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    // Fond blanc si canvas vierge (pas encore de signature)
-    if (!signatureData) initCanvasBackground(canvas, ctx);
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    const { x, y } = getCanvasCoords(e, canvas);
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-  }
-
-  function startDrawingClient(e: React.TouchEvent | React.MouseEvent) {
-    activeCanvas.current = "client";
-    const canvas = canvasClientRef.current;
-    if (!canvas) return;
-    isDrawing.current = true;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    // Fond blanc si canvas vierge (pas encore de signature)
-    if (!signatureClient) initCanvasBackground(canvas, ctx);
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    const { x, y } = getCanvasCoords(e, canvas);
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-  }
-
-  function draw(e: React.TouchEvent | React.MouseEvent) {
-    if (!isDrawing.current) return;
-    const canvas = activeCanvas.current === "tech" ? canvasRef.current : canvasClientRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const { x, y } = getCanvasCoords(e, canvas);
-    ctx.lineTo(x, y);
-    ctx.stroke();
-  }
-
-  function stopDrawing() {
-    if (!isDrawing.current) return;
-    isDrawing.current = false;
-    if (activeCanvas.current === "tech") {
-      const canvas = canvasRef.current;
-      if (canvas) setSignatureData(canvas.toDataURL("image/png"));
-    } else {
-      const canvas = canvasClientRef.current;
-      if (canvas) setSignatureClient(canvas.toDataURL("image/png"));
-    }
   }
 
   function clearSignature() {

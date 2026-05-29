@@ -123,7 +123,6 @@ export default async function HistoriqueEquipementPage({
   const timeline: EvenementTimeline[] = [];
 
   for (const c of controles ?? []) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const r = (Array.isArray(c.rapport) ? c.rapport[0] : c.rapport) as RapportBase | undefined;
     if (!r) continue;
     timeline.push({ type: "maintenance", date: r.date_intervention, rapport: r, controle: c as unknown as ControleAvecRapport });

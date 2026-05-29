@@ -108,22 +108,6 @@ export function InterventionClient({
     }
   }
 
-  function addPiece() {
-    setPieces([...pieces, { nom: "", quantite: 1, reference: "" }]);
-  }
-
-  function removePiece(index: number) {
-    setPieces(pieces.filter((_, i) => i !== index));
-  }
-
-  function updatePiece(index: number, field: keyof PieceUtilisee, value: string | number) {
-    setPieces((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
-      return next;
-    });
-  }
-
   const autoSave = useCallback(async () => {
     setAutoSaveStatus("saving");
     try {

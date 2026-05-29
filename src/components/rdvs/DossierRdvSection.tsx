@@ -24,11 +24,9 @@ type Props = {
 
 function RdvRow({
   rdv,
-  lockedDossier,
   onEdit,
 }: {
   rdv: RdvSimple;
-  lockedDossier: DossierOption;
   onEdit: (rdv: RdvSimple) => void;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -139,7 +137,7 @@ function RdvRow({
 
 // ── Section principale ─────────────────────────────────────────────────────
 
-export function DossierRdvSection({ dossierId, lockedDossier, rdvs }: Props) {
+export function DossierRdvSection({ lockedDossier, rdvs }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
   const [editRdv, setEditRdv] = useState<RdvSimple | null>(null);
 
@@ -182,7 +180,6 @@ export function DossierRdvSection({ dossierId, lockedDossier, rdvs }: Props) {
             <RdvRow
               key={rdv.id}
               rdv={rdv}
-              lockedDossier={lockedDossier}
               onEdit={(r) => setEditRdv(r)}
             />
           ))}
@@ -198,7 +195,6 @@ export function DossierRdvSection({ dossierId, lockedDossier, rdvs }: Props) {
                   <RdvRow
                     key={rdv.id}
                     rdv={rdv}
-                    lockedDossier={lockedDossier}
                     onEdit={(r) => setEditRdv(r)}
                   />
                 ))}

@@ -32,7 +32,6 @@ export async function GET(
   }
 
   // Mapper equipement_id → installation_id pour compatibilité PDF (photo context)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rapportComplet = {
     ...rapport,
     controles: (rapport.controles || []).map((c: Record<string, unknown>) => ({
@@ -47,7 +46,6 @@ export async function GET(
 
   const [year, month, day] = rapport.date_intervention.split('T')[0].split('-');
   const dateStr = `${parseInt(day)}-${parseInt(month)}-${year}`;
-  const numero = rapport.numero_cm.replace(/\s/g, '_').replace(/\//g, '-');
   const siteName = (rapport.site as { nom: string })?.nom || '';
   const cleanSite = siteName.replace(/[^a-zA-Z0-9àâäéèêëïîôùûüçÀÂÄÉÈÊËÏÎÔÙÛÜÇ -]/g, '').replace(/\s+/g, '_');
   const prefix =

@@ -47,7 +47,6 @@ export function ExportClient({
   finMois,
   premierRapport,
   dernierRapport,
-  nbFinalise,
 }: Props) {
   const [from, setFrom] = useState(debutMois);
   const [to, setTo] = useState(finMois);
