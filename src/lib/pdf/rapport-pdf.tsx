@@ -501,7 +501,7 @@ function PageConstat({
 
       {/* Intro */}
       <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 20 }}>
-        A l&apos;issue de cette visite, et sauf indication contraire, il a ete constate que :
+        A l&apos;issue de cette visite, il a ete constate que :
       </Text>
 
       {/* Items */}
