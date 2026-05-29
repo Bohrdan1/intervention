@@ -2,6 +2,13 @@
 
 import { createAdminClient } from "@/lib/supabase/server";
 
+// rapportId construit le chemin de stockage : on le restreint aux identifiants
+// simples (UUID / alphanumérique) pour éviter toute traversée de répertoire,
+// le client admin (service_role) contournant RLS.
+function isSafeId(id: string): boolean {
+  return /^[a-zA-Z0-9_-]+$/.test(id);
+}
+
 /**
  * Upload une signature (canvas data URL) vers Supabase Storage
  * Convertit base64 en blob et l'uploade comme image PNG
@@ -13,6 +20,10 @@ export async function uploadSignature(
 ): Promise<{ success: boolean; url?: string; error?: string }> {
   try {
     // Extraire les données base64
+    if (!isSafeId(rapportId)) {
+      return { success: false, error: "Identifiant de rapport invalide" };
+    }
+
     const matches = dataUrl.match(/^data:image\/(png|jpeg|jpg);base64,(.+)$/);
     if (!matches) {
       return { success: false, error: "Format de signature invalide" };
@@ -57,6 +68,9 @@ export async function deleteSignature(
   type: 'technicien' | 'client'
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    if (!isSafeId(rapportId)) {
+      return { success: false, error: "Identifiant de rapport invalide" };
+    }
     const path = `${rapportId}/${type}.png`;
     const supabase = createAdminClient();
     

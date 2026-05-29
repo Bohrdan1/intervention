@@ -151,11 +151,13 @@ async function autoStatut(
       .eq("dossier_id", dossierId);
     newStatut = (count ?? 0) > 0 ? "en_cours" : "ouvert";
   }
-  if (newStatut !== data.statut)
-    await supabase
+  if (newStatut !== data.statut) {
+    const { error } = await supabase
       .from("dossiers")
       .update({ statut: newStatut })
       .eq("id", dossierId);
+    if (error) console.error("Erreur autoStatut:", error);
+  }
 }
 
 export async function updateFacturation(
@@ -163,7 +165,8 @@ export async function updateFacturation(
   data: FacturationData
 ): Promise<void> {
   const supabase = await createClient();
-  await supabase.from("dossiers").update(data).eq("id", dossierId);
+  const { error } = await supabase.from("dossiers").update(data).eq("id", dossierId);
+  if (error) console.error("Erreur updateFacturation:", error);
   await autoStatut(supabase, dossierId);
   revalidatePath(`/dossiers/${dossierId}`);
   revalidatePath("/finances");
@@ -177,30 +180,33 @@ export async function setDossierEnAttente(
   note: string | null
 ): Promise<void> {
   const supabase = await createClient();
-  await supabase
+  const { error } = await supabase
     .from("dossiers")
     .update({ statut: "en_attente", note_attente: note })
     .eq("id", dossierId);
+  if (error) console.error("Erreur setDossierEnAttente:", error);
   revalidatePath(`/dossiers/${dossierId}`);
   revalidatePath("/");
 }
 
 export async function setDossierAnnule(dossierId: string): Promise<void> {
   const supabase = await createClient();
-  await supabase
+  const { error } = await supabase
     .from("dossiers")
     .update({ statut: "annule" })
     .eq("id", dossierId);
+  if (error) console.error("Erreur setDossierAnnule:", error);
   revalidatePath(`/dossiers/${dossierId}`);
   revalidatePath("/");
 }
 
 export async function setDossierReouvert(dossierId: string): Promise<void> {
   const supabase = await createClient();
-  await supabase
+  const { error } = await supabase
     .from("dossiers")
     .update({ statut: "en_cours", note_attente: null })
     .eq("id", dossierId);
+  if (error) console.error("Erreur setDossierReouvert:", error);
   revalidatePath(`/dossiers/${dossierId}`);
   revalidatePath("/");
 }
@@ -209,7 +215,7 @@ export async function setDossierReouvert(dossierId: string): Promise<void> {
 
 export async function updateDossier(dossierId: string, fd: FormData): Promise<void> {
   const supabase = await createClient();
-  await supabase
+  const { error } = await supabase
     .from("dossiers")
     .update({
       type_dossier: fd.get("type_dossier") as string,
@@ -217,6 +223,7 @@ export async function updateDossier(dossierId: string, fd: FormData): Promise<vo
       description: (fd.get("description") as string) || null,
     })
     .eq("id", dossierId);
+  if (error) console.error("Erreur updateDossier:", error);
   revalidatePath(`/dossiers/${dossierId}`);
   revalidatePath("/");
 }
@@ -228,10 +235,11 @@ export async function toggleDossierUrgent(
   isUrgent: boolean
 ): Promise<void> {
   const supabase = await createClient();
-  await supabase
+  const { error } = await supabase
     .from("dossiers")
     .update({ is_urgent: isUrgent })
     .eq("id", dossierId);
+  if (error) console.error("Erreur toggleDossierUrgent:", error);
   revalidatePath(`/dossiers/${dossierId}`);
   revalidatePath("/");
 }
@@ -242,16 +250,19 @@ export async function deleteDossier(id: string): Promise<void> {
   const supabase = await createClient();
 
   // 1. Détacher les rapports (conservés, mais plus liés au dossier)
-  await supabase
+  const { error: errDetach } = await supabase
     .from("rapports")
     .update({ dossier_id: null })
     .eq("dossier_id", id);
+  if (errDetach) console.error("Erreur deleteDossier (détacher rapports):", errDetach);
 
   // 2. Supprimer les RDV du dossier
-  await supabase.from("rdvs").delete().eq("dossier_id", id);
+  const { error: errRdvs } = await supabase.from("rdvs").delete().eq("dossier_id", id);
+  if (errRdvs) console.error("Erreur deleteDossier (suppression RDV):", errRdvs);
 
   // 3. Supprimer le dossier lui-même
-  await supabase.from("dossiers").delete().eq("id", id);
+  const { error: errDossier } = await supabase.from("dossiers").delete().eq("id", id);
+  if (errDossier) console.error("Erreur deleteDossier:", errDossier);
 
   revalidatePath("/");
   redirect("/");

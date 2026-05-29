@@ -73,7 +73,7 @@ Ne pas recréer la table installations.
 
 **clients.type :** `prospect` | `actif` | `inactif`
 **dossiers.type :** `urgent` | `contrat` | `visite`
-**dossiers.statut :** `ouvert` | `en_cours` | `en_attente` | `termine` | `annule`
+**dossiers.statut :** `ouvert` | `en_cours` | `en_attente` | `facture` | `termine` | `annule`
 **rapports.type_rapport :** `maintenance` | `intervention` | `visite`
 **rapports.statut :** `brouillon` | `finalise`
 **rapports.statut_devis :** `brouillon` | `envoye` | `accepte` | `refuse`
@@ -308,11 +308,12 @@ src/lib/
 
 ## Travaux ponctuels ouverts
 
-- /installations/[id] -> rediriger vers /equipements/[id]
-- /rapports/[id]/ot/ -> supprimer
-- /prospects/ -> supprimer, intégrer dans /clients?type=prospect
-- clients : ajouter colonne type (prospect/actif/inactif) avec migration SQL
-- Photos rapports : migrer vers { url, legende? } avec rétrocompatibilité
+- /rapports/[id]/ot/ -> supprimer (encore présent)
 - PDF iPad : Content-Disposition attachment manquant dans les deux route handlers
 - viewport : maximum-scale=1 user-scalable=no -> maximum-scale=5 dans layout.tsx
-- public/robots.txt : à créer (Disallow: /)
+
+### Faits (mai 2026)
+- /installations/[id] -> redirige bien vers /equipements/[id]
+- /prospects/ -> supprimé (intégré dans /clients?type=prospect)
+- public/robots.txt -> créé
+- dossiers.statut -> ajout du statut `facture` (migration 20260529000000)

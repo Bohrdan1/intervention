@@ -51,7 +51,7 @@ export async function createRdv(formData: FormData): Promise<void> {
 
   if (!dossier?.client_id) return;
 
-  await supabase.from("rdvs").insert({
+  const { error: errInsert } = await supabase.from("rdvs").insert({
     dossier_id,
     client_id: dossier.client_id,
     site_id: dossier.site_id ?? null,
@@ -61,6 +61,7 @@ export async function createRdv(formData: FormData): Promise<void> {
     statut,
     notes: notes || null,
   });
+  if (errInsert) console.error("Erreur createRdv:", errInsert);
 
   // RDV créé → passer le dossier en_cours s'il est encore ouvert
   await supabase
@@ -98,7 +99,7 @@ export async function updateRdv(
     .eq("id", id)
     .single();
 
-  const { data: rdv } = await supabase
+  const { data: rdv, error: errUpdate } = await supabase
     .from("rdvs")
     .update({
       date_rdv,
@@ -110,6 +111,7 @@ export async function updateRdv(
     .eq("id", id)
     .select("dossier_id")
     .single();
+  if (errUpdate) console.error("Erreur updateRdv:", errUpdate);
 
   // ── Sync Google Calendar ──────────────────────────────────────────────
   if (oldRdv) {
@@ -170,12 +172,13 @@ export async function updateRdvStatut(
 ): Promise<void> {
   const supabase = await createClient();
 
-  const { data: rdv } = await supabase
+  const { data: rdv, error } = await supabase
     .from("rdvs")
     .update({ statut })
     .eq("id", id)
     .select("dossier_id")
     .single();
+  if (error) console.error("Erreur updateRdvStatut:", error);
 
   invalidate(rdv?.dossier_id);
 }
@@ -190,7 +193,8 @@ export async function deleteRdv(id: string): Promise<void> {
     .eq("id", id)
     .single();
 
-  await supabase.from("rdvs").delete().eq("id", id);
+  const { error } = await supabase.from("rdvs").delete().eq("id", id);
+  if (error) console.error("Erreur deleteRdv:", error);
 
   // Supprimer l'événement Google Calendar si présent
   const googleEventId = existing?.google_event_id as string | null | undefined;
