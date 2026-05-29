@@ -518,9 +518,20 @@ function PageConstat({
       ))}
 
       {/* Conclusions */}
-      <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginTop: 25, marginBottom: 8 }}>
-        Les controles realises attestent du bon fonctionnement et de la conformite des installations au jour de l&apos;intervention.
-      </Text>
+      {(() => {
+        const toutConforme =
+          rapport.constat_general.every((item) => item.conforme) &&
+          rapport.controles.every((c) => c.points_erp.every((p) => p.conforme));
+        return toutConforme ? (
+          <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginTop: 25, marginBottom: 8 }}>
+            Les controles realises attestent du bon fonctionnement et de la conformite des installations au jour de l&apos;intervention.
+          </Text>
+        ) : (
+          <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#cc0000', marginTop: 25, marginBottom: 8 }}>
+            Des non-conformites ont ete constatees. Les points concernes sont detailles dans les fiches individuelles ci-dessus. Toute action corrective necessaire est a engager dans les meilleurs delais.
+          </Text>
+        );
+      })()}
       <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', marginBottom: 8 }}>
         Toute observation particuliere a ete mentionnee dans les fiches individuelles ci-dessus.
       </Text>
